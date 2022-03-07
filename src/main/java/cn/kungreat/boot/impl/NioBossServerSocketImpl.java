@@ -13,6 +13,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
 public class NioBossServerSocketImpl implements NioBossServerSocket {
     private ServerSocketChannel serverSocketChannel;
@@ -21,7 +22,8 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
     private Thread bossThreads;
     private final static AtomicInteger atomicInteger = new AtomicInteger(0);
     private NioWorkServerSocket[] workServerSockets;
-
+    private ChooseWorkServer chooseWorkServer;
+    private Logger logger;
     private NioBossServerSocketImpl() {
     }
 
@@ -74,7 +76,15 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
     }
 
     @Override
+    public NioBossServerSocket setLogger(Logger logger) {
+        this.logger=logger;
+        return this;
+    }
+
+    @Override
     public NioBossServerSocketImpl start(SocketAddress local, int backlog, NioWorkServerSocket[] workServerSockets, ChooseWorkServer chooseWorkServer) throws IOException {
+        this.workServerSockets=workServerSockets;
+        this.chooseWorkServer=chooseWorkServer;
         this.serverSocketChannel.bind(local, backlog);
         this.serverSocketChannel.register(this.selector, SelectionKey.OP_ACCEPT);
         this.bossThreads.start();
@@ -83,6 +93,8 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
 
     @Override
     public NioBossServerSocketImpl start(SocketAddress local, NioWorkServerSocket[] workServerSockets, ChooseWorkServer chooseWorkServer) throws IOException {
+        this.workServerSockets=workServerSockets;
+        this.chooseWorkServer=chooseWorkServer;
         this.serverSocketChannel.bind(local);
         this.serverSocketChannel.register(this.selector, SelectionKey.OP_ACCEPT);
         this.bossThreads.start();
@@ -99,6 +111,8 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                     while(iterator.hasNext()){
                         SelectionKey next = iterator.next();
                         iterator.remove();
+                        NioWorkServerSocket choose = NioBossServerSocketImpl.this.chooseWorkServer.choose(NioBossServerSocketImpl.this.workServerSockets);
+
                         //TODO
                     }
                 }

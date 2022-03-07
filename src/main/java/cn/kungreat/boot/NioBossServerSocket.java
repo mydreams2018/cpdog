@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.SocketOption;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public interface NioBossServerSocket {
 
@@ -13,6 +14,7 @@ public interface NioBossServerSocket {
     <T> T getOption(SocketOption<T> name) throws IOException;
     Set<SocketOption<?>> supportedOptions();
     NioBossServerSocket buildThread();
+    NioBossServerSocket setLogger(Logger logger);
     NioBossServerSocket start(SocketAddress local, int backlog, NioWorkServerSocket[] workServerSockets,
                               ChooseWorkServer chooseWorkServer) throws IOException;
     NioBossServerSocket start(SocketAddress local, NioWorkServerSocket[] workServerSockets,
