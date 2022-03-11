@@ -1,9 +1,17 @@
 package cn.kungreat.boot;
 
-import cn.kungreat.boot.impl.NioBossServerSocketImpl;
+import java.io.IOException;
+import java.net.SocketOption;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
 
 public interface NioWorkServerSocket {
 
-    NioBossServerSocketImpl buildThread(int threadCounts);
-    NioBossServerSocketImpl start(int port);
+    <T> NioWorkServerSocket setOption​(SocketOption<T> name, T value) throws IOException;
+    void setOption​(SocketChannel channel) throws IOException;
+    NioWorkServerSocket buildThread();
+    NioWorkServerSocket buildSelector() throws IOException;
+    NioWorkServerSocket start();
+    Thread getWorkThreads() ;
+    Selector getSelector();
 }

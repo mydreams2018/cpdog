@@ -16,10 +16,8 @@ public class ChooseWorkServerImpl implements ChooseWorkServer {
         int andIncrement = atomicInteger.getAndIncrement();
         if(andIncrement>=length){
             atomicInteger.getAndSet(1);
-            System.out.println(0);
             return workServerSockets[0];
         }
-        System.out.println(andIncrement);
         return workServerSockets[andIncrement];
     }
 }

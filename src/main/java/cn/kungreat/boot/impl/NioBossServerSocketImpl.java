@@ -7,18 +7,17 @@ import cn.kungreat.boot.NioWorkServerSocket;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.SocketOption;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class NioBossServerSocketImpl implements NioBossServerSocket {
     private ServerSocketChannel serverSocketChannel;
     private Selector selector;
-    private ThreadGroup threadGroup;
+    private static ThreadGroup threadGroup = new BossThreadGroup("bossServer");
     private Thread bossThreads;
     private final static AtomicInteger atomicInteger = new AtomicInteger(0);
     private NioWorkServerSocket[] workServerSockets;
@@ -68,9 +67,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
 
     @Override
     public NioBossServerSocketImpl buildThread() {
-        BossThreadGroup bossServer = new BossThreadGroup("bossServer");
-        this.bossThreads = new Thread(bossServer, new BossRunable(), getThreadName());
-        this.threadGroup = bossServer;
+        this.bossThreads = new Thread(threadGroup, new BossRunable(), getThreadName());
         this.bossThreads.setPriority(Thread.MAX_PRIORITY);
         return this;
     }
@@ -102,23 +99,65 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
     }
 
     private final class BossRunable implements Runnable{
+
+        private void accept(ServerSocketChannel serChannel){
+            SocketChannel accept = null;
+            try{
+                accept = serChannel.accept();
+                if(accept != null && accept.finishConnect()){
+                    NioWorkServerSocket choose = NioBossServerSocketImpl.this.chooseWorkServer.choose(NioBossServerSocketImpl.this.workServerSockets);
+                    accept.configureBlocking(false);
+                    choose.setOption​(accept);
+                    accept.register(choose.getSelector(),SelectionKey.OP_READ);
+                    NioBossServerSocketImpl.this.logger.log(Level.SEVERE,accept.getRemoteAddress()+"连接成功");
+                    Thread.State state = choose.getWorkThreads().getState();
+                    if(state.equals(Thread.State.NEW)){
+                        choose.getWorkThreads().start();
+                        NioBossServerSocketImpl.this.logger.log(Level.INFO,choose.getWorkThreads().getName()+":启动");
+                    }
+                }else{
+                    accept.close();
+                    NioBossServerSocketImpl.this.logger.log(Level.WARNING,accept.getRemoteAddress()+"连接失败");
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+                NioBossServerSocketImpl.this.logger.log(Level.WARNING,e.getLocalizedMessage()+"连接失败");
+                if(accept != null){
+                    try {
+                        accept.close();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                        NioBossServerSocketImpl.this.logger.log(Level.WARNING,ioException.getLocalizedMessage()+"close失败");
+                    }
+                }
+            }
+        }
+
         @Override
         public void run() {
+            NioBossServerSocketImpl.this.logger.log(Level.INFO,"boss服务启动");
             try {
-                while(selector.select() >= 0){
-                    Set<SelectionKey> selectionKeys = selector.selectedKeys();
+                while(NioBossServerSocketImpl.this.selector.select() >= 0){
+                    Set<SelectionKey> selectionKeys = NioBossServerSocketImpl.this.selector.selectedKeys();
                     Iterator<SelectionKey> iterator = selectionKeys.iterator();
                     while(iterator.hasNext()){
                         SelectionKey next = iterator.next();
                         iterator.remove();
-                        NioWorkServerSocket choose = NioBossServerSocketImpl.this.chooseWorkServer.choose(NioBossServerSocketImpl.this.workServerSockets);
-
-                        //TODO
+                        SelectableChannel channel = next.channel();
+                        if(next.isValid() && next.isAcceptable()){
+                            ServerSocketChannel serChannel = (ServerSocketChannel) channel;
+                            accept(serChannel);
+                        }else{
+                            NioBossServerSocketImpl.this.logger.log(Level.WARNING,"Boss事件类型错误");
+                        }
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                NioBossServerSocketImpl.this.logger.log(Level.WARNING,"Boss线程挂掉");
+                NioBossServerSocketImpl.this.logger.log(Level.WARNING,e.getLocalizedMessage());
             }
+            run();
         }
     }
 }
