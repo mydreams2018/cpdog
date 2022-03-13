@@ -10,7 +10,7 @@ public interface NioWorkServerSocket {
     <T> NioWorkServerSocket setOption​(SocketOption<T> name, T value) throws IOException;
     void setOption​(SocketChannel channel) throws IOException;
     NioWorkServerSocket buildThread();
-    NioWorkServerSocket buildSelector() throws IOException;
+    NioWorkServerSocket buildSelector(int bufferSize) throws IOException;
     NioWorkServerSocket start();
     Thread getWorkThreads() ;
     Selector getSelector();

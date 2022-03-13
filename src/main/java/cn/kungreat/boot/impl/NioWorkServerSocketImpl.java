@@ -16,7 +16,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private NioWorkServerSocketImpl(){}
     private final static ThreadGroup threadGroup = new WorkThreadGroup("workServer");
     private final static AtomicInteger atomicInteger = new AtomicInteger(0);
-
+    private int bufferSize;
     private final List<ChannelInHandler<?,?>> channelInHandlers = new ArrayList<>();
     private final TreeMap<Integer,ByteBuffer> treeMap = new TreeMap<>();
     private final HashMap<SocketOption<?>,Object> optionMap = new HashMap<>();
@@ -57,8 +57,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     }
 
     @Override
-    public NioWorkServerSocket buildSelector() throws IOException {
+    public NioWorkServerSocket buildSelector(int bufferSize) throws IOException {
         this.selector = Selector.open();
+        this.bufferSize = bufferSize;
         return this;
     }
 
@@ -93,40 +94,35 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }catch (Exception e){
                 e.printStackTrace();
             }
+            run();
         }
 
         public void handler(SelectionKey next){
-            SocketChannel clientChannel =null;
+            SocketChannel clientChannel = null;
             try{
                 clientChannel = (SocketChannel) next.channel();
                 if(next.isValid() && next.isReadable()){
-                    if(!clientChannel.isConnectionPending()){
-                        System.out.println("注意客户端服务关掉了");
-                        clientChannel.close();
-                        return;
-                    }
-                    //每一个SocketChannel对应一个唯一的缓冲区
-                    //todo 缓冲区大小问题 一次能不能读完的问题
                     ByteBuffer byteBuffer = treeMap.get(clientChannel.hashCode());
                     if(byteBuffer == null){
-                        byteBuffer = ByteBuffer.allocate(8192);
+                        byteBuffer = ByteBuffer.allocate(NioWorkServerSocketImpl.this.bufferSize);
                         treeMap.put(clientChannel.hashCode(),byteBuffer);
                     }
                     int read = clientChannel.read(byteBuffer);
-                    // read > 0 有数据  ==-1 表示流关闭  ==0 不管
                     while(read > 0){
                         read = clientChannel.read(byteBuffer);
                     }
                     if(read == -1){
+                        System.out.println(clientChannel.getRemoteAddress()+"自动关闭了");
                         clientChannel.close();
                     }
-
-
+                    if(!byteBuffer.hasRemaining()){
+                        System.out.println(clientChannel.getRemoteAddress()+"没有了缓存空间了.默认清空数据");
+                        byteBuffer.clear();
+                    }
                 }else{
                     System.out.println(clientChannel.getRemoteAddress()+":客户端监听类型异常");
                 }
             }catch (Exception e){
-                e.printStackTrace();
                 if(clientChannel!=null){
                     try {
                         clientChannel.close();
@@ -134,6 +130,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         ioException.printStackTrace();
                     }
                 }
+                e.printStackTrace();
                 treeMap.remove(clientChannel.hashCode());
             }
         }
