@@ -19,6 +19,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private int bufferSize;
     private final List<ChannelInHandler<?,?>> channelInHandlers = new ArrayList<>();
     private final TreeMap<Integer,ByteBuffer> treeMap = new TreeMap<>();
+    private final ByteBuffer outBuf = ByteBuffer.allocate(8192);
     private final HashMap<SocketOption<?>,Object> optionMap = new HashMap<>();
     private Thread workThreads;
     private Selector selector;
@@ -77,6 +78,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
         return selector;
     }
 
+    public ByteBuffer getOutBuf() {
+        return outBuf;
+    }
 
     private final class WorkRunable implements Runnable{
         @Override
