@@ -17,15 +17,12 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private final static ThreadGroup threadGroup = new WorkThreadGroup("workServer");
     private final static AtomicInteger atomicInteger = new AtomicInteger(0);
     private int bufferSize;
-    private final List<ChannelInHandler<?,?>> channelInHandlers = new ArrayList<>();
+    private static final List<ChannelInHandler<?,?>> channelInHandlers = new ArrayList<>();
     private final TreeMap<Integer,ByteBuffer> treeMap = new TreeMap<>();
     private final ByteBuffer outBuf = ByteBuffer.allocate(8192);
     private final HashMap<SocketOption<?>,Object> optionMap = new HashMap<>();
     private Thread workThreads;
     private Selector selector;
-    {
-        channelInHandlers.add(new CacheChannelInHandler());
-    }
 
     public static NioWorkServerSocket create(){
         return new NioWorkServerSocketImpl();
@@ -120,9 +117,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         clientChannel.close();
                     }
                     if(!byteBuffer.hasRemaining()){
-                        System.out.println(clientChannel.getRemoteAddress()+"没有了缓存空间了.默认清空数据");
-                        byteBuffer.clear();
+                        throw new RuntimeException(clientChannel.getRemoteAddress()+"没有了缓存空间了,强制关掉连接");
                     }
+                    runHandlers(clientChannel,byteBuffer);
                 }else{
                     System.out.println(clientChannel.getRemoteAddress()+":客户端监听类型异常");
                 }
@@ -137,6 +134,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                 e.printStackTrace();
                 treeMap.remove(clientChannel.hashCode());
             }
+        }
+
+        private void runHandlers(SocketChannel clientChannel, ByteBuffer byteBuffer) {
+            
         }
 
     }
