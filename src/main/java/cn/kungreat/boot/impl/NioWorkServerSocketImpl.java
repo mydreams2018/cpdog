@@ -4,6 +4,7 @@ import cn.kungreat.boot.ChannelInHandler;
 import cn.kungreat.boot.NioWorkServerSocket;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.SocketOption;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -31,6 +32,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private static String getThreadName() {
         int i = atomicInteger.addAndGet(1);
         return "work-thread-" + i;
+    }
+
+    public static void addChannelInHandlers(ChannelInHandler<?,?> channelInHandler){
+        channelInHandlers.add(channelInHandler);
     }
 
     @Override
@@ -119,7 +124,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     if(!byteBuffer.hasRemaining()){
                         throw new RuntimeException(clientChannel.getRemoteAddress()+"没有了缓存空间了,强制关掉连接");
                     }
-                    runHandlers(clientChannel,byteBuffer);
+                    runInHandlers(clientChannel,byteBuffer);
                 }else{
                     System.out.println(clientChannel.getRemoteAddress()+":客户端监听类型异常");
                 }
@@ -136,8 +141,27 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }
         }
 
-        private void runHandlers(SocketChannel clientChannel, ByteBuffer byteBuffer) {
-            
+        private void runInHandlers(SocketChannel clientChannel, ByteBuffer byteBuffer) {
+            Object linkIn = byteBuffer;
+            for(int x=0;x<channelInHandlers.size();x++){
+                if(clientChannel.isOpen()){
+                    try {
+                        ChannelInHandler<?, ?> channelInHandler = channelInHandlers.get(x);
+                        Class<? extends ChannelInHandler> channelInHandlerClass = channelInHandler.getClass();
+                        Method before = channelInHandlerClass.getMethod("before", SocketChannel.class, channelInHandler.getInClass());
+                        before.invoke(channelInHandler,clientChannel,linkIn);
+                        Method handler = channelInHandlerClass.getMethod("handler", SocketChannel.class, channelInHandler.getInClass());
+                        Object invoke = handler.invoke(channelInHandler, clientChannel, linkIn);
+                        Method after = channelInHandlerClass.getMethod("after", SocketChannel.class, channelInHandler.getInClass());
+                        after.invoke(channelInHandler,clientChannel,linkIn);
+                        linkIn = invoke;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }else{
+                    System.out.println("客户端close");
+                }
+            }
         }
 
     }
