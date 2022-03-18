@@ -1,6 +1,7 @@
 package cn.kungreat.boot.impl;
 
 import cn.kungreat.boot.ChannelInHandler;
+import cn.kungreat.boot.ChannelOutHandler;
 import cn.kungreat.boot.NioWorkServerSocket;
 
 import java.io.IOException;
@@ -19,6 +20,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private final static AtomicInteger atomicInteger = new AtomicInteger(0);
     private int bufferSize;
     private static final List<ChannelInHandler<?,?>> channelInHandlers = new ArrayList<>();
+    private static final List<ChannelOutHandler<?,?>> channelOutHandlers = new ArrayList<>();
     private final TreeMap<Integer,ByteBuffer> treeMap = new TreeMap<>();
     private final ByteBuffer outBuf = ByteBuffer.allocate(8192);
     private final HashMap<SocketOption<?>,Object> optionMap = new HashMap<>();
@@ -124,8 +126,8 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     if(!byteBuffer.hasRemaining()){
                         throw new RuntimeException(clientChannel.getRemoteAddress()+"没有了缓存空间了,强制关掉连接");
                     }
-                    Object o = runInHandlers(clientChannel, byteBuffer);
-
+                    Object inEnd = runInHandlers(clientChannel, byteBuffer);
+                    runOutHandlers(clientChannel,inEnd);
                 }else{
                     System.out.println(clientChannel.getRemoteAddress()+":客户端监听类型异常");
                 }
@@ -177,6 +179,42 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             return linkIn;
         }
 
+        private Object runOutHandlers(final SocketChannel clientChannel,final Object in) {
+            ByteBuffer outBuf = getOutBuf();
+            outBuf.clear();
+            Object linkIn = in;
+            Exception exception = null;
+            for(int x=0;x<channelOutHandlers.size();x++){
+                if(clientChannel.isOpen()){
+                    try {
+                        if(exception==null){
+                            ChannelOutHandler<?, ?> channelOutHandler = channelOutHandlers.get(x);
+                            Class<? extends ChannelOutHandler> channelOutHandlerClass = channelOutHandler.getClass();
+                            Method before = channelOutHandlerClass.getMethod("before", SocketChannel.class, channelOutHandler.getInClass());
+                            before.invoke(channelOutHandler,clientChannel,linkIn);
+                            Method handler = channelOutHandlerClass.getMethod("handler",ByteBuffer.class, SocketChannel.class, channelOutHandler.getInClass());
+                            Object invoke = handler.invoke(channelOutHandler, outBuf,clientChannel, linkIn);
+                            Method after = channelOutHandlerClass.getMethod("after", SocketChannel.class, channelOutHandler.getInClass());
+                            after.invoke(channelOutHandler,clientChannel,linkIn);
+                            linkIn = invoke;
+                        }else{
+                            ChannelOutHandler<?, ?> channelOutHandler = channelOutHandlers.get(x);
+                            channelOutHandler.exception(exception,clientChannel,linkIn);
+                            Class<? extends ChannelOutHandler> channelOutHandlerClass = channelOutHandler.getClass();
+                            Method handler = channelOutHandlerClass.getMethod("handler", ByteBuffer.class, SocketChannel.class, channelOutHandler.getInClass());
+                            linkIn = handler.invoke(channelOutHandler, outBuf,clientChannel,linkIn);
+                            exception = null;
+                        }
+                    }catch(Exception e){
+                        exception = e;
+                        e.printStackTrace();
+                    }
+                }else{
+                    System.out.println("客户端close");
+                }
+            }
+            return linkIn;
+        }
     }
 
 }
