@@ -122,6 +122,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     if(read == -1){
                         System.out.println(clientChannel.getRemoteAddress()+"自动关闭了");
                         clientChannel.close();
+                        treeMap.remove(clientChannel.hashCode());
                     }
                     if(!byteBuffer.hasRemaining()){
                         throw new RuntimeException(clientChannel.getRemoteAddress()+"没有了缓存空间了,强制关掉连接");
@@ -139,8 +140,8 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         ioException.printStackTrace();
                     }
                 }
-                e.printStackTrace();
                 treeMap.remove(clientChannel.hashCode());
+                e.printStackTrace();
             }
         }
 
@@ -174,6 +175,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     }
                 }else{
                     System.out.println("客户端close");
+                    break;
                 }
             }
             return linkIn;
@@ -211,6 +213,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     }
                 }else{
                     System.out.println("客户端close");
+                    break;
                 }
             }
             return linkIn;
