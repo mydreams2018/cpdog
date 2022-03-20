@@ -1,5 +1,6 @@
 package cn.kungreat.boot;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
@@ -16,11 +17,12 @@ public interface ChannelOutHandler<I,O> {
     /*
      *@Description 正常链路情况下会在中间调用此方法,异常时也会调用此方法
      *@Param byteBuffer输出的缓存对象-每个WORK对象一个每次输出链路开始时清空  socketChannel 当前连接管道 in 入参
+     *@throws 可能出现在异常
      *@Return 返回的值.要是下一链路接收的值
      *@Date 2022/3/18
      *@Time 11:09
      */
-    O handler(ByteBuffer byteBuffer,SocketChannel socketChannel, I in);
+    O handler(ByteBuffer byteBuffer,SocketChannel socketChannel, I in) throws Exception;
 
     /*
      *@Description 正常链路情况下会后调此方法、出现异常时不调用此方法
@@ -34,11 +36,12 @@ public interface ChannelOutHandler<I,O> {
     /*
      *@Description 出现异常需要处理.可选关闭通道 或者自已处理 但是要保证下一个链路的入参正常接收
      *@Param e 异常信息 socketChannel 当前连接管道 in 入参
+     *@throws 可能出现在异常
      *@Return 无
      *@Date 2022/3/18
      *@Time 11:09
      */
-    void exception(Exception e,SocketChannel socketChannel,Object in);
+    void exception(Exception e,SocketChannel socketChannel,Object in)throws Exception;
 
     /*
      *@Description 返回当前入参的类型,为了方便反射调用

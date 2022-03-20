@@ -40,6 +40,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
         channelInHandlers.add(channelInHandler);
     }
 
+    public static void addChannelOutHandlers(ChannelOutHandler<?,?> channelOutHandler){
+        channelOutHandlers.add(channelOutHandler);
+    }
+
     @Override
     public <T> NioWorkServerSocket setOption​(SocketOption<T> name, T value) throws IOException {
         optionMap.put(name,value);
@@ -123,6 +127,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         System.out.println(clientChannel.getRemoteAddress()+"自动关闭了");
                         clientChannel.close();
                         treeMap.remove(clientChannel.hashCode());
+                        return;
                     }
                     if(!byteBuffer.hasRemaining()){
                         throw new RuntimeException(clientChannel.getRemoteAddress()+"没有了缓存空间了,强制关掉连接");

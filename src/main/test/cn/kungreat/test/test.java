@@ -3,8 +3,7 @@ package cn.kungreat.test;
 import cn.kungreat.boot.NioBossServerSocket;
 import cn.kungreat.boot.NioWorkServerSocket;
 import cn.kungreat.boot.handler.DefaultChannelInHandler;
-import cn.kungreat.boot.handler.DefaultChannelInHandler2;
-import cn.kungreat.boot.handler.DefaultChannelInHandler3;
+import cn.kungreat.boot.handler.DefautChannelOutHandler;
 import cn.kungreat.boot.impl.ChooseWorkServerImpl;
 import cn.kungreat.boot.impl.DefaultLogServer;
 import cn.kungreat.boot.impl.NioBossServerSocketImpl;
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
-import java.nio.ByteBuffer;
 import java.util.logging.Logger;
 
 public class test {
@@ -27,8 +25,7 @@ public class test {
         nioBossServerSocket.setLogger(log);
         ChooseWorkServerImpl chooseWorkServer = new ChooseWorkServerImpl();
         NioWorkServerSocketImpl.addChannelInHandlers(new DefaultChannelInHandler());
-        NioWorkServerSocketImpl.addChannelInHandlers(new DefaultChannelInHandler2());
-        NioWorkServerSocketImpl.addChannelInHandlers(new DefaultChannelInHandler3());
+        NioWorkServerSocketImpl.addChannelOutHandlers(new DefautChannelOutHandler());
         NioWorkServerSocket[] workServerSockets = new NioWorkServerSocket[12];
         for(int x=0;x<workServerSockets.length;x++){
             NioWorkServerSocket workServerSocket = NioWorkServerSocketImpl.create();
