@@ -109,6 +109,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                     accept.configureBlocking(false);
                     choose.setOption​(accept);
                     accept.register(choose.getSelector(),SelectionKey.OP_READ);
+                    choose.getSelector().wakeup();
                     NioBossServerSocketImpl.this.logger.log(Level.SEVERE,accept.getRemoteAddress()+"连接成功");
                     Thread.State state = choose.getWorkThreads().getState();
                     if(state.equals(Thread.State.NEW)){
