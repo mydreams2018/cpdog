@@ -1,2 +1,8 @@
  //每一个SocketChannel对应一个唯一的缓冲区 缓冲区固定大小 read > 0 有数据  ==-1 表示流关闭  ==0 不管
  //clientChannel.read();  没有buffer空间也不会报错.并且 对方强制关闭了连接也读取不到 因为没有空间可读
+
+1:channelHnadler 链路 [入参、出参] 需要注意并发问题
+2:channel-in-buffer 入站缓冲区、使用给定的大小字节、没有空间时拋异常、关客户端连接  每一个SocketChannel对应一个唯一的缓冲区
+                    走链路时需要处理好buffer的指针、需要考虑TCP-IP粘包拆包问题、
+                    每次触发事件时、只会把当前事件数据read追加到当前的buffer中. 指针一定要处理好.
+3:channel-out-buffer 出站缓冲区、使用固定大小字节、每次走outHandler链路时清空数据.每个work对象私有
