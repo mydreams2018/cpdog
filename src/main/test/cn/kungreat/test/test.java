@@ -4,6 +4,7 @@ import cn.kungreat.boot.NioBossServerSocket;
 import cn.kungreat.boot.NioWorkServerSocket;
 import cn.kungreat.boot.handler.DefaultChannelInHandler;
 import cn.kungreat.boot.handler.DefautChannelOutHandler;
+import cn.kungreat.boot.handler.WebSocketProtocolHandler;
 import cn.kungreat.boot.impl.ChooseWorkServerImpl;
 import cn.kungreat.boot.impl.DefaultLogServer;
 import cn.kungreat.boot.impl.NioBossServerSocketImpl;
@@ -26,11 +27,12 @@ public class test {
         ChooseWorkServerImpl chooseWorkServer = new ChooseWorkServerImpl();
         NioWorkServerSocketImpl.addChannelInHandlers(new DefaultChannelInHandler());
         NioWorkServerSocketImpl.addChannelOutHandlers(new DefautChannelOutHandler());
+        NioWorkServerSocketImpl.addChannelProtocolHandler(new WebSocketProtocolHandler());
         NioWorkServerSocket[] workServerSockets = new NioWorkServerSocket[12];
         for(int x=0;x<workServerSockets.length;x++){
             NioWorkServerSocket workServerSocket = NioWorkServerSocketImpl.create();
             workServerSocket.buildThread();
-            workServerSocket.buildSelector(256);
+            workServerSocket.buildSelector(2048);
             workServerSocket.setOption​(StandardSocketOptions.SO_KEEPALIVE,true);
             workServerSocket.setOption​(StandardSocketOptions.SO_RCVBUF,1024);
             workServerSockets[x]=workServerSocket;

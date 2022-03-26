@@ -6,3 +6,20 @@
                     走链路时需要处理好buffer的指针、需要考虑TCP-IP粘包拆包问题、
                     每次触发事件时、只会把当前事件数据read追加到当前的buffer中. 指针一定要处理好.
 3:channel-out-buffer 出站缓冲区、使用固定大小字节、每次走outHandler链路时清空数据.每个work对象私有
+
+\n     10     换行NL
+\r     13     回车CR
+
+GET /name HTTP/1.1
+Host: 192.168.9.52:9999
+Connection: Upgrade
+Pragma: no-cache
+Cache-Control: no-cache
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36 Edg/99.0.1150.46
+Upgrade: websocket
+Origin: http://localhost:63342
+Sec-WebSocket-Version: 13
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
+Sec-WebSocket-Key: zkvuhevaXj9DhHgHWT29yQ==
+Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
