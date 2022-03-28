@@ -1,5 +1,7 @@
 package cn.kungreat.test;
 
+import cn.kungreat.boot.utils.CutoverBytes;
+
 import java.security.MessageDigest;
 import java.util.Base64;
 
@@ -12,6 +14,11 @@ public class Test2 {
 //        System.out.println(Base64.getEncoder().encodeToString(digest));
         //s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
         //s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
-
+//        byte bt = -12;
+//        if(bt<0){
+//            System.out.println("小0");
+//        }
+        byte[] bts = {0,-1,-1,-1};
+        System.out.println(CutoverBytes.readInt(bts));
     }
 }

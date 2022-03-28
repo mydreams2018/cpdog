@@ -19,7 +19,7 @@ public class WebSocketProtocolHandler implements ChannelProtocolHandler {
     public boolean handlers(SocketChannel socketChannel, ByteBuffer in) throws Exception {
         boolean rt = false;
         if (in.hasRemaining()){
-            List<String> lis = new ArrayList<>(24);
+            List<String> lis = new ArrayList<>(32);
             byte[] bytes = in.array();
             int beforeIndex = 0;
             int afterIndex ;
@@ -33,10 +33,12 @@ public class WebSocketProtocolHandler implements ChannelProtocolHandler {
                 }
             }
             WebSocketBean webSocketBean = getWebSocketBean(lis);
-            String secWebSocketKey = getSecWebSocketKey(webSocketBean.getSecWebSocketKey());
-            writeProtocol(secWebSocketKey,socketChannel,in);
-            in.clear();
-            rt = true;
+            if(webSocketBean.getSecWebSocketKey()!=null && !webSocketBean.getSecWebSocketKey().isEmpty()){
+                String secWebSocketKey = getSecWebSocketKey(webSocketBean.getSecWebSocketKey());
+                writeProtocol(secWebSocketKey,socketChannel,in);
+                in.clear();
+                rt = true;
+            }
         }else{
             System.out.println("WebSocketProtocolHandler:没有可读取字节");
         }
