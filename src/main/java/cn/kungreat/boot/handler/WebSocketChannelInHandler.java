@@ -20,18 +20,29 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer,St
             WEBSOCKETSTATETREEMAP.put(socketChannel.hashCode(),webSocketState);
         }
         if(webSocketState.getDateLength()==0){
-            byte[] array = buffer.array();
-            webSocketState.setFinish(array[0]<0);
-            webSocketState.setType(array[0]&15);
-            if(array[1]<0){
-                webSocketState.setDateLength(array);
-                webSocketState.setMaskingKey(array);
-                int currentPos = webSocketState.getCurrentPos();
-                //拿到当前指针的位置开始取真实的数据
-            }else{
-                System.out.println("协议mask标记位不正确关闭连接:");
-                socketChannel.close();
-                WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
+            int remaining = buffer.remaining();
+            //最少需要6个字节才能解释 协议
+            if(remaining > 6){
+                byte[] array = buffer.array();
+                webSocketState.setFinish(array[0]<0);
+                webSocketState.setType(array[0]&15);
+                if(array[1]<0){
+                    webSocketState.setDateLength(array);
+                    webSocketState.setMaskingKey(array);
+                    int currentPos = webSocketState.getCurrentPos();
+                    //拿到当前指针的位置开始取真实的数据
+                    if(currentPos==remaining){
+                        //刚好够拿到必需要的数据  不做任何操作.数据指针不变.  太浪费数组性能 要做指针处理的话
+                    }else if(currentPos<remaining){
+                        //拿到必需要的数据 还有额外的数据读.......
+                    }else{
+                        //这种情况的话表示 我们接收的数据不够支持业务 不做任何操作.数据指针不变.
+                    }
+                }else{
+                    System.out.println("协议mask标记位不正确关闭连接:");
+                    socketChannel.close();
+                    WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
+                }
             }
         }else{
             //读以前的旧数据
