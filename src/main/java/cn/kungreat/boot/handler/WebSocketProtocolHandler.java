@@ -83,7 +83,7 @@ public class WebSocketProtocolHandler implements ChannelProtocolHandler {
     }
 
     private void writeProtocol(String secWebSocketKey,SocketChannel socketChannel,ByteBuffer in) throws Exception {
-        StringBuffer stringBuffer = new StringBuffer(512);
+        StringBuffer stringBuffer = new StringBuffer(256);
         stringBuffer.append("HTTP/1.1 101 Switching Protocols");
         stringBuffer.append(System.lineSeparator());
         stringBuffer.append("Upgrade: websocket");

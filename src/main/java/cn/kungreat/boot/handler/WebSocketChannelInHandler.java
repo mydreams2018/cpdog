@@ -8,7 +8,10 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.TreeMap;
 
-public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, String> {
+/*
+* 把websocket 的数据 解码出来并且 传入下一个链路
+*/
+public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, WebSocketChannelInHandler.WebSocketState> {
 
     private static final TreeMap<Integer, WebSocketState> WEBSOCKETSTATETREEMAP = new TreeMap<>();
 
@@ -21,7 +24,11 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, S
             WEBSOCKETSTATETREEMAP.put(socketChannel.hashCode(), webSocketState);
         }
         long remainingTotal = webSocketState.getDateLength() - webSocketState.getReadLength();
-        if (remainingTotal > 0) {
+        if (remainingTotal == 0) {
+            //清掉上一次的内容
+            if(webSocketState.isDone()){
+                webSocketState.clearStringBuffer();
+            }
             int remaining = buffer.remaining();
             //最少需要6个字节才能解释 协议
             if (remaining > 6) {
@@ -44,7 +51,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, S
     }
 
     @Override
-    public String handler(SocketChannel socketChannel, ByteBuffer buffer) throws Exception {
+    public WebSocketState handler(SocketChannel socketChannel, ByteBuffer buffer) throws Exception {
         WebSocketState webSocketState = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode());
         int currentPos = webSocketState.getCurrentPos();
         int remaining = buffer.remaining();
@@ -70,12 +77,18 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, S
             buffer.compact();
             webSocketState.setCurrentPos(0);
         }
-        return null;
+        return webSocketState;
     }
 
     @Override
     public void after(SocketChannel socketChannel, ByteBuffer buffer) {
-        //此处功能待定
+        WebSocketState webSocketState = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode());
+        if(webSocketState.isFinish() && webSocketState.getReadLength()==webSocketState.getDateLength()){
+            webSocketState.setDone(true);
+        }
+        if(webSocketState.getType()==1){
+            webSocketState.setStringData();
+        }
     }
 
     @Override
@@ -98,6 +111,14 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, S
          * finish  websocket 是否完成标识
          */
         private boolean finish;
+        /**
+         * done 是否一次完整的消息完成. finish==true && dateLength==readLength
+         */
+        private boolean done=false;
+        /**
+         * stringBuffer  type==1 存放的文字内容
+         */
+        private StringBuffer stringBuffer = new StringBuffer();
         /**
          * type  websocket 数据类型标识
          * 1: 文本数据
@@ -207,6 +228,46 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, S
 
         public void setReadLength(long readLength) {
             this.readLength = readLength;
+        }
+
+        public boolean isDone() {
+            return done;
+        }
+
+        public void setDone(boolean done) {
+            this.done = done;
+        }
+
+        public StringBuffer getStringBuffer() {
+            return stringBuffer;
+        }
+
+        /*
+         编码转换成字符串 默认用UTF-8
+        */
+        public void setStringData() {
+            byteBuffer.flip();
+            int remaining = byteBuffer.remaining();
+            if(!done){
+                int ix = 0;
+                do{
+                    ix++;
+                    byte b = byteBuffer.get(remaining - ix);
+                    if(b>0 || (b<=-12 && b>=-62)){
+                        break;
+                    }
+                }while(true);
+                stringBuffer.append(new String(byteBuffer.array(),0,remaining-ix,Charset.forName("UTF-8")));
+                byteBuffer.position(remaining-ix);
+                byteBuffer.compact();
+            }else{
+                stringBuffer.append(new String(byteBuffer.array(),0,remaining,Charset.forName("UTF-8")));
+                byteBuffer.clear();
+            }
+        }
+
+        public void clearStringBuffer(){
+            this.stringBuffer = new StringBuffer();
         }
     }
 }

@@ -2,6 +2,8 @@ package cn.kungreat.test;
 
 import cn.kungreat.boot.NioBossServerSocket;
 import cn.kungreat.boot.NioWorkServerSocket;
+import cn.kungreat.boot.handler.WebSocketChannelInHandler;
+import cn.kungreat.boot.handler.WebSocketChannelOutHandler;
 import cn.kungreat.boot.handler.WebSocketProtocolHandler;
 import cn.kungreat.boot.impl.ChooseWorkServerImpl;
 import cn.kungreat.boot.impl.DefaultLogServer;
@@ -23,8 +25,8 @@ public class test {
                 ,"kungreat.cn");
         nioBossServerSocket.setLogger(log);
         ChooseWorkServerImpl chooseWorkServer = new ChooseWorkServerImpl();
-//        NioWorkServerSocketImpl.addChannelInHandlers(new DefaultChannelInHandler());
-//        NioWorkServerSocketImpl.addChannelOutHandlers(new DefautChannelOutHandler());
+        NioWorkServerSocketImpl.addChannelInHandlers(new WebSocketChannelInHandler());
+        NioWorkServerSocketImpl.addChannelOutHandlers(new WebSocketChannelOutHandler());
         NioWorkServerSocketImpl.addChannelProtocolHandler(new WebSocketProtocolHandler());
         NioWorkServerSocket[] workServerSockets = new NioWorkServerSocket[12];
         for(int x=0;x<workServerSockets.length;x++){
