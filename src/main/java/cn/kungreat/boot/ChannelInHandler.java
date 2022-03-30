@@ -29,7 +29,7 @@ public interface ChannelInHandler<I,O> {
      *@Date 2022/3/18
      *@Time 11:09
      */
-    void after(SocketChannel socketChannel,I in);
+    void after(SocketChannel socketChannel,I in) throws Exception;
     /*
     *@Description 出现异常需要处理.可选关闭通道 或者自已处理 但是要保证下一个链路的入参正常接收
     *@Param e 异常信息 socketChannel 当前连接管道 byteBuffer原始读取的字节数据缓冲区需要转换 in 入参

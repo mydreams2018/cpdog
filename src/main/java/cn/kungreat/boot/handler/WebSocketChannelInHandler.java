@@ -6,29 +6,28 @@ import cn.kungreat.boot.utils.CutoverBytes;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
+import java.util.LinkedList;
 import java.util.TreeMap;
 
 /*
 * 把websocket 的数据 解码出来并且 传入下一个链路
 */
-public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, WebSocketChannelInHandler.WebSocketState> {
-
-    private static final TreeMap<Integer, WebSocketState> WEBSOCKETSTATETREEMAP = new TreeMap<>();
+public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, LinkedList<WebSocketChannelInHandler.WebSocketState>> {
+    //要考虑一定删除的问题 todo
+    private static final TreeMap<Integer,LinkedList<WebSocketState>> WEBSOCKETSTATETREEMAP = new TreeMap<>();
 
     @Override
     public void before(SocketChannel socketChannel,ByteBuffer buffer) throws Exception {
         buffer.flip();
-        WebSocketState webSocketState = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode());
-        if (webSocketState == null) {
-            webSocketState = new WebSocketState(buffer.capacity());
-            WEBSOCKETSTATETREEMAP.put(socketChannel.hashCode(), webSocketState);
+        LinkedList<WebSocketState> listSos = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode());
+        if (listSos == null) {
+            listSos = new LinkedList<>();
+            listSos.add(new WebSocketState(buffer.capacity()));
+            WEBSOCKETSTATETREEMAP.put(socketChannel.hashCode(), listSos);
         }
+        WebSocketState webSocketState = listSos.getLast();
         long remainingTotal = webSocketState.getDateLength() - webSocketState.getReadLength();
         if (remainingTotal == 0) {
-            //清掉上一次的内容
-            if(webSocketState.isDone()){
-                webSocketState.clearStringBuffer();
-            }
             int remaining = buffer.remaining();
             //最少需要6个字节才能解释 协议
             if (remaining > 6) {
@@ -51,8 +50,8 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, W
     }
 
     @Override
-    public WebSocketState handler(SocketChannel socketChannel, ByteBuffer buffer) throws Exception {
-        WebSocketState webSocketState = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode());
+    public LinkedList<WebSocketState> handler(SocketChannel socketChannel, ByteBuffer buffer) throws Exception {
+        WebSocketState webSocketState = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).getLast();
         int currentPos = webSocketState.getCurrentPos();
         int remaining = buffer.remaining();
         long remainingTotal = webSocketState.getDateLength()-webSocketState.getReadLength();
@@ -74,21 +73,37 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, W
             }
             webSocketState.setReadLength(readLength);
             buffer.position(currentPos);
-            buffer.compact();
             webSocketState.setCurrentPos(0);
         }
-        return webSocketState;
+        buffer.compact();
+        return WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode());
     }
 
     @Override
-    public void after(SocketChannel socketChannel, ByteBuffer buffer) {
-        WebSocketState webSocketState = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode());
+    public void after(SocketChannel socketChannel, ByteBuffer buffer) throws Exception {
+        WebSocketState webSocketState = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).getLast();
         if(webSocketState.isFinish() && webSocketState.getReadLength()==webSocketState.getDateLength()){
             webSocketState.setDone(true);
         }
         if(webSocketState.getType()==1){
             webSocketState.setStringData();
         }
+        if(webSocketState.isDone()){
+            WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).add(new WebSocketState(buffer.capacity()));
+            loopData(socketChannel,buffer);
+        }
+    }
+    /*
+     *@Description TCP-IP 有可能一次到达多个信息.在一个消息完成后 判断需要有追加处理
+     *@Param socketChannel 当前连接管道 byteBuffer原始读取的字节数据缓冲区需要转换
+     *@Return 无
+     *@Date 2022/3/18
+     *@Time 11:09
+     */
+    private void loopData(SocketChannel socketChannel,ByteBuffer buffer) throws Exception {
+        before(socketChannel,buffer);
+        handler(socketChannel,buffer);
+        after(socketChannel,buffer);
     }
 
     @Override
@@ -264,10 +279,6 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, W
                 stringBuffer.append(new String(byteBuffer.array(),0,remaining,Charset.forName("UTF-8")));
                 byteBuffer.clear();
             }
-        }
-
-        public void clearStringBuffer(){
-            this.stringBuffer = new StringBuffer();
         }
     }
 }
