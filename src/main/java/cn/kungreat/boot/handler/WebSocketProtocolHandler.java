@@ -18,12 +18,12 @@ public class WebSocketProtocolHandler implements ChannelProtocolHandler {
     @Override
     public boolean handlers(SocketChannel socketChannel, ByteBuffer in) throws Exception {
         boolean rt = false;
-        if (in.hasRemaining()){
+        if (in.position()>0){
             List<String> lis = new ArrayList<>(32);
             byte[] bytes = in.array();
             int beforeIndex = 0;
             int afterIndex ;
-            for(int x=0;x<in.remaining();x++){
+            for(int x=0;x<in.position();x++){
                 if(bytes[x]==10 || bytes[x]== 13){
                     afterIndex = x;
                     if(afterIndex-beforeIndex > 0){
@@ -38,8 +38,12 @@ public class WebSocketProtocolHandler implements ChannelProtocolHandler {
                 writeProtocol(secWebSocketKey,socketChannel,in);
                 in.clear();
                 rt = true;
+            }else if(!in.hasRemaining()){
+                socketChannel.close();
+                System.out.println("WebSocketProtocolHandler:数据读满了.但是没有解释出协议");
             }
         }else{
+            socketChannel.close();
             System.out.println("WebSocketProtocolHandler:没有可读取字节");
         }
         return rt;
