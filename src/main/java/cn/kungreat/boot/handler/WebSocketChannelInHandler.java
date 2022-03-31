@@ -78,8 +78,6 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
             }
             buffer.compact();
             return WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode());
-        }else{
-            WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
         }
         return null;
     }
@@ -98,8 +96,6 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).add(new WebSocketState(buffer.capacity()));
                 loopData(socketChannel,buffer);
             }
-        }else{
-            WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
         }
     }
     /*
