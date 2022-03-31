@@ -13,8 +13,8 @@ import java.util.TreeMap;
 * 把websocket 的数据 解码出来并且 传入下一个链路
 */
 public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, LinkedList<WebSocketChannelInHandler.WebSocketState>> {
-    //要考虑一定删除的问题 todo
-    private static final TreeMap<Integer,LinkedList<WebSocketState>> WEBSOCKETSTATETREEMAP = new TreeMap<>();
+    //在前边就关闭了的连接  历史数据清理的问题  通过拿到所有选择器 channel 比较 hashcode todo
+    public static final TreeMap<Integer,LinkedList<WebSocketState>> WEBSOCKETSTATETREEMAP = new TreeMap<>();
 
     @Override
     public void before(SocketChannel socketChannel,ByteBuffer buffer) throws Exception {
@@ -51,46 +51,55 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
 
     @Override
     public LinkedList<WebSocketState> handler(SocketChannel socketChannel, ByteBuffer buffer) throws Exception {
-        WebSocketState webSocketState = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).getLast();
-        int currentPos = webSocketState.getCurrentPos();
-        int remaining = buffer.remaining();
-        long remainingTotal = webSocketState.getDateLength()-webSocketState.getReadLength();
-        //拿到当前指针的位置开始取真实的数据
-        if (currentPos < remaining && remainingTotal > 0) {
-            byte[] array = buffer.array();
-            //拿到必需要的数据 还有额外的数据读.......
-            long maxReadLength = remaining - currentPos;
-            ByteBuffer tarBuffer = webSocketState.getByteBuffer();
-            long runLength = Math.min(tarBuffer.remaining(), Math.min(maxReadLength, remainingTotal));
-            //当前已经读取的长度索引
-            long readLength = webSocketState.getReadLength();
-            byte[] maskingKey = webSocketState.getMaskingKey();
-            for (int x = 0; x < runLength; x++) {
-                byte tar = (byte) (array[currentPos] ^ maskingKey[Math.floorMod(readLength, 4)]);
-                tarBuffer.put(tar);
-                currentPos++;
-                readLength++;
+        if(socketChannel.isOpen()){
+            WebSocketState webSocketState = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).getLast();
+            int currentPos = webSocketState.getCurrentPos();
+            int remaining = buffer.remaining();
+            long remainingTotal = webSocketState.getDateLength()-webSocketState.getReadLength();
+            //拿到当前指针的位置开始取真实的数据
+            if (currentPos < remaining && remainingTotal > 0) {
+                byte[] array = buffer.array();
+                //拿到必需要的数据 还有额外的数据读.......
+                long maxReadLength = remaining - currentPos;
+                ByteBuffer tarBuffer = webSocketState.getByteBuffer();
+                long runLength = Math.min(tarBuffer.remaining(), Math.min(maxReadLength, remainingTotal));
+                //当前已经读取的长度索引
+                long readLength = webSocketState.getReadLength();
+                byte[] maskingKey = webSocketState.getMaskingKey();
+                for (int x = 0; x < runLength; x++) {
+                    byte tar = (byte) (array[currentPos] ^ maskingKey[Math.floorMod(readLength, 4)]);
+                    tarBuffer.put(tar);
+                    currentPos++;
+                    readLength++;
+                }
+                webSocketState.setReadLength(readLength);
+                buffer.position(currentPos);
+                webSocketState.setCurrentPos(0);
             }
-            webSocketState.setReadLength(readLength);
-            buffer.position(currentPos);
-            webSocketState.setCurrentPos(0);
+            buffer.compact();
+            return WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode());
+        }else{
+            WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
         }
-        buffer.compact();
-        return WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode());
+        return null;
     }
 
     @Override
     public void after(SocketChannel socketChannel, ByteBuffer buffer) throws Exception {
-        WebSocketState webSocketState = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).getLast();
-        if(webSocketState.isFinish() && webSocketState.getReadLength()==webSocketState.getDateLength()){
-            webSocketState.setDone(true);
-        }
-        if(webSocketState.getType()==1){
-            webSocketState.setStringData();
-        }
-        if(webSocketState.isDone()){
-            WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).add(new WebSocketState(buffer.capacity()));
-            loopData(socketChannel,buffer);
+        if(socketChannel.isOpen()){
+            WebSocketState webSocketState = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).getLast();
+            if(webSocketState.isFinish() && webSocketState.getReadLength()==webSocketState.getDateLength()){
+                webSocketState.setDone(true);
+            }
+            if(webSocketState.getType()==1){
+                webSocketState.setStringData();
+            }
+            if(webSocketState.isDone()){
+                WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).add(new WebSocketState(buffer.capacity()));
+                loopData(socketChannel,buffer);
+            }
+        }else{
+            WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
         }
     }
     /*
