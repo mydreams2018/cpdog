@@ -99,6 +99,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     }
 
     private final class WorkRunable implements Runnable{
+
+        private Exception exception = null;
+
         @Override
         public void run() {
             try{
@@ -171,11 +174,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
 
         private Object runInHandlers(final SocketChannel clientChannel,final ByteBuffer byteBuffer) {
             Object linkIn = byteBuffer;
-            Exception exception = null;
             for(int x=0;x<channelInHandlers.size();x++){
                 if(clientChannel.isOpen()){
                     try {
-                        if(exception==null){
+                        if(this.exception==null){
                             ChannelInHandler<?, ?> channelInHandler = channelInHandlers.get(x);
                             Class<? extends ChannelInHandler> channelInHandlerClass = channelInHandler.getClass();
                             Method before = channelInHandlerClass.getMethod("before", SocketChannel.class, channelInHandler.getInClass());
@@ -191,10 +193,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                             Class<? extends ChannelInHandler> channelInHandlerClass = channelInHandler.getClass();
                             Method handler = channelInHandlerClass.getMethod("handler", SocketChannel.class, channelInHandler.getInClass());
                             linkIn = handler.invoke(channelInHandler,clientChannel,linkIn);
-                            exception = null;
+                            this.exception = null;
                         }
                     }catch(Exception e){
-                        exception = e;
+                        this.exception = e;
                         e.printStackTrace();
                     }
                 }else{
@@ -205,15 +207,14 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             return linkIn;
         }
 
-        private Object runOutHandlers(final SocketChannel clientChannel,final Object in) {
+        private Object runOutHandlers(final SocketChannel clientChannel,final Object in) throws IOException {
             ByteBuffer outBuf = getOutBuf();
             outBuf.clear();
             Object linkIn = in;
-            Exception exception = null;
             for(int x=0;x<channelOutHandlers.size();x++){
                 if(clientChannel.isOpen()){
                     try {
-                        if(exception==null){
+                        if(this.exception==null){
                             ChannelOutHandler<?, ?> channelOutHandler = channelOutHandlers.get(x);
                             Class<? extends ChannelOutHandler> channelOutHandlerClass = channelOutHandler.getClass();
                             Method before = channelOutHandlerClass.getMethod("before", SocketChannel.class, channelOutHandler.getInClass());
@@ -229,10 +230,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                             Class<? extends ChannelOutHandler> channelOutHandlerClass = channelOutHandler.getClass();
                             Method handler = channelOutHandlerClass.getMethod("handler", ByteBuffer.class, SocketChannel.class, channelOutHandler.getInClass());
                             linkIn = handler.invoke(channelOutHandler, outBuf,clientChannel,linkIn);
-                            exception = null;
+                            this.exception = null;
                         }
                     }catch(Exception e){
-                        exception = e;
+                        this.exception = e;
                         e.printStackTrace();
                     }
                 }else{
@@ -240,6 +241,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     break;
                 }
             }
+            this.exception=null;
             return linkIn;
         }
     }
