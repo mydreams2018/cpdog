@@ -112,8 +112,10 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
     }
 
     @Override
-    public void exception(Exception e, SocketChannel socketChannel, Object in) throws Exception {
+    public ByteBuffer exception(Exception e, SocketChannel socketChannel, Object in) throws Exception {
         socketChannel.close();
+        e.printStackTrace();
+        return null;
     }
 
     @Override

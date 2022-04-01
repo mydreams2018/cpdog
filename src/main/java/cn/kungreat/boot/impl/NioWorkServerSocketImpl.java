@@ -189,10 +189,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                             linkIn = invoke;
                         }else{
                             ChannelInHandler<?, ?> channelInHandler = channelInHandlers.get(x);
-                            channelInHandler.exception(exception,clientChannel,linkIn);
+                            Object handlerIn = channelInHandler.exception(this.exception, clientChannel, linkIn);
                             Class<? extends ChannelInHandler> channelInHandlerClass = channelInHandler.getClass();
                             Method handler = channelInHandlerClass.getMethod("handler", SocketChannel.class, channelInHandler.getInClass());
-                            linkIn = handler.invoke(channelInHandler,clientChannel,linkIn);
+                            linkIn = handler.invoke(channelInHandler,clientChannel,handlerIn);
                             this.exception = null;
                         }
                     }catch(Exception e){
@@ -226,10 +226,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                             linkIn = invoke;
                         }else{
                             ChannelOutHandler<?, ?> channelOutHandler = channelOutHandlers.get(x);
-                            channelOutHandler.exception(exception,clientChannel,linkIn);
+                            Object handlerIn = channelOutHandler.exception(this.exception, clientChannel, linkIn);
                             Class<? extends ChannelOutHandler> channelOutHandlerClass = channelOutHandler.getClass();
                             Method handler = channelOutHandlerClass.getMethod("handler", ByteBuffer.class, SocketChannel.class, channelOutHandler.getInClass());
-                            linkIn = handler.invoke(channelOutHandler, outBuf,clientChannel,linkIn);
+                            linkIn = handler.invoke(channelOutHandler, outBuf,clientChannel,handlerIn);
                             this.exception = null;
                         }
                     }catch(Exception e){

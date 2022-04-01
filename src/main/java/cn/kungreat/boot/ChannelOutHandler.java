@@ -1,6 +1,5 @@
 package cn.kungreat.boot;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
@@ -34,14 +33,14 @@ public interface ChannelOutHandler<I,O> {
     void after(SocketChannel socketChannel, I in);
 
     /*
-     *@Description 出现异常需要处理.可选关闭通道 或者自已处理 但是要保证下一个链路的入参正常接收
+     *@Description 出现异常需要处理.可选关闭通道 或者自已处理 但是要保证当前handler链路的入参正常接收
      *@Param e 异常信息 socketChannel 当前连接管道 in 入参
      *@throws 可能出现在异常
-     *@Return 无
+     *@Return handler 的入参
      *@Date 2022/3/18
      *@Time 11:09
      */
-    void exception(Exception e,SocketChannel socketChannel,Object in)throws Exception;
+    I exception(Exception e,SocketChannel socketChannel,Object in)throws Exception;
 
     /*
      *@Description 返回当前入参的类型,为了方便反射调用

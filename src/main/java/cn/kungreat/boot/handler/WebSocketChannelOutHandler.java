@@ -30,12 +30,15 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
 
     @Override
     public String handler(ByteBuffer byteBuffer, SocketChannel socketChannel, LinkedList<WebSocketChannelInHandler.WebSocketState> in) throws Exception {
-        WebSocketChannelInHandler.WebSocketState first = in.getFirst();
-        while (first.getType() == 1 && first.isDone()) {
-            log.info(socketChannel.getRemoteAddress() +first.getStringBuffer().toString());
-            in.removeFirst();
-            first = in.getFirst();
+        if(in != null){
+            WebSocketChannelInHandler.WebSocketState first = in.getFirst();
+            while (first != null && first.getType() == 1 && first.isDone()) {
+                log.info(socketChannel.getRemoteAddress() + first.getStringBuffer().toString());
+                in.removeFirst();
+                first = in.getFirst();
+            }
         }
+
         return null;
     }
 
@@ -45,9 +48,10 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
     }
 
     @Override
-    public void exception(Exception e, SocketChannel socketChannel, Object in) throws Exception {
+    public LinkedList exception(Exception e, SocketChannel socketChannel, Object in) throws Exception {
         e.printStackTrace();
         socketChannel.close();
+        return null;
     }
 
     @Override
