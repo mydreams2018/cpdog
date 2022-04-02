@@ -23,3 +23,17 @@ Accept-Encoding: gzip, deflate
 Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
 Sec-WebSocket-Key: zkvuhevaXj9DhHgHWT29yQ==
 Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+
+serversocketchannel IP_TOS  为从此 Socket 发送的数据包设置 IP 标头中的流量类别或服务类型八位字节。
+                            由于底层网络实现可能会忽略此值，因此应用程序应将其视为提示。
+                            必须在 0 <= IP_TOS <= 255 范围内，否则将抛出 IllegalArgumentException。
+                    SO_RCVBUF   接收缓冲区
+                    SO_REUSEADDR 地址重用
+socketchannel   SO_SNDBUF  套接字发送缓冲区的大小
+                SO_RCVBUF  套接字接收缓冲区的大小
+                SO_LINGER     如果存在数据，则在关闭时逗留（仅在阻塞模式下配置时）
+                SO_KEEPALIVE  保持连接活跃
+                IP_TOS
+                SO_OOBINLINE （接收 TCP 紧急数据）默认情况下，禁用此选项，并且在套接字上接收到的 TCP 紧急数据被静默丢弃。
+                TCP_NODELAY  禁用 Nagle 算法
+                SO_REUSEADDR 地址重用
