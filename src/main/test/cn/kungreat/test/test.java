@@ -33,7 +33,7 @@ public class test {
             NioWorkServerSocket workServerSocket = NioWorkServerSocketImpl.create();
             workServerSocket.buildThread();
             workServerSocket.buildSelector(8192);
-            workServerSocket.setOption​(StandardSocketOptions.SO_KEEPALIVE,true);
+//            workServerSocket.setOption​(StandardSocketOptions.SO_KEEPALIVE,true);
             workServerSockets[x]=workServerSocket;
         }
         nioBossServerSocket.start(new InetSocketAddress(InetAddress.getLocalHost(),9999),workServerSockets,chooseWorkServer);

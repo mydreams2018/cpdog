@@ -33,7 +33,7 @@ serversocketchannel IP_TOS  为从此 Socket 发送的数据包设置 IP 标头�
 socketchannel   SO_SNDBUF  套接字发送缓冲区的大小  65536
                 SO_RCVBUF  套接字接收缓冲区的大小  65536
                 SO_LINGER     如果存在数据，则在关闭时逗留（仅在阻塞模式下配置时） -1
-                SO_KEEPALIVE  保持连接活跃 false
+                SO_KEEPALIVE  保持连接活跃 false tcp-ip 机制.不会触发读事件.会有性能浪费.只能测试IP:端口连接正常.
                 IP_TOS
                 SO_OOBINLINE （接收 TCP 紧急数据）默认情况下，禁用此选项，并且在套接字上接收到的 TCP 紧急数据被静默丢弃。
                 TCP_NODELAY  禁用 Nagle 算法   false
