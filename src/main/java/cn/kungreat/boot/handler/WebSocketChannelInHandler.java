@@ -7,14 +7,15 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
-import java.util.TreeMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /*
 * 把websocket 的数据 解码出来并且 传入下一个链路
 */
 public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, LinkedList<WebSocketChannelInHandler.WebSocketState>> {
     //在前边就关闭了的连接  历史数据清理的问题  通过拿到所有选择器 channel 比较 hashcode todo
-    public static final TreeMap<Integer,LinkedList<WebSocketState>> WEBSOCKETSTATETREEMAP = new TreeMap<>();
+    public static final Map<Integer,LinkedList<WebSocketState>> WEBSOCKETSTATETREEMAP = new ConcurrentHashMap<>();
 
     @Override
     public void before(SocketChannel socketChannel,ByteBuffer buffer) throws Exception {
