@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.SocketOption;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -30,6 +31,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private final HashMap<SocketOption<?>,Object> optionMap = new HashMap<>();
     private Thread workThreads;
     private Selector selector;
+    //清理缓冲区 不存在的channel对象 172800000  48小时清理一次
+    private int clearCount = 1;
+    private long curTimes = System.currentTimeMillis();
 
     public static NioWorkServerSocket create(){
         return new NioWorkServerSocketImpl();
@@ -113,6 +117,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         iterator.remove();
                         handler(next);
                     }
+                    clearBuffer();
                 }
             }catch (Exception e){
                 e.printStackTrace();
@@ -243,6 +248,35 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }
             this.exception=null;
             return linkIn;
+        }
+//清理缓存  按理说是不会出错的 但是为了安全还是try下
+        private void clearBuffer(){
+            if(System.currentTimeMillis() > curTimes + (clearCount * 172800000)){
+                clearCount++;
+                try {
+                    Set<SelectionKey> keys = selector.keys();
+                    Iterator<Map.Entry<Integer,ProtocolState>> iterator = protocolStateMap.entrySet().iterator();
+                    while(iterator.hasNext()){
+                        Map.Entry<Integer, ProtocolState> next = iterator.next();
+                        Integer integer = next.getKey();
+                        boolean ishas = false;
+                        for (SelectionKey ky: keys) {
+                            SelectableChannel channel = ky.channel();
+                            if(channel != null && integer.equals(channel.hashCode())){
+                                ishas = true;
+                                break;
+                            }
+                        }
+                        if(!ishas){
+                            iterator.remove();
+                            treeMap.remove(integer);
+                        }
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                    System.out.println("clearBuffer:error");
+                }
+            }
         }
     }
 
