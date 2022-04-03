@@ -170,6 +170,8 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     } catch (IOException ioException) {
                         ioException.printStackTrace();
                     }
+                }else{
+                    next.cancel();
                 }
                 treeMap.remove(clientChannel.hashCode());
                 protocolStateMap.remove(clientChannel.hashCode());
@@ -205,7 +207,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         e.printStackTrace();
                     }
                 }else{
-                    System.out.println("客户端close");
+                    System.out.println("channel-close");
                     break;
                 }
             }
@@ -242,39 +244,26 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         e.printStackTrace();
                     }
                 }else{
-                    System.out.println("客户端close");
+                    System.out.println("channel-close");
                     break;
                 }
             }
             this.exception=null;
             return linkIn;
         }
-//清理缓存  按理说是不会出错的 但是为了安全还是try下
+//清理特殊情况关闭的channel
         private void clearBuffer(){
             if(System.currentTimeMillis() > curTimes + (clearCount * 172800000)){
                 clearCount++;
                 try {
                     Set<SelectionKey> keys = selector.keys();
-                    Iterator<Map.Entry<Integer,ProtocolState>> iterator = protocolStateMap.entrySet().iterator();
-                    while(iterator.hasNext()){
-                        Map.Entry<Integer, ProtocolState> next = iterator.next();
-                        Integer integer = next.getKey();
-                        boolean ishas = false;
-                        for (SelectionKey ky: keys) {
-                            SelectableChannel channel = ky.channel();
-                            if(channel != null && integer.equals(channel.hashCode())){
-                                ishas = true;
-                                break;
-                            }
-                        }
-                        if(!ishas){
-                            iterator.remove();
-                            treeMap.remove(integer);
-                        }
+                    for (SelectionKey ky: keys) {
+                        SocketChannel channel = (SocketChannel) ky.channel();
+
                     }
                 }catch (Exception e){
                     e.printStackTrace();
-                    System.out.println("clearBuffer:error");
+                    System.out.println("clear-channel:error");
                 }
             }
         }
