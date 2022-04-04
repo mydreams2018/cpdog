@@ -3,9 +3,12 @@ package cn.kungreat.boot.handler;
 import cn.kungreat.boot.ChannelInHandler;
 import cn.kungreat.boot.utils.CutoverBytes;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,6 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, LinkedList<WebSocketChannelInHandler.WebSocketState>> {
     //在前边就关闭了的连接  历史数据清理的问题  通过拿到所有选择器 channel 比较 hashcode todo
     public static final Map<Integer,LinkedList<WebSocketState>> WEBSOCKETSTATETREEMAP = new ConcurrentHashMap<>();
+    //二进制 数据时用来做的缓存
+    public static final Map<Integer,String> WEBSOCKETSTATEBYTES = new ConcurrentHashMap<>();
 
     @Override
     public void before(SocketChannel socketChannel,ByteBuffer buffer) throws Exception {
@@ -45,6 +50,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                     System.out.println("协议mask标记位不正确关闭连接:");
                     socketChannel.close();
                     WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
+                    WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
                 }
             }
         }
@@ -91,12 +97,16 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 webSocketState.setDone(true);
             }
             if(webSocketState.getType()==1){
-                webSocketState.setStringData();
+                webSocketState.setStringData(socketChannel);
+            }else if(webSocketState.getType()==2){
+                webSocketState.setByteData(socketChannel.hashCode(),
+                        WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()),socketChannel);
             }
             if(webSocketState.isDone()){
                 if(webSocketState.getType() == 8){
                     System.out.println("break:");
                     WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
+                    WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
                 }else{
                     WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).add(new WebSocketState(buffer.capacity()));
                     loopData(socketChannel,buffer);
@@ -121,6 +131,8 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
     public ByteBuffer exception(Exception e, SocketChannel socketChannel, Object in) throws Exception {
         socketChannel.close();
         e.printStackTrace();
+        WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
+        WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
         return null;
     }
 
@@ -133,6 +145,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
 
         private WebSocketState(int length) {
             byteBuffer = ByteBuffer.allocate(length);
+            this.type=999;
         }
 
         /**
@@ -144,9 +157,9 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
          */
         private boolean done=false;
         /**
-         * stringBuffer  type==1 存放的文字内容
+         * stringBuffer  缓存
          */
-        private StringBuffer stringBuffer = new StringBuffer();
+        private StringBuilder stringBuffer = new StringBuilder();
         /**
          * type  websocket 数据类型标识
          * 1: 文本数据
@@ -182,6 +195,11 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
          * fileName 传送文件时使用
          */
         private String fileName;
+        private Path filePath = null;
+        /**
+         * isConvert 传送文件时使用 表示数据是否已经转换
+         */
+        private boolean isConvert;
 
         public boolean isFinish() {
             return finish;
@@ -273,14 +291,14 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
             this.done = done;
         }
 
-        public StringBuffer getStringBuffer() {
+        public StringBuilder getStringBuffer() {
             return stringBuffer;
         }
 
         /*
          编码转换成字符串 默认用UTF-8
         */
-        public void setStringData() {
+        public void setStringData(SocketChannel socketChannel) throws Exception {
             byteBuffer.flip();
             int remaining = byteBuffer.remaining();
             if(!done){
@@ -311,6 +329,12 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                     if(temp[0].equals("charts")){
                         this.charts=temp[1];
                     }
+                }
+                if(this.src.isEmpty() || this.tar.isEmpty() || this.charts.isEmpty()){
+                    System.out.println("字符内容解释出错:关闭连接");
+                    socketChannel.close();
+                    WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
+                    WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
                 }
             }
         }
@@ -346,5 +370,73 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         public void setCharts(String charts) {
             this.charts = charts;
         }
+
+        public Path getFilePath() {
+            return filePath;
+        }
+
+        public void setFilePath(Path filePath) {
+            this.filePath = filePath;
+        }
+
+        //二进制数据时做的数据处理. 由于是分二次发送所以第一次的二进制数据是 相关的源信息
+        public void setByteData(int hashcode,LinkedList<WebSocketState> list,SocketChannel socketChannel) throws IOException {
+            if(done){
+                if(WEBSOCKETSTATEBYTES.get(hashcode) == null){
+                    byteBuffer.flip();
+                    int remaining = byteBuffer.remaining();
+                    WEBSOCKETSTATEBYTES.put(hashcode,new String(byteBuffer.array(),0,remaining,Charset.forName("UTF-8")));
+                    list.removeLast();
+                    byteBuffer.clear();
+                }else{
+                    WEBSOCKETSTATEBYTES.remove(hashcode);
+                }
+            }else{
+                String sbu = WEBSOCKETSTATEBYTES.get(hashcode);
+                if(!byteBuffer.hasRemaining()){
+                    System.out.println("二进制数据解释失败.关闭连接");
+                    socketChannel.close();
+                    WEBSOCKETSTATETREEMAP.remove(hashcode);
+                    WEBSOCKETSTATEBYTES.remove(hashcode);
+                    return;
+                }
+                if(sbu!=null && !isConvert){
+                    String[] split = sbu.split(";");
+                    for(int x=0;x<split.length;x++){
+                        String[] temp = split[x].split("=");
+                        if(temp[0].equals("src") && temp.length>1){
+                            this.src=temp[1];
+                        }
+                        if(temp[0].equals("tar") && temp.length>1){
+                            this.tar=temp[1];
+                        }
+                        if(temp[0].equals("fileName") && temp.length>1){
+                            this.fileName=temp[1];
+                        }
+                    }
+                    if(this.src!=null && this.src.length()>0
+                       && this.tar!=null && this.tar.length()>0
+                            && this.fileName!=null && this.fileName.length()>0){
+                        try {
+                            filePath = Path.of("D:\\kungreat\\IdeaProjects",this.fileName);
+                            Files.createFile(filePath);
+                            isConvert=true;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            System.out.println("文件创建出错:关闭连接");
+                            socketChannel.close();
+                            WEBSOCKETSTATETREEMAP.remove(hashcode);
+                            WEBSOCKETSTATEBYTES.remove(hashcode);
+                        }
+                    }else{
+                        System.out.println("文件内容解释出错:关闭连接");
+                        socketChannel.close();
+                        WEBSOCKETSTATETREEMAP.remove(hashcode);
+                        WEBSOCKETSTATEBYTES.remove(hashcode);
+                    }
+                }
+            }
+        }
+
     }
 }
