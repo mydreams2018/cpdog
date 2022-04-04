@@ -33,7 +33,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
         if(in != null){
             WebSocketChannelInHandler.WebSocketState first = in.getFirst();
             while (first != null && first.getType() == 1 && first.isDone()) {
-                log.info(socketChannel.getRemoteAddress() + first.getStringBuffer().toString());
+                log.info(socketChannel.getRemoteAddress() + "src:"+first.getSrc()+" chatrs:"+first.getCharts()+" tar:"+first.getTar());
                 in.removeFirst();
                 first = in.getFirst();
             }

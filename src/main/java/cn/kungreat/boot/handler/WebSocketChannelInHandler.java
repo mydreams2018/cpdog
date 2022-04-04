@@ -175,6 +175,13 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         private int currentPos;
 
         private ByteBuffer byteBuffer;
+        private String src;
+        private String tar;
+        private String charts;
+        /**
+         * fileName 传送文件时使用
+         */
+        private String fileName;
 
         public boolean isFinish() {
             return finish;
@@ -291,7 +298,53 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
             }else{
                 stringBuffer.append(new String(byteBuffer.array(),0,remaining,Charset.forName("UTF-8")));
                 byteBuffer.clear();
+                String[] split = stringBuffer.toString().split(";");
+                stringBuffer = null;
+                for(int x=0;x<split.length;x++){
+                    String[] temp = split[x].split("=");
+                    if(temp[0].equals("src")){
+                        this.src=temp[1];
+                    }
+                    if(temp[0].equals("tar")){
+                        this.tar=temp[1];
+                    }
+                    if(temp[0].equals("charts")){
+                        this.charts=temp[1];
+                    }
+                }
             }
+        }
+
+        public String getSrc() {
+            return src;
+        }
+
+        public void setSrc(String src) {
+            this.src = src;
+        }
+
+        public String getTar() {
+            return tar;
+        }
+
+        public void setTar(String tar) {
+            this.tar = tar;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public void setFileName(String fileName) {
+            this.fileName = fileName;
+        }
+
+        public String getCharts() {
+            return charts;
+        }
+
+        public void setCharts(String charts) {
+            this.charts = charts;
         }
     }
 }

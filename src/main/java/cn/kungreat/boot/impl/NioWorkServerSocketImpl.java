@@ -248,7 +248,12 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     break;
                 }
             }
-            this.exception=null;
+//            走完链路还存在异常时 关闭连接
+            if(this.exception != null){
+                this.exception=null;
+                clientChannel.close();
+                System.out.println("走完链路.还存在异常时 关闭连接");
+            }
             return linkIn;
         }
 //清理特殊情况关闭的channel
