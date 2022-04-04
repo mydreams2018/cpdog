@@ -15,7 +15,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
 
     static {
         try {
-            log = DefaultLogServer.createLog("C:\\Users\\kungr\\Videos\\Captures"
+            log = DefaultLogServer.createLog("D:\\kungreat\\IdeaProjects\\log1"
                         ,"cn.kungreat.boot.handler");
         } catch (IOException e) {
             e.printStackTrace();

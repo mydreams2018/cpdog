@@ -94,8 +94,13 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 webSocketState.setStringData();
             }
             if(webSocketState.isDone()){
-                WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).add(new WebSocketState(buffer.capacity()));
-                loopData(socketChannel,buffer);
+                if(webSocketState.getType() == 8){
+                    System.out.println("break:");
+                    WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
+                }else{
+                    WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).add(new WebSocketState(buffer.capacity()));
+                    loopData(socketChannel,buffer);
+                }
             }
         }
     }
@@ -146,7 +151,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
          * type  websocket 数据类型标识
          * 1: 文本数据
          * 2: byte数据
-         * 8: break
+         * 8: break 关闭的信号
          * 9:  ping
          * 10: pong
          */

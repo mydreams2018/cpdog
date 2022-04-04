@@ -21,7 +21,7 @@ public class test {
         NioBossServerSocket nioBossServerSocket = NioBossServerSocketImpl.create();
         nioBossServerSocket.buildChannel();
         nioBossServerSocket.buildThread();
-        Logger log = DefaultLogServer.createLog("C:\\Users\\kungr\\Pictures\\Camera Roll"
+        Logger log = DefaultLogServer.createLog("D:\\kungreat\\IdeaProjects\\log2"
                 ,"kungreat.cn");
         nioBossServerSocket.setLogger(log);
         ChooseWorkServerImpl chooseWorkServer = new ChooseWorkServerImpl();
