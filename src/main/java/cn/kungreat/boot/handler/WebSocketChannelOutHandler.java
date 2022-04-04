@@ -46,7 +46,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     byte[] bts = new byte[fileBuffer.remaining()];
                     System.arraycopy(fileBuffer.array(),0,bts,0,fileBuffer.remaining());
                     Files.write(first.getFilePath(),bts, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
-                    fileBuffer.compact();
+                    fileBuffer.clear();
                     in.removeFirst();
                     first = in.peekFirst();
                 }else if(first.getType() == 2 && first.getFilePath() != null){
@@ -56,7 +56,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     byte[] bts = new byte[fileBuffer.remaining()];
                     System.arraycopy(fileBuffer.array(),0,bts,0,fileBuffer.remaining());
                     Files.write(first.getFilePath(),bts, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
-                    fileBuffer.compact();
+                    fileBuffer.clear();
                     break;
                 }else if(first.getType() == 8){
                     System.out.println("out type ==8 ");

@@ -393,7 +393,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 }
             }else{
                 String sbu = WEBSOCKETSTATEBYTES.get(hashcode);
-                if(!byteBuffer.hasRemaining()){
+                if(sbu==null && !byteBuffer.hasRemaining()){
                     System.out.println("二进制数据解释失败.关闭连接");
                     socketChannel.close();
                     WEBSOCKETSTATETREEMAP.remove(hashcode);
