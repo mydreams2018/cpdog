@@ -41,7 +41,16 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 webSocketState.setCurrentPos(0);
                 byte[] array = buffer.array();
                 webSocketState.setFinish(array[0] < 0);
-                webSocketState.setType(array[0] & 15);
+                if((array[0] & 15) != 0){
+                    webSocketState.setType(array[0] & 15);
+                }else if(webSocketState.getType() == 999){
+                    System.out.println("警告,类型解释失败.关闭连接");
+                    socketChannel.close();
+                    WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
+                    WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
+                }else{
+                    System.out.println("这是一个延续帧.保持上一次的数据类型不变");
+                }
                 if (array[1] < 0) {
                     //设置数据长度
                     webSocketState.setDateLength(array,remaining);
@@ -101,13 +110,13 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
             }else if(webSocketState.getType()==2){
                 webSocketState.setByteData(socketChannel.hashCode(),
                         WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()),socketChannel);
+            }else if(webSocketState.getType() == 8){
+                System.out.println("break:");
+                WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
+                WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
             }
             if(webSocketState.isDone()){
-                if(webSocketState.getType() == 8){
-                    System.out.println("break:");
-                    WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
-                    WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
-                }else{
+                if(webSocketState.getType() != 8){
                     WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).add(new WebSocketState(buffer.capacity()));
                     loopData(socketChannel,buffer);
                 }
@@ -162,6 +171,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         private StringBuilder stringBuffer = new StringBuilder();
         /**
          * type  websocket 数据类型标识
+         * 0 continuation frame
          * 1: 文本数据
          * 2: byte数据
          * 8: break 关闭的信号

@@ -39,8 +39,8 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     in.removeFirst();
                     first = in.peekFirst();
                 }else if(first.getType() == 2 && first.isDone()){
-                    //写出文件
-                    System.out.println(FileSystems.getDefault());
+                    //写出文件 FileSystems.getDefault()
+                    System.out.println("文件写出完毕:"+first.getFileName());
                     ByteBuffer fileBuffer = first.getByteBuffer();
                     fileBuffer.flip();
                     byte[] bts = new byte[fileBuffer.remaining()];
@@ -64,6 +64,8 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                 }else if(first.getType() == 999){
                     break;
                 }else if(first.getType() == 2){//第一次产生二进制数据 但是还没有读完全的情况
+                    break;
+                }else if(first.getType() == 1){//文本数据过大时没有读取完成不做操作
                     break;
                 }else{
                     System.out.println("out type 未知");
