@@ -58,10 +58,11 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     Files.write(first.getFilePath(),bts, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
                     fileBuffer.clear();
                     break;
-                }else if(first.getType() == 8){
+                }else if(first.getType() == 8){//关闭信息状态标识
                     System.out.println("out type ==8 ");
                     break;
-                }else if(first.getType() == 999){
+                }else if(first.getType() == 999){//初始化的一个空对象标识
+                    System.out.println("out type 999");
                     break;
                 }else if(first.getType() == 2){//第一次产生二进制数据 但是还没有读完全的情况
                     break;
