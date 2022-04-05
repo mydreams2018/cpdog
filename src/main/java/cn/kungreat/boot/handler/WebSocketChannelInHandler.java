@@ -39,6 +39,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
             if (remaining > 6) {
                 //需要初始化这个
                 webSocketState.setCurrentPos(0);
+                webSocketState.setMaskingIndex(0);
                 byte[] array = buffer.array();
                 webSocketState.setFinish(array[0] < 0);
                 if((array[0] & 15) != 0){
@@ -81,14 +82,17 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 long runLength = Math.min(tarBuffer.remaining(), Math.min(maxReadLength, remainingTotal));
                 //当前已经读取的长度索引
                 long readLength = webSocketState.getReadLength();
+                long maskingIndex = webSocketState.getMaskingIndex();
                 byte[] maskingKey = webSocketState.getMaskingKey();
                 for (int x = 0; x < runLength; x++) {
-                    byte tar = (byte) (array[currentPos] ^ maskingKey[Math.floorMod(readLength, 4)]);
+                    byte tar = (byte) (array[currentPos] ^ maskingKey[Math.floorMod(maskingIndex, 4)]);
                     tarBuffer.put(tar);
                     currentPos++;
                     readLength++;
+                    maskingIndex++;
                 }
                 webSocketState.setReadLength(readLength);
+                webSocketState.setMaskingIndex(maskingIndex);
                 buffer.position(currentPos);
                 webSocketState.setCurrentPos(0);
             }
@@ -192,6 +196,10 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
          * maskingKey  websocket 客户端掩码
          */
         private byte[] maskingKey = new byte[4];
+        /**
+         * maskingIndex  websocket 客户端掩码索引
+         */
+        private long maskingIndex;
         /**
          * currentPos websocket 当前byte指针位置
          */
@@ -448,5 +456,12 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
             }
         }
 
+        public long getMaskingIndex() {
+            return maskingIndex;
+        }
+
+        public void setMaskingIndex(long maskingIndex) {
+            this.maskingIndex = maskingIndex;
+        }
     }
 }
