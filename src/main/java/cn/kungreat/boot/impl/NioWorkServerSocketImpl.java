@@ -256,7 +256,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }
             return linkIn;
         }
-//清理特殊情况关闭的channel
+//清理特殊情况下 断开的channel
         private void clearBuffer(){
             if(System.currentTimeMillis() > curTimes + (clearCount * 172800000)){
                 clearCount++;

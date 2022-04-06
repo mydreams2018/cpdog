@@ -50,4 +50,11 @@ public interface ChannelOutHandler<I,O> {
      *@Time 11:09
      */
     Class<I> getInClass();
+    /*
+     *@Description 清理数据的操作.针对那些特殊情况下关闭的资源的回调. 已经关闭的资源
+     *@Param socketChannel 唯一的对象
+     *@Date 2022/4/6
+     *@Time 11:09
+     */
+    void clearBuffers(SocketChannel socketChannel);
 }

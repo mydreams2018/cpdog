@@ -154,6 +154,12 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         return ByteBuffer.class;
     }
 
+    @Override
+    public void clearBuffers(SocketChannel socketChannel) {
+        WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
+        WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
+    }
+
     static final class WebSocketState {
 
         private WebSocketState(int length) {

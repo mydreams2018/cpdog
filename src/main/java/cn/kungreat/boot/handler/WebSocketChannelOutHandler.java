@@ -96,4 +96,9 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
     public Class getInClass() {
         return LinkedList.class;
     }
+
+    @Override
+    public void clearBuffers(SocketChannel socketChannel) {
+
+    }
 }
