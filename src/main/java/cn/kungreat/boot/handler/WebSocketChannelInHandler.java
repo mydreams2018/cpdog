@@ -413,6 +413,43 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                     list.removeLast();
                     byteBuffer.clear();
                 }else{
+                    //第二次 二进制 进来一次就接收到了所有的数据的情况
+                    if(!isConvert){
+                        String sbu = WEBSOCKETSTATEBYTES.get(hashcode);
+                        String[] split = sbu.split(";");
+                        for(int x=0;x<split.length;x++){
+                            String[] temp = split[x].split("=");
+                            if(temp[0].equals("src") && temp.length>1){
+                                this.src=temp[1];
+                            }
+                            if(temp[0].equals("tar") && temp.length>1){
+                                this.tar=temp[1];
+                            }
+                            if(temp[0].equals("fileName") && temp.length>1){
+                                this.fileName=temp[1];
+                            }
+                        }
+                        if(this.src!=null && this.src.length()>0
+                                && this.tar!=null && this.tar.length()>0
+                                && this.fileName!=null && this.fileName.length()>0){
+                            try {
+                                filePath = Path.of("D:\\kungreat\\IdeaProjects",this.fileName);
+                                Files.createFile(filePath);
+                                isConvert=true;
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                System.out.println("文件创建出错:关闭连接");
+                                socketChannel.close();
+                                WEBSOCKETSTATETREEMAP.remove(hashcode);
+                                WEBSOCKETSTATEBYTES.remove(hashcode);
+                            }
+                        }else{
+                            System.out.println("文件内容解释出错:关闭连接");
+                            socketChannel.close();
+                            WEBSOCKETSTATETREEMAP.remove(hashcode);
+                            WEBSOCKETSTATEBYTES.remove(hashcode);
+                        }
+                    }
                     WEBSOCKETSTATEBYTES.remove(hashcode);
                 }
             }else{
