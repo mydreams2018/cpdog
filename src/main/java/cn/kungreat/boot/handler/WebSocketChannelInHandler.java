@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 * 把websocket 的数据 解码出来并且 传入下一个链路
 */
 public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, LinkedList<WebSocketChannelInHandler.WebSocketState>> {
-    //在前边就关闭了的连接  历史数据清理的问题  通过拿到所有选择器 channel 比较 hashcode todo
+    //每次发生的完整的事件对象
     public static final Map<Integer,LinkedList<WebSocketState>> WEBSOCKETSTATETREEMAP = new ConcurrentHashMap<>();
     //二进制 数据时用来做的缓存
     public static final Map<Integer,String> WEBSOCKETSTATEBYTES = new ConcurrentHashMap<>();
