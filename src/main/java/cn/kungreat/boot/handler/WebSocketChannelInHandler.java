@@ -217,6 +217,10 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         private String charts;
         private String url;
         /**
+         * uuid 每条数据的唯一标识
+         */
+        private String uuid;
+        /**
          * fileName 传送文件时使用
          */
         private String fileName;
@@ -357,8 +361,11 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                     if(temp[0].equals("url")){
                         this.url=temp[1];
                     }
+                    if(temp[0].equals("uuid")){
+                        this.uuid=temp[1];
+                    }
                 }
-                if(this.src.isEmpty() || this.tar.isEmpty() || this.charts.isEmpty() || this.url.isEmpty()){
+                if(this.src.isEmpty() || this.tar.isEmpty() || this.charts.isEmpty() || this.url.isEmpty() || this.uuid.isEmpty()){
                     System.out.println("字符内容解释出错:关闭连接");
                     socketChannel.close();
                     WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
@@ -435,11 +442,15 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                             if(temp[0].equals("url") && temp.length>1){
                                 this.url=temp[1];
                             }
+                            if(temp[0].equals("uuid") && temp.length>1){
+                                this.uuid=temp[1];
+                            }
                         }
                         if(this.src!=null && this.src.length()>0
                                 && this.tar!=null && this.tar.length()>0
                                 && this.fileName!=null && this.fileName.length()>0
-                                && this.url!=null && this.url.length()>0 ){
+                                && this.url!=null && this.url.length()>0
+                                && this.uuid!=null && this.uuid.length()>0 ){
                             try {
                                 filePath = Path.of("D:\\kungreat\\IdeaProjects",this.fileName);
                                 Files.createFile(filePath);
@@ -485,11 +496,15 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                         if(temp[0].equals("url") && temp.length>1){
                             this.url=temp[1];
                         }
+                        if(temp[0].equals("uuid") && temp.length>1){
+                            this.uuid=temp[1];
+                        }
                     }
                     if(this.src!=null && this.src.length()>0
                        && this.tar!=null && this.tar.length()>0
                             && this.fileName!=null && this.fileName.length()>0
-                            && this.url!=null && this.url.length()>0 ){
+                            && this.url!=null && this.url.length()>0
+                            && this.uuid!=null && this.uuid.length()>0 ){
                         try {
                             filePath = Path.of("D:\\kungreat\\IdeaProjects",this.fileName);
                             Files.createFile(filePath);
@@ -533,6 +548,14 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
 
         public void setConvert(boolean convert) {
             isConvert = convert;
+        }
+
+        public String getUuid() {
+            return uuid;
+        }
+
+        public void setUuid(String uuid) {
+            this.uuid = uuid;
         }
     }
 }
