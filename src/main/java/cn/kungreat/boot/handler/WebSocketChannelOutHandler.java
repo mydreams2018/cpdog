@@ -49,7 +49,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     fileBuffer.clear();
                     in.removeFirst();
                     first = in.peekFirst();
-                }else if(first.getType() == 2 && first.getFilePath() != null){
+                }else if(first.getType() == 2 && first.isConvert()){
                     //写出文件
                     ByteBuffer fileBuffer = first.getByteBuffer();
                     fileBuffer.flip();

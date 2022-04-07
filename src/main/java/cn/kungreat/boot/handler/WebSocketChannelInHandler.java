@@ -215,6 +215,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         private String src;
         private String tar;
         private String charts;
+        private String url;
         /**
          * fileName 传送文件时使用
          */
@@ -353,8 +354,11 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                     if(temp[0].equals("charts")){
                         this.charts=temp[1];
                     }
+                    if(temp[0].equals("url")){
+                        this.url=temp[1];
+                    }
                 }
-                if(this.src.isEmpty() || this.tar.isEmpty() || this.charts.isEmpty()){
+                if(this.src.isEmpty() || this.tar.isEmpty() || this.charts.isEmpty() || this.url.isEmpty()){
                     System.out.println("字符内容解释出错:关闭连接");
                     socketChannel.close();
                     WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
@@ -428,10 +432,14 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                             if(temp[0].equals("fileName") && temp.length>1){
                                 this.fileName=temp[1];
                             }
+                            if(temp[0].equals("url") && temp.length>1){
+                                this.url=temp[1];
+                            }
                         }
                         if(this.src!=null && this.src.length()>0
                                 && this.tar!=null && this.tar.length()>0
-                                && this.fileName!=null && this.fileName.length()>0){
+                                && this.fileName!=null && this.fileName.length()>0
+                                && this.url!=null && this.url.length()>0 ){
                             try {
                                 filePath = Path.of("D:\\kungreat\\IdeaProjects",this.fileName);
                                 Files.createFile(filePath);
@@ -474,10 +482,14 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                         if(temp[0].equals("fileName") && temp.length>1){
                             this.fileName=temp[1];
                         }
+                        if(temp[0].equals("url") && temp.length>1){
+                            this.url=temp[1];
+                        }
                     }
                     if(this.src!=null && this.src.length()>0
                        && this.tar!=null && this.tar.length()>0
-                            && this.fileName!=null && this.fileName.length()>0){
+                            && this.fileName!=null && this.fileName.length()>0
+                            && this.url!=null && this.url.length()>0 ){
                         try {
                             filePath = Path.of("D:\\kungreat\\IdeaProjects",this.fileName);
                             Files.createFile(filePath);
@@ -505,6 +517,22 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
 
         public void setMaskingIndex(long maskingIndex) {
             this.maskingIndex = maskingIndex;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
+        }
+
+        public boolean isConvert() {
+            return isConvert;
+        }
+
+        public void setConvert(boolean convert) {
+            isConvert = convert;
         }
     }
 }
