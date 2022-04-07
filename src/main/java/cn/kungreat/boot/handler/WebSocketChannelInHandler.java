@@ -261,7 +261,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 }
             } else {
                 if(remaining>14){
-                    byte[] temp = {dateLength[2], dateLength[3], dateLength[4], dateLength[5],
+                    byte[] temp = {(byte)(dateLength[2]&127), dateLength[3], dateLength[4], dateLength[5],
                             dateLength[6], dateLength[7], dateLength[8], dateLength[9]};
                     this.dateLength += CutoverBytes.readLong(temp);
                     this.currentPos = this.currentPos + 9;
