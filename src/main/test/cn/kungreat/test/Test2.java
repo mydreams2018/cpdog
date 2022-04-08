@@ -1,6 +1,9 @@
 package cn.kungreat.test;
 
+import cn.kungreat.boot.handler.WebSocketChannelInHandler;
 import cn.kungreat.boot.utils.CutoverBytes;
+import cn.kungreat.boot.utils.JdbcTemplate;
+import cn.kungreat.boot.utils.JdbcUtils;
 
 import java.security.MessageDigest;
 import java.util.Base64;
@@ -20,5 +23,6 @@ public class Test2 {
 //        }
         byte[] bts = {0,-1,-1,-1};
         System.out.println(CutoverBytes.readInt(bts));
+        System.out.println(JdbcTemplate.register(null));
     }
 }

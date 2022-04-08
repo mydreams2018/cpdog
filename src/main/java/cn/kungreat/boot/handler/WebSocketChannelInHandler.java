@@ -160,7 +160,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
     }
 
-    static final class WebSocketState {
+   public static final class WebSocketState {
 
         private WebSocketState(int length) {
             byteBuffer = ByteBuffer.allocate(length);
