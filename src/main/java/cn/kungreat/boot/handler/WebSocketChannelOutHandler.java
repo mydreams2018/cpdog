@@ -2,10 +2,13 @@ package cn.kungreat.boot.handler;
 
 import cn.kungreat.boot.ChannelOutHandler;
 import cn.kungreat.boot.impl.DefaultLogServer;
+import cn.kungreat.boot.utils.JdbcTemplate;
+import cn.kungreat.boot.utils.WebSocketResponse;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.LinkedList;
 import java.util.logging.Logger;
@@ -36,6 +39,20 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
             while (first != null) {
                 if(first.getType() == 1 && first.isDone()){
                     log.info(socketChannel.getRemoteAddress() + "src:"+first.getSrc()+" chatrs:"+first.getCharts()+" tar:"+first.getTar());
+                    if(first.getUrl().equals("register")){
+                        String register = JdbcTemplate.register(first);
+                        byte[] bytes = register.getBytes(Charset.forName("UTF-8"));
+                        int readLength = 0;
+                        byteBuffer.put(WebSocketResponse.getBytes(bytes));
+                        do{
+                            int min = Math.min(bytes.length - readLength, byteBuffer.remaining());
+                            byteBuffer.put(bytes,readLength,min);
+                            readLength = readLength + min;
+                            byteBuffer.flip();
+                            socketChannel.write(byteBuffer);
+                            byteBuffer.clear();
+                        }while (readLength<bytes.length);
+                    }
                     in.removeFirst();
                     first = in.peekFirst();
                 }else if(first.getType() == 2 && first.isDone()){
