@@ -18,9 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
 */
 public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, LinkedList<WebSocketChannelInHandler.WebSocketState>> {
     //每次发生的完整的事件对象
-    public static final Map<Integer,LinkedList<WebSocketState>> WEBSOCKETSTATETREEMAP = new ConcurrentHashMap<>();
+    public static final Map<Integer,LinkedList<WebSocketState>> WEBSOCKETSTATETREEMAP = new ConcurrentHashMap<>(1024);
     //二进制 数据时用来做的缓存
-    public static final Map<Integer,String> WEBSOCKETSTATEBYTES = new ConcurrentHashMap<>();
+    public static final Map<Integer,String> WEBSOCKETSTATEBYTES = new ConcurrentHashMap<>(256);
 
     @Override
     public void before(SocketChannel socketChannel,ByteBuffer buffer) throws Exception {

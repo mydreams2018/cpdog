@@ -11,11 +11,18 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<WebSocketChannelInHandler.WebSocketState>,String> {
 
    public static Logger log;
+    /*
+    存放用户登录随机生成的UUID 关联信息.UUID在前端是session级别的. [k=uuid v=userid]
+    在前端特殊情况下关闭没有通知到后端的时候  此缓存会存在一些历史的没有用的数据.清理很浪费性能. 建议周期性重启解决
+    */
+    public static final Map<String,String> USER_UUIDS = new ConcurrentHashMap<>(1024);
 
     static {
         try {
