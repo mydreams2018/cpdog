@@ -87,7 +87,7 @@ public class JdbcTemplate {
                 if (resultSet.next()){
                     String uuid = UUID.randomUUID().toString();
                     WebSocketChannelOutHandler.USER_UUIDS.put(uuid,phone);
-                    rt=String.format(rt,job.getUuid(),"100","用户或密码错误",uuid);
+                    rt=String.format(rt,job.getUuid(),"200","用户认证成功.",uuid);
                 }else{
                     //验证失败
                     rt=String.format(rt,job.getUuid(),"100","用户或密码错误","n");
