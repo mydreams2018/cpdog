@@ -1,10 +1,12 @@
 package cn.kungreat.boot.utils;
 
 import cn.kungreat.boot.handler.WebSocketChannelInHandler;
+import cn.kungreat.boot.handler.WebSocketChannelOutHandler;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.UUID;
 
 public class JdbcTemplate {
 
@@ -51,6 +53,44 @@ public class JdbcTemplate {
                         rt=String.format(rt,job.getUuid(),"000","未知错误");
                     }
                     connection.commit();
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return rt;
+    }
+
+    public static String login(WebSocketChannelInHandler.WebSocketState job){
+        String rt = "uuid=%s;code=%s;msg=%s;sktoken=%s";
+        try(Connection connection = JdbcUtils.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement("select phone,nike_name from user_details where phone=? and password=?")){
+            String phone = "";
+            String password = "";
+            String jobCharts = job.getCharts();
+            String[] split = jobCharts.split("&");
+            for(int x=0;x<split.length;x++){
+                String[] temp = split[x].split(":");
+                if(temp[0].equals("phone")){
+                    phone = temp[1];
+                }
+                if(temp[0].equals("password")){
+                    password = temp[1];
+                }
+            }
+            if(phone.isEmpty() || password.isEmpty()){
+                rt=String.format(rt, job.getUuid(),"100","必要数据为空","n");
+            }else{
+                preparedStatement.setString(1,phone);
+                preparedStatement.setString(2,password);
+                ResultSet resultSet = preparedStatement.executeQuery();
+                if (resultSet.next()){
+                    String uuid = UUID.randomUUID().toString();
+                    WebSocketChannelOutHandler.USER_UUIDS.put(uuid,phone);
+                    rt=String.format(rt,job.getUuid(),"100","用户或密码错误",uuid);
+                }else{
+                    //验证失败
+                    rt=String.format(rt,job.getUuid(),"100","用户或密码错误","n");
                 }
             }
         }catch (Exception e){
