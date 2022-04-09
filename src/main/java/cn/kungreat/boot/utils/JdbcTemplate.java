@@ -11,7 +11,7 @@ public class JdbcTemplate {
     public static String register(WebSocketChannelInHandler.WebSocketState job){
         String rt = "uuid=%s;code=%s;msg=%s";
         try(Connection connection = JdbcUtils.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement("select phone,nike_name from user_details where phone=? and nike_name=?")){
+            PreparedStatement preparedStatement = connection.prepareStatement("select phone,nike_name from user_details where phone=? or nike_name=?")){
             String phone = "";
             String nikeName = "";
             String password = "";
@@ -39,10 +39,11 @@ public class JdbcTemplate {
                     //数据已经存在了
                     rt=String.format(rt, job.getUuid(),"100","用户已经存在了丢雷");
                 }else{
-                    PreparedStatement insert = connection.prepareStatement("insert into user_details (phone,nike_name,password) values (?,?,?)");
+                    PreparedStatement insert = connection.prepareStatement("insert into user_details (phone,nike_name,password,id,register_time) values (?,?,?,?,CURDATE())");
                     insert.setString(1,phone);
                     insert.setString(2,nikeName);
                     insert.setString(3,password);
+                    insert.setString(4,job.getUuid());
                     int is = insert.executeUpdate();
                     if(is>0){
                         rt=String.format(rt,job.getUuid(),"200","用户注册成功");
