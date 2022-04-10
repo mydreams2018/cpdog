@@ -62,7 +62,7 @@ public class JdbcTemplate {
     }
 
     public static String login(WebSocketChannelInHandler.WebSocketState job){
-        String rt = "uuid=%s;code=%s;msg=%s;sktoken=%s";
+        String rt = "uuid=%s;code=%s;msg=%s;sktoken=%s;user=%s";
         try(Connection connection = JdbcUtils.getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement("select phone,nike_name from user_details where phone=? and password=?")){
             String phone = "";
@@ -79,7 +79,7 @@ public class JdbcTemplate {
                 }
             }
             if(phone.isEmpty() || password.isEmpty()){
-                rt=String.format(rt, job.getUuid(),"100","必要数据为空","n");
+                rt=String.format(rt, job.getUuid(),"100","必要数据为空","n","n");
             }else{
                 preparedStatement.setString(1,phone);
                 preparedStatement.setString(2,password);
@@ -87,10 +87,10 @@ public class JdbcTemplate {
                 if (resultSet.next()){
                     String uuid = UUID.randomUUID().toString();
                     WebSocketChannelOutHandler.USER_UUIDS.put(uuid,phone);
-                    rt=String.format(rt,job.getUuid(),"200","用户认证成功.",uuid);
+                    rt=String.format(rt,job.getUuid(),"200","用户认证成功.",uuid,resultSet.getString("nike_name"));
                 }else{
                     //验证失败
-                    rt=String.format(rt,job.getUuid(),"100","用户或密码错误","n");
+                    rt=String.format(rt,job.getUuid(),"100","用户或密码错误","n","n");
                 }
             }
         }catch (Exception e){
