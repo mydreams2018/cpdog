@@ -22,6 +22,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
     //二进制 数据时用来做的缓存
     public static final Map<Integer,String> WEBSOCKETSTATEBYTES = new ConcurrentHashMap<>(256);
 
+    public static final String FILE_PATH = "C:/Users/kungreat/IdeaProjects/dwbbs/web/images/user";
     @Override
     public void before(SocketChannel socketChannel,ByteBuffer buffer) throws Exception {
         buffer.flip();
@@ -452,7 +453,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                                 && this.url!=null && this.url.length()>0
                                 && this.uuid!=null && this.uuid.length()>0 ){
                             try {
-                                filePath = Path.of("D:\\kungreat\\IdeaProjects",this.fileName);
+                                filePath = Path.of(WebSocketChannelInHandler.FILE_PATH,this.fileName);
                                 Files.createFile(filePath);
                                 isConvert=true;
                             } catch (Exception e) {
