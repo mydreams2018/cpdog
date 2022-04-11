@@ -429,46 +429,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                     if(!isConvert){
                         String sbu = WEBSOCKETSTATEBYTES.get(hashcode);
                         String[] split = sbu.split(";");
-                        for(int x=0;x<split.length;x++){
-                            String[] temp = split[x].split("=");
-                            if(temp[0].equals("src") && temp.length>1){
-                                this.src=temp[1];
-                            }
-                            if(temp[0].equals("tar") && temp.length>1){
-                                this.tar=temp[1];
-                            }
-                            if(temp[0].equals("fileName") && temp.length>1){
-                                this.fileName=temp[1];
-                            }
-                            if(temp[0].equals("url") && temp.length>1){
-                                this.url=temp[1];
-                            }
-                            if(temp[0].equals("uuid") && temp.length>1){
-                                this.uuid=temp[1];
-                            }
-                        }
-                        if(this.src!=null && this.src.length()>0
-                                && this.tar!=null && this.tar.length()>0
-                                && this.fileName!=null && this.fileName.length()>0
-                                && this.url!=null && this.url.length()>0
-                                && this.uuid!=null && this.uuid.length()>0 ){
-                            try {
-                                filePath = Path.of(WebSocketChannelInHandler.FILE_PATH,this.fileName);
-                                Files.createFile(filePath);
-                                isConvert=true;
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                                System.out.println("文件创建出错:关闭连接");
-                                socketChannel.close();
-                                WEBSOCKETSTATETREEMAP.remove(hashcode);
-                                WEBSOCKETSTATEBYTES.remove(hashcode);
-                            }
-                        }else{
-                            System.out.println("文件内容解释出错:关闭连接");
-                            socketChannel.close();
-                            WEBSOCKETSTATETREEMAP.remove(hashcode);
-                            WEBSOCKETSTATEBYTES.remove(hashcode);
-                        }
+                        setDataBase(split,hashcode,socketChannel);
                     }
                     WEBSOCKETSTATEBYTES.remove(hashcode);
                 }
@@ -483,47 +444,51 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 }
                 if(sbu!=null && !isConvert){
                     String[] split = sbu.split(";");
-                    for(int x=0;x<split.length;x++){
-                        String[] temp = split[x].split("=");
-                        if(temp[0].equals("src") && temp.length>1){
-                            this.src=temp[1];
-                        }
-                        if(temp[0].equals("tar") && temp.length>1){
-                            this.tar=temp[1];
-                        }
-                        if(temp[0].equals("fileName") && temp.length>1){
-                            this.fileName=temp[1];
-                        }
-                        if(temp[0].equals("url") && temp.length>1){
-                            this.url=temp[1];
-                        }
-                        if(temp[0].equals("uuid") && temp.length>1){
-                            this.uuid=temp[1];
-                        }
-                    }
-                    if(this.src!=null && this.src.length()>0
-                       && this.tar!=null && this.tar.length()>0
-                            && this.fileName!=null && this.fileName.length()>0
-                            && this.url!=null && this.url.length()>0
-                            && this.uuid!=null && this.uuid.length()>0 ){
-                        try {
-                            filePath = Path.of(WebSocketChannelInHandler.FILE_PATH,this.fileName);
-                            Files.createFile(filePath);
-                            isConvert=true;
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            System.out.println("文件创建出错:关闭连接");
-                            socketChannel.close();
-                            WEBSOCKETSTATETREEMAP.remove(hashcode);
-                            WEBSOCKETSTATEBYTES.remove(hashcode);
-                        }
-                    }else{
-                        System.out.println("文件内容解释出错:关闭连接");
-                        socketChannel.close();
-                        WEBSOCKETSTATETREEMAP.remove(hashcode);
-                        WEBSOCKETSTATEBYTES.remove(hashcode);
-                    }
+                    setDataBase(split,hashcode,socketChannel);
                 }
+            }
+        }
+
+        private void setDataBase(String[] split,int hashcode,SocketChannel socketChannel)throws IOException {
+            for(int x=0;x<split.length;x++){
+                String[] temp = split[x].split("=");
+                if(temp[0].equals("src") && temp.length>1){
+                    this.src=temp[1];
+                }
+                if(temp[0].equals("tar") && temp.length>1){
+                    this.tar=temp[1];
+                }
+                if(temp[0].equals("fileName") && temp.length>1){
+                    this.fileName=temp[1];
+                }
+                if(temp[0].equals("url") && temp.length>1){
+                    this.url=temp[1];
+                }
+                if(temp[0].equals("uuid") && temp.length>1){
+                    this.uuid=temp[1];
+                }
+            }
+            if(this.src!=null && this.src.length()>0
+                    && this.tar!=null && this.tar.length()>0
+                    && this.fileName!=null && this.fileName.length()>0
+                    && this.url!=null && this.url.length()>0
+                    && this.uuid!=null && this.uuid.length()>0 ){
+                try {
+                    filePath = Path.of(WebSocketChannelInHandler.FILE_PATH,this.fileName);
+                    Files.createFile(filePath);
+                    isConvert=true;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    System.out.println("文件创建出错:关闭连接");
+                    socketChannel.close();
+                    WEBSOCKETSTATETREEMAP.remove(hashcode);
+                    WEBSOCKETSTATEBYTES.remove(hashcode);
+                }
+            }else{
+                System.out.println("文件内容解释出错:关闭连接");
+                socketChannel.close();
+                WEBSOCKETSTATETREEMAP.remove(hashcode);
+                WEBSOCKETSTATEBYTES.remove(hashcode);
             }
         }
 
