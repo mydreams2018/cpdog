@@ -2,6 +2,7 @@ package cn.kungreat.boot.utils;
 
 import cn.kungreat.boot.handler.WebSocketChannelInHandler;
 import cn.kungreat.boot.handler.WebSocketChannelOutHandler;
+import cn.kungreat.boot.jb.BaseResponse;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,51 +12,43 @@ import java.util.UUID;
 public class JdbcTemplate {
 
     public static String register(WebSocketChannelInHandler.WebSocketState job){
-        String rt = "uuid=%s;code=%s;msg=%s";
+        String rt = "";
+        final BaseResponse baseResponse = new BaseResponse();
         try(Connection connection = JdbcUtils.getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement("select phone,nike_name from user_details where phone=? or nike_name=?")){
-            String phone = "";
-            String nikeName = "";
-            String password = "";
-            String firstLetter = "";
-            String jobCharts = job.getCharts();
-            String[] split = jobCharts.split("&");
-            for(int x=0;x<split.length;x++){
-                String[] temp = split[x].split(":");
-                if(temp[0].equals("phone")){
-                    phone = temp[1];
-                }
-                if(temp[0].equals("nikeName")){
-                    nikeName = temp[1];
-                }
-                if(temp[0].equals("password")){
-                    password = temp[1];
-                }
-                if(temp[0].equals("firstLetter")){
-                    firstLetter = temp[1];
-                }
-            }
-            if(phone.isEmpty() || nikeName.isEmpty() || password.isEmpty() || firstLetter.isEmpty()){
-                rt=String.format(rt, job.getUuid(),"100","必要数据为空");
+            WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
+            if(jobCharts.getPhone().isEmpty() || jobCharts.getNikeName().isEmpty()
+                    || jobCharts.getPassword().isEmpty() || jobCharts.getFirstLetter().isEmpty()){
+                baseResponse.setUuid(job.getUuid());
+                baseResponse.setMsg("必要数据为空");
+                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
             }else{
-                preparedStatement.setString(1,phone);
-                preparedStatement.setString(2,nikeName);
+                preparedStatement.setString(1,jobCharts.getPhone());
+                preparedStatement.setString(2,jobCharts.getNikeName());
                 ResultSet resultSet = preparedStatement.executeQuery();
                 if (resultSet.next()){
                     //数据已经存在了
-                    rt=String.format(rt, job.getUuid(),"100","用户已经存在了丢雷");
+                    baseResponse.setUuid(job.getUuid());
+                    baseResponse.setMsg("用户已经存在了");
+                    rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                 }else{
                     PreparedStatement insert = connection.prepareStatement("insert into user_details (phone,nike_name,password,id,register_time,sort_first) values (?,?,?,?,CURDATE(),?)");
-                    insert.setString(1,phone);
-                    insert.setString(2,nikeName);
-                    insert.setString(3,password);
+                    insert.setString(1,jobCharts.getPhone());
+                    insert.setString(2,jobCharts.getNikeName());
+                    insert.setString(3,jobCharts.getPassword());
                     insert.setString(4,job.getUuid());
-                    insert.setString(5,firstLetter);
+                    insert.setString(5,jobCharts.getFirstLetter());
                     int is = insert.executeUpdate();
                     if(is>0){
-                        rt=String.format(rt,job.getUuid(),"200","用户注册成功");
+                        baseResponse.setUuid(job.getUuid());
+                        baseResponse.setMsg("用户注册成功");
+                        baseResponse.setCode("200");
+                        rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                     }else{
-                        rt=String.format(rt,job.getUuid(),"000","未知错误");
+                        baseResponse.setUuid(job.getUuid());
+                        baseResponse.setMsg("未知错误");
+                        baseResponse.setCode("000");
+                        rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                     }
                     connection.commit();
                 }
@@ -67,35 +60,32 @@ public class JdbcTemplate {
     }
 
     public static String login(WebSocketChannelInHandler.WebSocketState job){
-        String rt = "uuid=%s;code=%s;msg=%s;sktoken=%s;user=%s";
+        String rt = "";
+        final BaseResponse baseResponse = new BaseResponse();
         try(Connection connection = JdbcUtils.getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement("select phone,nike_name from user_details where phone=? and password=?")){
-            String phone = "";
-            String password = "";
-            String jobCharts = job.getCharts();
-            String[] split = jobCharts.split("&");
-            for(int x=0;x<split.length;x++){
-                String[] temp = split[x].split(":");
-                if(temp[0].equals("phone")){
-                    phone = temp[1];
-                }
-                if(temp[0].equals("password")){
-                    password = temp[1];
-                }
-            }
-            if(phone.isEmpty() || password.isEmpty()){
-                rt=String.format(rt, job.getUuid(),"100","必要数据为空","n","n");
+            WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
+            if(jobCharts.getPhone().isEmpty() || jobCharts.getPassword().isEmpty()){
+                baseResponse.setUuid(job.getUuid());
+                baseResponse.setMsg("必要数据为空");
+                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
             }else{
-                preparedStatement.setString(1,phone);
-                preparedStatement.setString(2,password);
+                preparedStatement.setString(1,jobCharts.getPhone());
+                preparedStatement.setString(2,jobCharts.getPassword());
                 ResultSet resultSet = preparedStatement.executeQuery();
                 if (resultSet.next()){
-                    String uuid = UUID.randomUUID().toString();
-                    WebSocketChannelOutHandler.USER_UUIDS.put(uuid,phone);
-                    rt=String.format(rt,job.getUuid(),"200","用户认证成功.",uuid,resultSet.getString("nike_name"));
+                    baseResponse.setUuid(job.getUuid());
+                    baseResponse.setMsg("用户认证成功");
+                    baseResponse.setCode("200");
+                    baseResponse.setUser(resultSet.getString("nike_name"));
+                    baseResponse.setSktoken(UUID.randomUUID().toString());
+                    WebSocketChannelOutHandler.USER_UUIDS.put(baseResponse.getSktoken(),jobCharts.getPhone());
+                    rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                 }else{
                     //验证失败
-                    rt=String.format(rt,job.getUuid(),"100","用户或密码错误","n","n");
+                    baseResponse.setUuid(job.getUuid());
+                    baseResponse.setMsg("用户或密码错误");
+                    rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                 }
             }
         }catch (Exception e){
@@ -105,7 +95,7 @@ public class JdbcTemplate {
     }
 
     public static String queryUsers(WebSocketChannelInHandler.WebSocketState job){
-        String rt = "uuid=%s;code=%s;msg=%s;pages=%s;datas=%s";
+        String rt = "";
 
 
         return rt;

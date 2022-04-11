@@ -2,6 +2,9 @@ package cn.kungreat.boot.handler;
 
 import cn.kungreat.boot.ChannelInHandler;
 import cn.kungreat.boot.utils.CutoverBytes;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -23,6 +26,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
     public static final Map<Integer,String> WEBSOCKETSTATEBYTES = new ConcurrentHashMap<>(256);
 
     public static final String FILE_PATH = "C:/Users/kungreat/IdeaProjects/dwbbs/web/images/user";
+    public static final ObjectMapper MAP_JSON = new ObjectMapper(); //create once, reuse
     @Override
     public void before(SocketChannel socketChannel,ByteBuffer buffer) throws Exception {
         buffer.flip();
@@ -215,7 +219,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         private ByteBuffer byteBuffer;
         private String src;
         private String tar;
-        private String charts;
+        private ChartsContent charts;
         private String url;
         /**
          * uuid 每条数据的唯一标识
@@ -346,27 +350,23 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
             }else{
                 stringBuffer.append(new String(byteBuffer.array(),0,remaining,Charset.forName("UTF-8")));
                 byteBuffer.clear();
-                String[] split = stringBuffer.toString().split(";");
+                //接收字符串本次完成了.解释成对象
+                ReceiveObj receiveObj = MAP_JSON.readValue(stringBuffer.toString(),ReceiveObj.class);
                 stringBuffer = null;
-                for(int x=0;x<split.length;x++){
-                    String[] temp = split[x].split("=");
-                    if(temp[0].equals("src")){
-                        this.src=temp[1];
-                    }
-                    if(temp[0].equals("tar")){
-                        this.tar=temp[1];
-                    }
-                    if(temp[0].equals("charts")){
-                        this.charts=temp[1];
-                    }
-                    if(temp[0].equals("url")){
-                        this.url=temp[1];
-                    }
-                    if(temp[0].equals("uuid")){
-                        this.uuid=temp[1];
-                    }
+                if(receiveObj == null){
+                    System.out.println("字符内容解释出错:关闭连接");
+                    socketChannel.close();
+                    WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
+                    WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
+                    return;
+                }else{
+                    this.src=receiveObj.getSrc();
+                    this.tar=receiveObj.getTar();
+                    this.charts=receiveObj.getCharts();
+                    this.url=receiveObj.getUrl();
+                    this.uuid=receiveObj.getUuid();
                 }
-                if(this.src.isEmpty() || this.tar.isEmpty() || this.charts.isEmpty() || this.url.isEmpty() || this.uuid.isEmpty()){
+                if(this.src.isEmpty() || this.tar.isEmpty() || this.charts == null || this.url.isEmpty() || this.uuid.isEmpty()){
                     System.out.println("字符内容解释出错:关闭连接");
                     socketChannel.close();
                     WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
@@ -399,11 +399,11 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
             this.fileName = fileName;
         }
 
-        public String getCharts() {
+        public ChartsContent getCharts() {
             return charts;
         }
 
-        public void setCharts(String charts) {
+        public void setCharts(ChartsContent charts) {
             this.charts = charts;
         }
 
@@ -558,5 +558,22 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         public void setUuid(String uuid) {
             this.uuid = uuid;
         }
+    }
+    @Setter
+    @Getter
+    private static final class ReceiveObj{
+        private String uuid;
+        private String src;
+        private String tar;
+        private String url;
+        private ChartsContent charts;
+    }
+    @Setter
+    @Getter
+    public static final class ChartsContent{
+        private String nikeName;
+        private String phone;
+        private String password;
+        private String firstLetter;
     }
 }
