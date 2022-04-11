@@ -27,7 +27,8 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private static ChannelProtocolHandler channelProtocolHandler ;
     private final TreeMap<Integer,ByteBuffer> treeMap = new TreeMap<>();
     private final TreeMap<Integer,ProtocolState> protocolStateMap = new TreeMap<>();
-    private final ByteBuffer outBuf = ByteBuffer.allocate(8192);
+    //出站buffer 设置为jvm外管理.减少一次copy 不用array
+    private final ByteBuffer outBuf = ByteBuffer.allocateDirect(8192);
     private final HashMap<SocketOption<?>,Object> optionMap = new HashMap<>();
     private Thread workThreads;
     private Selector selector;
