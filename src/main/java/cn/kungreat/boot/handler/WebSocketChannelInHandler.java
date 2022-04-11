@@ -575,5 +575,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         private String phone;
         private String password;
         private String firstLetter;
+        private String tokenSession;
+        private Integer currentPage;
     }
 }

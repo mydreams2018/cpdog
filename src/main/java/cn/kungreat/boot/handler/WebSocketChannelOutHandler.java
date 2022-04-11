@@ -46,12 +46,14 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
             while (first != null) {
                 if(first.getType() == 1 && first.isDone()){
                     log.info(socketChannel.getRemoteAddress() + "src:"+first.getSrc()+" chatrs:"+first.getCharts()+" tar:"+first.getTar());
-                    if(first.getUrl().equals("register") || first.getUrl().equals("login")){
+                    if(first.getUrl().equals("register") || first.getUrl().equals("login") || first.getUrl().equals("queryUsers")){
                         String rts="";
                         if(first.getUrl().equals("register")){
                             rts = JdbcTemplate.register(first);
                         }else if(first.getUrl().equals("login")){
                             rts = JdbcTemplate.login(first);
+                        }else if(first.getUrl().equals("queryUsers")){
+                            rts = JdbcTemplate.queryUsers(first);
                         }
                         byte[] bytes = rts.getBytes(Charset.forName("UTF-8"));
                         int readLength = 0;
