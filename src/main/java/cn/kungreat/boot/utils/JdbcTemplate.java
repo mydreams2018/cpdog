@@ -103,4 +103,11 @@ public class JdbcTemplate {
         }
         return rt;
     }
+
+    public static String queryUsers(WebSocketChannelInHandler.WebSocketState job){
+        String rt = "uuid=%s;code=%s;msg=%s;pages=%s;datas=%s";
+
+
+        return rt;
+    }
 }

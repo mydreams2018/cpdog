@@ -59,3 +59,13 @@ create table user_details
 )
     comment '用户详情';
 
+   Integer count = detailsTextMapper.selectCount(query);
+        List list  = Collections.emptyList();
+        if (count >  0){
+            list = detailsTextMapper.selectAll(query);
+        }
+        query.setData(count,query.getPageSize(),query.getCurrentPage());
+        QueryResult result = new QueryResult();
+        result.setDatas(list);
+        result.setPage(query);
+        return result;

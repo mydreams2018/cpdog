@@ -17,6 +17,7 @@
 		<skipTests>true</skipTests>
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
+		<jackson.version>2.12.4</jackson.version>
 	</properties>
 
 	<dependencies>
@@ -37,7 +38,11 @@
 			<artifactId>mysql-connector-java</artifactId>
 			<version>8.0.22</version>
 		</dependency>
-
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
