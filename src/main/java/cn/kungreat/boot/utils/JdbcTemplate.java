@@ -17,6 +17,7 @@ public class JdbcTemplate {
             String phone = "";
             String nikeName = "";
             String password = "";
+            String firstLetter = "";
             String jobCharts = job.getCharts();
             String[] split = jobCharts.split("&");
             for(int x=0;x<split.length;x++){
@@ -30,8 +31,11 @@ public class JdbcTemplate {
                 if(temp[0].equals("password")){
                     password = temp[1];
                 }
+                if(temp[0].equals("firstLetter")){
+                    firstLetter = temp[1];
+                }
             }
-            if(phone.isEmpty() || nikeName.isEmpty() || password.isEmpty()){
+            if(phone.isEmpty() || nikeName.isEmpty() || password.isEmpty() || firstLetter.isEmpty()){
                 rt=String.format(rt, job.getUuid(),"100","必要数据为空");
             }else{
                 preparedStatement.setString(1,phone);
@@ -41,11 +45,12 @@ public class JdbcTemplate {
                     //数据已经存在了
                     rt=String.format(rt, job.getUuid(),"100","用户已经存在了丢雷");
                 }else{
-                    PreparedStatement insert = connection.prepareStatement("insert into user_details (phone,nike_name,password,id,register_time) values (?,?,?,?,CURDATE())");
+                    PreparedStatement insert = connection.prepareStatement("insert into user_details (phone,nike_name,password,id,register_time,sort_first) values (?,?,?,?,CURDATE(),?)");
                     insert.setString(1,phone);
                     insert.setString(2,nikeName);
                     insert.setString(3,password);
                     insert.setString(4,job.getUuid());
+                    insert.setString(5,firstLetter);
                     int is = insert.executeUpdate();
                     if(is>0){
                         rt=String.format(rt,job.getUuid(),"200","用户注册成功");

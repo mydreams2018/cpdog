@@ -6,7 +6,11 @@ import cn.kungreat.boot.utils.JdbcTemplate;
 import cn.kungreat.boot.utils.JdbcUtils;
 
 import java.security.MessageDigest;
+import java.text.Collator;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Comparator;
+import java.util.Locale;
 
 public class Test2 {
     public static void main(String[] args) throws Exception {
@@ -23,6 +27,8 @@ public class Test2 {
 //        }
         byte[] bts = {0,-1,-1,-1};
         System.out.println(CutoverBytes.readInt(bts));
-        System.out.println(JdbcTemplate.register(null));
+        //定义一个中文排序器
+        Comparator c = Collator.getInstance(Locale.CHINA);
+
     }
 }
