@@ -542,5 +542,6 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         private String firstLetter;
         private String tokenSession;
         private Integer currentPage;
+        private String currentActiveId;
     }
 }

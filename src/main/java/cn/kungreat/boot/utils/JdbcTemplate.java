@@ -138,6 +138,7 @@ public class JdbcTemplate {
                 QueryResult result = new QueryResult();
                 result.setDatas(list);
                 result.setPage(paging);
+                result.setCurrentActiveId(jobCharts.getCurrentActiveId());
                 rt = WebSocketChannelInHandler.MAP_JSON.writeValueAsString(result);
             }
         }catch (Exception e){
