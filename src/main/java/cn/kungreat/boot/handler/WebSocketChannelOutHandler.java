@@ -1,11 +1,9 @@
 package cn.kungreat.boot.handler;
 
 import cn.kungreat.boot.ChannelOutHandler;
-import cn.kungreat.boot.impl.DefaultLogServer;
 import cn.kungreat.boot.utils.JdbcTemplate;
 import cn.kungreat.boot.utils.WebSocketResponse;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
@@ -13,25 +11,13 @@ import java.nio.file.*;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<WebSocketChannelInHandler.WebSocketState>,String> {
 
-   public static Logger log;
     /*
     存放用户登录随机生成的UUID 关联信息.UUID在前端是session级别的. [k=uuid v=userid]
-     此缓存会存在一些历史的没有用的数据.清理很浪费性能. 建议周期性重启解决
     */
     public static final Map<String,String> USER_UUIDS = new ConcurrentHashMap<>(1024);
-
-    static {
-        try {
-            log = DefaultLogServer.createLog("D:\\kungreat\\IdeaProjects\\log1"
-                        ,"cn.kungreat.boot.handler");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
 
     @Override
@@ -45,7 +31,6 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
             WebSocketChannelInHandler.WebSocketState first = in.peekFirst();
             while (first != null) {
                 if(first.getType() == 1 && first.isDone()){
-                    log.info(socketChannel.getRemoteAddress() + "src:"+first.getSrc()+" chatrs:"+first.getCharts()+" tar:"+first.getTar());
                     if(first.getUrl().equals("register") || first.getUrl().equals("login") || first.getUrl().equals("queryUsers")){
                         String rts="";
                         if(first.getUrl().equals("register")){
