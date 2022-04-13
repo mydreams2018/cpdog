@@ -21,8 +21,8 @@ public class JdbcTemplate {
         try(Connection connection = JdbcUtils.getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement("select phone,nike_name from user_details where phone=? or nike_name=?")){
             WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
-            if(jobCharts.getPhone().isEmpty() || jobCharts.getNikeName().isEmpty()
-                    || jobCharts.getPassword().isEmpty() || jobCharts.getFirstLetter().isEmpty()){
+            if(jobCharts.getPhone().isBlank() || jobCharts.getNikeName().isBlank()
+                    || jobCharts.getPassword().isBlank() || jobCharts.getFirstLetter().isBlank()){
                 baseResponse.setUuid(job.getUuid());
                 baseResponse.setMsg("必要数据为空");
                 rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
@@ -69,7 +69,7 @@ public class JdbcTemplate {
         try(Connection connection = JdbcUtils.getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement("select phone,nike_name from user_details where phone=? and password=?")){
             WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
-            if(jobCharts.getPhone().isEmpty() || jobCharts.getPassword().isEmpty()){
+            if(jobCharts.getPhone().isBlank() || jobCharts.getPassword().isBlank()){
                 baseResponse.setUuid(job.getUuid());
                 baseResponse.setMsg("必要数据为空");
                 rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
@@ -83,7 +83,7 @@ public class JdbcTemplate {
                     baseResponse.setCode("200");
                     baseResponse.setUser(resultSet.getString("nike_name"));
                     baseResponse.setSktoken(UUID.randomUUID().toString());
-                    WebSocketChannelOutHandler.USER_UUIDS.put(baseResponse.getSktoken(),jobCharts.getPhone());
+                    WebSocketChannelOutHandler.USER_UUIDS.put(baseResponse.getSktoken(),resultSet.getString("nike_name"));
                     rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                 }else{
                     //验证失败
@@ -143,6 +143,17 @@ public class JdbcTemplate {
             }
         }catch (Exception e){
             e.printStackTrace();
+        }
+        return rt;
+    }
+
+    public static String applyFriends(WebSocketChannelInHandler.WebSocketState first) {
+        String rt = "";
+        List<String> nikeNamels = first.getCharts().getNikeNamels();
+        String tokenSession = first.getCharts().getTokenSession();
+        if(nikeNamels != null && nikeNamels.size()>0 && tokenSession!= null){
+            String nikeNm = WebSocketChannelOutHandler.USER_UUIDS.get("tokenSession");
+
         }
         return rt;
     }

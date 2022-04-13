@@ -31,14 +31,18 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
             WebSocketChannelInHandler.WebSocketState first = in.peekFirst();
             while (first != null) {
                 if(first.getType() == 1 && first.isDone()){
-                    if(first.getUrl().equals("register") || first.getUrl().equals("login") || first.getUrl().equals("queryUsers")){
+                    String baseUrl = first.getUrl();
+                    if(baseUrl.equals("register") || baseUrl.equals("login")
+                            || baseUrl.equals("queryUsers") || baseUrl.equals("applyFriends")){
                         String rts="";
-                        if(first.getUrl().equals("register")){
+                        if(baseUrl.equals("register")){
                             rts = JdbcTemplate.register(first);
-                        }else if(first.getUrl().equals("login")){
+                        }else if(baseUrl.equals("login")){
                             rts = JdbcTemplate.login(first);
-                        }else if(first.getUrl().equals("queryUsers")){
+                        }else if(baseUrl.equals("queryUsers")){
                             rts = JdbcTemplate.queryUsers(first);
+                        }else if(baseUrl.equals("applyFriends")){
+                            rts = JdbcTemplate.applyFriends(first);
                         }
                         byte[] bytes = rts.getBytes(Charset.forName("UTF-8"));
                         int readLength = 0;

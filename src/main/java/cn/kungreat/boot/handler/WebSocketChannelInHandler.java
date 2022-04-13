@@ -13,6 +13,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -544,5 +545,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         private Integer currentPage;
         private Integer totalPage;
         private String currentActiveId;
+        private String message;
+        private List<String> nikeNamels;
     }
 }
