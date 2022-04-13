@@ -6,9 +6,7 @@ import cn.kungreat.boot.jb.BaseResponse;
 import cn.kungreat.boot.jb.QueryResult;
 import cn.kungreat.boot.jb.UserDetails;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -151,9 +149,31 @@ public class JdbcTemplate {
         String rt = "";
         List<String> nikeNamels = first.getCharts().getNikeNamels();
         String tokenSession = first.getCharts().getTokenSession();
-        if(nikeNamels != null && nikeNamels.size()>0 && tokenSession!= null){
-            String nikeNm = WebSocketChannelOutHandler.USER_UUIDS.get("tokenSession");
-
+        if(nikeNamels != null && nikeNamels.size()>0 && tokenSession != null){
+            final BaseResponse baseResponse = new BaseResponse();
+            String nikeNm = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+            if(nikeNm != null){
+                String message = first.getCharts().getMessage();
+                try(Connection connection = JdbcUtils.getConnection();
+                    PreparedStatement statement = connection.prepareStatement("insert into apply_history (src_user_id, tar_user_id,apply_msg,tar_state,apply_time) values (?,?,?,?,CURDATE())")){
+                    for(int x=0;x<nikeNamels.size();x++){
+                        statement.setString(1,nikeNm);
+                        statement.setString(2,nikeNamels.get(x));
+                        statement.setString(3,message);
+                        statement.setInt(4,1);
+                        statement.addBatch();
+                    }
+                    int[] ints = statement.executeBatch();
+                    statement.clearBatch();
+                    baseResponse.setCode("200");
+                    baseResponse.setMsg("申请添加好友成功.共"+ints.length+"个人");
+                    baseResponse.setUrl("applyFriends");
+                    rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                    connection.commit();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
         }
         return rt;
     }
