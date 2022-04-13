@@ -8,6 +8,7 @@ import cn.kungreat.boot.jb.UserDetails;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -154,8 +155,20 @@ public class JdbcTemplate {
             String nikeNm = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
             if(nikeNm != null){
                 String message = first.getCharts().getMessage();
+                StringBuilder nks = new StringBuilder();
+                for (int x=0;x< nikeNamels.size();x++) {
+                    if(x==nikeNamels.size()-1){
+                        nks.append("?");
+                        nks.append(")");
+                    }else{
+                        nks.append("?");
+                        nks.append(",");
+                    }
+                }
                 try(Connection connection = JdbcUtils.getConnection();
-                    PreparedStatement statement = connection.prepareStatement("insert into apply_history (src_user_id, tar_user_id,apply_msg,tar_state,apply_time) values (?,?,?,?,CURDATE())")){
+                    PreparedStatement statement = connection.prepareStatement("insert into apply_history (src_user_id, tar_user_id,apply_msg,tar_state,apply_time) values (?,?,?,?,CURDATE())");
+                    PreparedStatement preparedStatement = connection.prepareStatement("select tar_user_id from friends_history where src_user_id = ? and cur_state = 1 and tar_user_id in ("+nks)){
+                    clearApplyFriends(nikeNm,nikeNamels,preparedStatement);
                     for(int x=0;x<nikeNamels.size();x++){
                         statement.setString(1,nikeNm);
                         statement.setString(2,nikeNamels.get(x));
@@ -163,13 +176,15 @@ public class JdbcTemplate {
                         statement.setInt(4,1);
                         statement.addBatch();
                     }
-                    int[] ints = statement.executeBatch();
-                    statement.clearBatch();
-                    baseResponse.setCode("200");
-                    baseResponse.setMsg("申请添加好友成功.共"+ints.length+"个人");
-                    baseResponse.setUrl("applyFriends");
-                    rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
-                    connection.commit();
+                    if(nikeNamels.size()>0){
+                        int[] ints = statement.executeBatch();
+                        statement.clearBatch();
+                        baseResponse.setCode("200");
+                        baseResponse.setMsg("申请添加好友成功.共"+ints.length+"个人");
+                        baseResponse.setUrl("applyFriends");
+                        rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                        connection.commit();
+                    }
                 }catch (Exception e){
                     e.printStackTrace();
                 }
@@ -177,4 +192,26 @@ public class JdbcTemplate {
         }
         return rt;
     }
+//查询当前的好友. 过滤掉重复的申请
+    private static void clearApplyFriends(String nikeName,List<String> srcs,PreparedStatement preparedStatement) throws SQLException {
+        List<String> rts = new ArrayList<>();
+        preparedStatement.setString(1,nikeName);
+        for (int i = 0; i < srcs.size(); i++) {
+            preparedStatement.setString(i+2,srcs.get(i));
+        }
+        ResultSet resultSet = preparedStatement.executeQuery();
+        while (resultSet.next()){
+            rts.add(resultSet.getString("tar_user_id"));
+        }
+        if(rts.size() > 0){
+            Iterator<String> stringIterator = srcs.iterator();
+            while(stringIterator.hasNext()) {
+                String temp = stringIterator.next();
+                if(rts.contains(temp)){
+                    stringIterator.remove();
+                }
+            }
+        }
+    }
+
 }
