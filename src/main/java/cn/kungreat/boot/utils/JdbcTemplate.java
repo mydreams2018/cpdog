@@ -104,9 +104,10 @@ public class JdbcTemplate {
             PreparedStatement preparedStatement = connection.prepareStatement("select register_time,describes,nike_name,img_path,sort_first from user_details " +
                                                                     "where nike_name LIKE ? order by sort_first limit ?,? ")){
             WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
-            if(jobCharts.getNikeName() != null && !jobCharts.getNikeName().isBlank()){
-                preparedCount.setString(1, "%" + jobCharts.getNikeName());
-                preparedStatement.setString(1, "%" + jobCharts.getNikeName());
+            String nikName = jobCharts.getNikeName();
+            if(nikName != null && !nikName.isBlank()){
+                preparedCount.setString(1, "%"+nikName+"%");
+                preparedStatement.setString(1, "%"+nikName+"%");
             }else{
                 preparedCount.setString(1, "%");
                 preparedStatement.setString(1, "%");
@@ -214,4 +215,61 @@ public class JdbcTemplate {
         }
     }
 
+    public static String queryUsersFriends(WebSocketChannelInHandler.WebSocketState job) {
+        String rt="";
+        String tokenSession = job.getCharts().getTokenSession();
+        String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+        if(tokenSession!=null && !tokenSession.isBlank() && tokenNikeName !=null){
+            try(Connection connection = JdbcUtils.getConnection();
+                PreparedStatement preparedCount = connection.prepareStatement("select count(src_user_id) from friends_history where src_user_id= ? and tar_user_id LIKE ?");
+                PreparedStatement preparedStatement = connection.prepareStatement("select nike_name,register_time,describes,img_path,sort_first from user_details where nike_name in "+
+                        "(select tar_user_id from friends_history where src_user_id= ? and tar_user_id LIKE ?) order by sort_first limit ?,?")){
+                WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
+                String nikName = jobCharts.getNikeName();
+                if(nikName != null && !nikName.isBlank()){
+                    preparedCount.setString(1, tokenNikeName);
+                    preparedStatement.setString(1,tokenNikeName);
+                    preparedCount.setString(2,"%"+nikName+"%");
+                    preparedStatement.setString(2,"%"+nikName+"%");
+                }else{
+                    preparedCount.setString(1, tokenNikeName);
+                    preparedStatement.setString(1,tokenNikeName);
+                    preparedCount.setString(2, "%");
+                    preparedStatement.setString(2, "%");
+                }
+                ResultSet rs1 = preparedCount.executeQuery();
+                int nums = 0;
+                if(rs1.next()){
+                    nums = rs1.getInt(1);
+                }
+                List<UserDetails> list  = null;
+                Paging paging = new Paging();
+                if(nums > 0){
+                    list = new ArrayList<>();
+                    paging.setCurrentPage(jobCharts.getCurrentPage());
+                    preparedStatement.setInt(3, paging.getStart());
+                    preparedStatement.setInt(4, paging.getPageSize());
+                    ResultSet resultSet = preparedStatement.executeQuery();
+                    while (resultSet.next()){
+                        UserDetails userDetails = new UserDetails();
+                        userDetails.setRegisterTime(resultSet.getString("register_time"));
+                        userDetails.setDescribes(resultSet.getString("describes"));
+                        userDetails.setNikeName(resultSet.getString("nike_name"));
+                        userDetails.setImgPath(resultSet.getString("img_path"));
+                        userDetails.setSortFirst(resultSet.getString("sort_first"));
+                        list.add(userDetails);
+                    }
+                    paging.setData(nums,paging.getPageSize(),paging.getCurrentPage());
+                    QueryResult result = new QueryResult();
+                    result.setDatas(list);
+                    result.setPage(paging);
+                    result.setCurrentActiveId(jobCharts.getCurrentActiveId());
+                    rt = WebSocketChannelInHandler.MAP_JSON.writeValueAsString(result);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        return rt;
+    }
 }
