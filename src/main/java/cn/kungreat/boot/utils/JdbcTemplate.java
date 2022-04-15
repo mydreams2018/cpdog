@@ -330,4 +330,47 @@ public class JdbcTemplate {
         }
         return rt;
     }
+
+    public static String handlerApplyFriend(WebSocketChannelInHandler.WebSocketState job) {
+        String rt="";
+        String tokenSession = job.getCharts().getTokenSession();
+        String message = job.getCharts().getMessage();
+        String nikeName = job.getCharts().getNikeName();
+        String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+        if(tokenSession!=null && !tokenSession.isBlank() && message!=null && !message.isBlank()
+               && nikeName!= null && !nikeName.isBlank() && tokenNikeName != null){
+            if(message.equals("delete")){
+              rt=deleteApplyFriend(nikeName,tokenNikeName);
+            }else if(message.equals("accept")){
+
+            }
+        }
+        return rt;
+    }
+
+    private static String deleteApplyFriend(String src,String tar){
+        String rt="";
+        final BaseResponse baseResponse = new BaseResponse();
+        try(Connection connection = JdbcUtils.getConnection();
+            PreparedStatement preparedStatement=connection.prepareStatement("delete from apply_history where src_user_id=? and tar_user_id=?")){
+            preparedStatement.setString(1,src);
+            preparedStatement.setString(2,tar);
+            int i = preparedStatement.executeUpdate();
+            if(i>0){
+                baseResponse.setCode("200");
+                baseResponse.setMsg("删除申请成功:"+src);
+                baseResponse.setUser(src);
+                baseResponse.setUrl("handlerApplyFriend");
+                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+            }else{
+                baseResponse.setMsg("删除失败:"+src);
+                baseResponse.setUrl("handlerApplyFriend");
+                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+            }
+            connection.commit();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return rt;
+    }
 }
