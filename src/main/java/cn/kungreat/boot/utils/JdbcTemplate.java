@@ -118,8 +118,8 @@ public class JdbcTemplate {
                 nums = rs1.getInt(1);
             }
             List<UserDetails> list  = null;
-            Paging paging = new Paging();
             if(nums > 0){
+                Paging paging = new Paging();
                 list = new ArrayList<>();
                 paging.setCurrentPage(jobCharts.getCurrentPage());
                 preparedStatement.setInt(2, paging.getStart());
@@ -243,8 +243,8 @@ public class JdbcTemplate {
                     nums = rs1.getInt(1);
                 }
                 List<UserDetails> list  = null;
-                Paging paging = new Paging();
                 if(nums > 0){
+                    Paging paging = new Paging();
                     list = new ArrayList<>();
                     paging.setCurrentPage(jobCharts.getCurrentPage());
                     preparedStatement.setInt(3, paging.getStart());
@@ -257,6 +257,64 @@ public class JdbcTemplate {
                         userDetails.setNikeName(resultSet.getString("nike_name"));
                         userDetails.setImgPath(resultSet.getString("img_path"));
                         userDetails.setSortFirst(resultSet.getString("sort_first"));
+                        list.add(userDetails);
+                    }
+                    paging.setData(nums,paging.getPageSize(),paging.getCurrentPage());
+                    QueryResult result = new QueryResult();
+                    result.setDatas(list);
+                    result.setPage(paging);
+                    result.setCurrentActiveId(jobCharts.getCurrentActiveId());
+                    rt = WebSocketChannelInHandler.MAP_JSON.writeValueAsString(result);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        return rt;
+    }
+
+    public static String queryAnswerFriends(WebSocketChannelInHandler.WebSocketState job) {
+        String rt="";
+        String tokenSession = job.getCharts().getTokenSession();
+        String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+        if(tokenSession!=null && !tokenSession.isBlank() && tokenNikeName != null){
+            try(Connection connection = JdbcUtils.getConnection();
+                PreparedStatement preparedCount = connection.prepareStatement("select count(src_user_id) from apply_history where tar_user_id =? and src_user_id like ?");
+                PreparedStatement preparedStatement = connection.prepareStatement("select histy.src_user_id, histy.apply_time,histy.apply_msg, usdet.img_path from " +
+                        " (select src_user_id,apply_time,apply_msg from apply_history where tar_user_id =? and src_user_id like ?) histy " +
+                        " join user_details usdet on histy.src_user_id = usdet.nike_name order by histy.apply_time limit ?,?")){
+                WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
+                String srcNikName = jobCharts.getNikeName();
+                if(srcNikName!=null && !srcNikName.isBlank()){
+                    preparedCount.setString(1,tokenNikeName);
+                    preparedCount.setString(2,"%"+srcNikName+"%");
+                    preparedStatement.setString(1,tokenNikeName);
+                    preparedStatement.setString(2,"%"+srcNikName+"%");
+                }else{
+                    preparedCount.setString(1,tokenNikeName);
+                    preparedCount.setString(2,"%");
+                    preparedStatement.setString(1,tokenNikeName);
+                    preparedStatement.setString(2,"%");
+                }
+                ResultSet rs1 = preparedCount.executeQuery();
+                int nums = 0;
+                if(rs1.next()){
+                    nums = rs1.getInt(1);
+                }
+                List<UserDetails> list  = null;
+                if(nums > 0){
+                    Paging paging = new Paging();
+                    list = new ArrayList<>();
+                    paging.setCurrentPage(jobCharts.getCurrentPage());
+                    preparedStatement.setInt(3, paging.getStart());
+                    preparedStatement.setInt(4, paging.getPageSize());
+                    ResultSet resultSet = preparedStatement.executeQuery();
+                    while (resultSet.next()){
+                        UserDetails userDetails = new UserDetails();
+                        userDetails.setRegisterTime(resultSet.getString("apply_time"));
+                        userDetails.setDescribes(resultSet.getString("apply_msg"));
+                        userDetails.setNikeName(resultSet.getString("src_user_id"));
+                        userDetails.setImgPath(resultSet.getString("img_path"));
                         list.add(userDetails);
                     }
                     paging.setData(nums,paging.getPageSize(),paging.getCurrentPage());

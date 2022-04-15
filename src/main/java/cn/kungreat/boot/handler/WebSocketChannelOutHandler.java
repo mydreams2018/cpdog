@@ -34,7 +34,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     String baseUrl = first.getUrl();
                     if(baseUrl.equals("register") || baseUrl.equals("login")
                             || baseUrl.equals("queryUsers") || baseUrl.equals("applyFriends")
-                    || baseUrl.equals("queryUsersFriends")){
+                    || baseUrl.equals("queryUsersFriends") || baseUrl.equals("queryAnswerFriends")){
                         String rts="";
                         if(baseUrl.equals("register")){
                             rts = JdbcTemplate.register(first);
@@ -46,6 +46,8 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                             rts = JdbcTemplate.applyFriends(first);
                         }else if(baseUrl.equals("queryUsersFriends")){
                             rts = JdbcTemplate.queryUsersFriends(first);
+                        }else if(baseUrl.equals("queryAnswerFriends")){
+                            rts = JdbcTemplate.queryAnswerFriends(first);
                         }
                         byte[] bytes = rts.getBytes(Charset.forName("UTF-8"));
                         int readLength = 0;
