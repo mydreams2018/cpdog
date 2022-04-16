@@ -343,6 +343,8 @@ public class JdbcTemplate {
               rt=deleteApplyFriend(nikeName,tokenNikeName);
             }else if(message.equals("accept")){
 
+            }else if(message.equals("reject")){
+                rt=rejectApplyFriend(nikeName,tokenNikeName);
             }
         }
         return rt;
@@ -364,6 +366,32 @@ public class JdbcTemplate {
                 rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
             }else{
                 baseResponse.setMsg("删除失败:"+src);
+                baseResponse.setUrl("handlerApplyFriend");
+                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+            }
+            connection.commit();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return rt;
+    }
+
+    private static String rejectApplyFriend(String src,String tar){
+        String rt="";
+        final BaseResponse baseResponse = new BaseResponse();
+        try(Connection connection = JdbcUtils.getConnection();
+            PreparedStatement preparedStatement=connection.prepareStatement("update apply_history set apply_state=2 where src_user_id=? and tar_user_id=? and apply_state=0")){
+            preparedStatement.setString(1,src);
+            preparedStatement.setString(2,tar);
+            int i = preparedStatement.executeUpdate();
+            if(i>0){
+                baseResponse.setCode("200");
+                baseResponse.setMsg("拒绝申请成功:"+src);
+                baseResponse.setUser(src);
+                baseResponse.setUrl("handlerApplyFriend");
+                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+            }else{
+                baseResponse.setMsg("拒绝申请失败:"+src);
                 baseResponse.setUrl("handlerApplyFriend");
                 rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
             }
