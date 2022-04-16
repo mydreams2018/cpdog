@@ -279,9 +279,9 @@ public class JdbcTemplate {
         String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
         if(tokenSession!=null && !tokenSession.isBlank() && tokenNikeName != null){
             try(Connection connection = JdbcUtils.getConnection();
-                PreparedStatement preparedCount = connection.prepareStatement("select count(src_user_id) from apply_history where tar_user_id =? and src_user_id like ?");
+                PreparedStatement preparedCount = connection.prepareStatement("select count(src_user_id) from apply_history where tar_user_id =? and src_user_id like ? and apply_state=0");
                 PreparedStatement preparedStatement = connection.prepareStatement("select histy.src_user_id, histy.apply_time,histy.apply_msg, usdet.img_path from " +
-                        " (select src_user_id,apply_time,apply_msg from apply_history where tar_user_id =? and src_user_id like ?) histy " +
+                        " (select src_user_id,apply_time,apply_msg from apply_history where tar_user_id =? and src_user_id like ? and apply_state=0) histy " +
                         " join user_details usdet on histy.src_user_id = usdet.nike_name order by histy.apply_time limit ?,?")){
                 WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
                 String srcNikName = jobCharts.getNikeName();
@@ -352,7 +352,7 @@ public class JdbcTemplate {
         String rt="";
         final BaseResponse baseResponse = new BaseResponse();
         try(Connection connection = JdbcUtils.getConnection();
-            PreparedStatement preparedStatement=connection.prepareStatement("delete from apply_history where src_user_id=? and tar_user_id=?")){
+            PreparedStatement preparedStatement=connection.prepareStatement("delete from apply_history where src_user_id=? and tar_user_id=? and apply_state=0")){
             preparedStatement.setString(1,src);
             preparedStatement.setString(2,tar);
             int i = preparedStatement.executeUpdate();
