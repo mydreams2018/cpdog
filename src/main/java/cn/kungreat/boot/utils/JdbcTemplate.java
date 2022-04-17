@@ -220,9 +220,9 @@ public class JdbcTemplate {
         String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
         if(tokenSession!=null && !tokenSession.isBlank() && tokenNikeName !=null){
             try(Connection connection = JdbcUtils.getConnection();
-                PreparedStatement preparedCount = connection.prepareStatement("select count(src_user_id) from friends_history where src_user_id= ? and tar_user_id LIKE ?");
+                PreparedStatement preparedCount = connection.prepareStatement("select count(src_user_id) from friends_history where src_user_id= ? and tar_user_id LIKE ? and cur_state=1");
                 PreparedStatement preparedStatement = connection.prepareStatement("select nike_name,register_time,describes,img_path,sort_first from user_details where nike_name in "+
-                        "(select tar_user_id from friends_history where src_user_id= ? and tar_user_id LIKE ?) order by sort_first limit ?,?")){
+                        "(select tar_user_id from friends_history where src_user_id= ? and tar_user_id LIKE ? and cur_state=1) order by sort_first limit ?,?")){
                 WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
                 String nikName = jobCharts.getNikeName();
                 if(nikName != null && !nikName.isBlank()){
