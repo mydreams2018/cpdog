@@ -12,4 +12,5 @@ public class BaseResponse {
     private String url;
     private String code="100";
     private String msg="未来错误";
+    private String imgPath;
 }

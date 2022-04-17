@@ -66,7 +66,7 @@ public class JdbcTemplate {
         String rt = "";
         final BaseResponse baseResponse = new BaseResponse();
         try(Connection connection = JdbcUtils.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement("select phone,nike_name from user_details where phone=? and password=?")){
+            PreparedStatement preparedStatement = connection.prepareStatement("select phone,nike_name,img_path from user_details where phone=? and password=?")){
             WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
             if(jobCharts.getPhone().isBlank() || jobCharts.getPassword().isBlank()){
                 baseResponse.setUuid(job.getUuid());
@@ -82,6 +82,7 @@ public class JdbcTemplate {
                     baseResponse.setCode("200");
                     baseResponse.setUser(resultSet.getString("nike_name"));
                     baseResponse.setSktoken(UUID.randomUUID().toString());
+                    baseResponse.setImgPath(resultSet.getString("img_path"));
                     WebSocketChannelOutHandler.USER_UUIDS.put(baseResponse.getSktoken(),resultSet.getString("nike_name"));
                     rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                 }else{
@@ -491,4 +492,29 @@ public class JdbcTemplate {
         return rt;
     }
 
+    public static String uploadUserImg(WebSocketChannelInHandler.WebSocketState job) {
+        String rt="";
+        String nikeName = WebSocketChannelOutHandler.USER_UUIDS.get(job.getSrc());
+        final BaseResponse baseResponse = new BaseResponse();
+        try(Connection connection = JdbcUtils.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement("update user_details set img_path=? where nike_name=?")){
+            preparedStatement.setString(1,"/images/user/"+job.getFileName());
+            preparedStatement.setString(2,nikeName);
+            int i = preparedStatement.executeUpdate();
+            if(i>0){
+                baseResponse.setCode("200");
+                baseResponse.setMsg("图片上传成功");
+                baseResponse.setUrl("uploadUserImg");
+                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+            }else{
+                baseResponse.setMsg("图片上传失败");
+                baseResponse.setUrl("uploadUserImg");
+                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+            }
+            connection.commit();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return rt;
+    }
 }

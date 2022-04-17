@@ -77,6 +77,22 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     System.arraycopy(fileBuffer.array(),0,bts,0,fileBuffer.remaining());
                     Files.write(first.getFilePath(),bts, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
                     fileBuffer.clear();
+                    String baseUrl = first.getUrl();
+                    if(baseUrl.equals("uploadUserImg")){
+                        String rts = JdbcTemplate.uploadUserImg(first);
+
+                        byte[] bytes = rts.getBytes(Charset.forName("UTF-8"));
+                        int readLength = 0;
+                        byteBuffer.put(WebSocketResponse.getBytes(bytes));
+                        do{
+                            int min = Math.min(bytes.length - readLength, byteBuffer.remaining());
+                            byteBuffer.put(bytes,readLength,min);
+                            readLength = readLength + min;
+                            byteBuffer.flip();
+                            socketChannel.write(byteBuffer);
+                            byteBuffer.clear();
+                        }while (readLength<bytes.length);
+                    }
                     in.removeFirst();
                     first = in.peekFirst();
                 }else if(first.getType() == 2 && first.isConvert()){
