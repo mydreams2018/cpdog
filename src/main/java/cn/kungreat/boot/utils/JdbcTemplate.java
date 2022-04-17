@@ -167,14 +167,13 @@ public class JdbcTemplate {
                     }
                 }
                 try(Connection connection = JdbcUtils.getConnection();
-                    PreparedStatement statement = connection.prepareStatement("insert into apply_history (src_user_id, tar_user_id,apply_msg,tar_state,apply_time) values (?,?,?,?,CURDATE())");
+                    PreparedStatement statement = connection.prepareStatement("insert into apply_history (src_user_id, tar_user_id,apply_msg,apply_time) values (?,?,?,CURDATE())");
                     PreparedStatement preparedStatement = connection.prepareStatement("select tar_user_id from friends_history where src_user_id = ? and cur_state = 1 and tar_user_id in ("+nks)){
                     clearApplyFriends(nikeNm,nikeNamels,preparedStatement);
                     for(int x=0;x<nikeNamels.size();x++){
                         statement.setString(1,nikeNm);
                         statement.setString(2,nikeNamels.get(x));
                         statement.setString(3,message);
-                        statement.setInt(4,1);
                         statement.addBatch();
                     }
                     if(nikeNamels.size()>0){
@@ -342,10 +341,46 @@ public class JdbcTemplate {
             if(message.equals("delete")){
               rt=deleteApplyFriend(nikeName,tokenNikeName);
             }else if(message.equals("accept")){
-
+                rt = acceptApplyFriend(nikeName,tokenNikeName);
             }else if(message.equals("reject")){
                 rt=rejectApplyFriend(nikeName,tokenNikeName);
             }
+        }
+        return rt;
+    }
+/* 不考虑极端情况 添加好友  */
+    private static String acceptApplyFriend(String src, String tar) {
+        String rt="";
+        final BaseResponse baseResponse = new BaseResponse();
+        try(Connection connection = JdbcUtils.getConnection();
+            PreparedStatement preparedStatement=connection.prepareStatement("update apply_history set apply_state=1 where src_user_id=? and tar_user_id=? and apply_state=0");
+            PreparedStatement friendPreparedStatement = connection.prepareStatement("insert into friends_history(src_user_id,tar_user_id,add_sources,active_time,cur_state) values (?,?,?,CURDATE(),1)")){
+            preparedStatement.setString(1,src);
+            preparedStatement.setString(2,tar);
+            int i = preparedStatement.executeUpdate();
+            friendPreparedStatement.setString(1,src);
+            friendPreparedStatement.setString(2,tar);
+            friendPreparedStatement.setString(3,"1");
+            int i1 = friendPreparedStatement.executeUpdate();
+            friendPreparedStatement.setString(1,tar);
+            friendPreparedStatement.setString(2,src);
+            friendPreparedStatement.setString(3,"2");
+            int i2 = friendPreparedStatement.executeUpdate();
+            if(i>0 && i1>0 && i2>0){
+                baseResponse.setCode("200");
+                baseResponse.setMsg("接受申请成功:"+src);
+                baseResponse.setUser(src);
+                baseResponse.setUrl("handlerApplyFriend");
+                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                connection.commit();
+            }else{
+                baseResponse.setMsg("接受申请失败:"+src);
+                baseResponse.setUrl("handlerApplyFriend");
+                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                connection.rollback();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
         }
         return rt;
     }
