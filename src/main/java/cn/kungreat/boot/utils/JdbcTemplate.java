@@ -436,4 +436,59 @@ public class JdbcTemplate {
         }
         return rt;
     }
+//现有好友处理
+    public static String handlerCurrentFriend(WebSocketChannelInHandler.WebSocketState job) {
+        String rt="";
+        String tokenSession = job.getCharts().getTokenSession();
+        String message = job.getCharts().getMessage();
+        String nikeName = job.getCharts().getNikeName();
+        if(tokenSession!=null && !tokenSession.isBlank() && message!=null && !message.isBlank()
+                && nikeName!= null && !nikeName.isBlank()){
+            String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+            if(tokenNikeName!=null){
+                if(message.equals("add group")){
+
+                }else if(message.equals("new message")){
+
+                }else if(message.equals("delete user")){
+                    rt=deleteCurrentFriend(tokenNikeName,nikeName);
+                }
+            }
+        }
+        return rt;
+    }
+/* src发起的源 tar 目标 */
+    private static String deleteCurrentFriend(String src,String tar){
+        String rt="";
+        final BaseResponse baseResponse = new BaseResponse();
+        try(Connection connection = JdbcUtils.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement("update friends_history set cur_state=2,delete_source=?,delete_time=CURDATE() " +
+                    "where src_user_id=? and tar_user_id=? and cur_state=1")){
+            preparedStatement.setString(1,"1");
+            preparedStatement.setString(2,src);
+            preparedStatement.setString(3,tar);
+            int num1 = preparedStatement.executeUpdate();
+            preparedStatement.setString(1,"2");
+            preparedStatement.setString(2,tar);
+            preparedStatement.setString(3,src);
+            int num2 = preparedStatement.executeUpdate();
+            if(num1>0 && num2>0){
+                baseResponse.setCode("200");
+                baseResponse.setMsg("删除好友成功:"+src);
+                baseResponse.setUser(tar);
+                baseResponse.setUrl("handlerCurrentFriend");
+                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                connection.commit();
+            }else{
+                baseResponse.setMsg("删除好友失败:"+src);
+                baseResponse.setUrl("handlerCurrentFriend");
+                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                connection.rollback();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return rt;
+    }
+
 }
