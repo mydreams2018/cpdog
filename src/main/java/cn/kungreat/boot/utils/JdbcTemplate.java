@@ -450,7 +450,7 @@ public class JdbcTemplate {
                 if(message.equals("add group")){
 
                 }else if(message.equals("new message")){
-
+                    rt=addMsgView(tokenNikeName,nikeName);
                 }else if(message.equals("delete user")){
                     rt=deleteCurrentFriend(tokenNikeName,nikeName);
                 }
@@ -458,7 +458,55 @@ public class JdbcTemplate {
         }
         return rt;
     }
-/* src发起的源 tar 目标 */
+
+    private static String addMsgView(String src,String tar){
+        String rt="";
+        final BaseResponse baseResponse = new BaseResponse();
+        try(Connection connection = JdbcUtils.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement("select id,user_src, user_tar, show_state, src_tar_uuid, last_msg_time from msg_view where user_src=? and user_tar=?"
+                    ,ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_UPDATABLE);
+            PreparedStatement insert = connection.prepareStatement("insert into msg_view(user_src, user_tar, src_tar_uuid, last_msg_time,id) values (?,?,UUID(),unix_timestamp(now()),UUID())")){
+            preparedStatement.setString(1,src);
+            preparedStatement.setString(2,tar);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()){
+                //修改自已当前的视图信息
+                resultSet.updateInt("show_state", 1);
+                resultSet.updateInt("last_msg_time",(int)(System.currentTimeMillis()/1000));
+                resultSet.updateRow();
+            }else{
+                preparedStatement.setString(1,tar);
+                preparedStatement.setString(2,src);
+                resultSet = preparedStatement.executeQuery();
+                if(resultSet.next()){
+                    String tempUUID = resultSet.getString("src_tar_uuid");
+                    //从对方已有信息获得数据 添加自已的视图信息 src_tar_uuid 这个是双方唯一的信息认证标识
+                    resultSet.moveToInsertRow();
+                    resultSet.updateString("id",UUID.randomUUID().toString());
+                    resultSet.updateString("user_src",src);
+                    resultSet.updateString("user_tar",tar);
+                    resultSet.updateInt("show_state",1);
+                    resultSet.updateString("src_tar_uuid",tempUUID);
+                    resultSet.updateInt("last_msg_time",(int)(System.currentTimeMillis()/1000));
+                    resultSet.insertRow();
+                }else{
+                    //这里是完全的新增一个视图
+                    insert.setString(1,src);
+                    insert.setString(2,tar);
+                    insert.executeUpdate();
+                }
+            }
+            connection.commit();
+            baseResponse.setCode("200");
+            baseResponse.setUrl("handlerCurrentFriend");
+            baseResponse.setMsg("添加聊天视图成功");
+            rt = WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return rt;
+    }
+    /* src发起的源 tar 目标 */
     private static String deleteCurrentFriend(String src,String tar){
         String rt="";
         final BaseResponse baseResponse = new BaseResponse();
