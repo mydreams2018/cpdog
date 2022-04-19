@@ -565,4 +565,64 @@ public class JdbcTemplate {
         }
         return rt;
     }
+//查询聊天视图
+    public static String queryChartsViews(WebSocketChannelInHandler.WebSocketState job) {
+        String rt="";
+        String tokenSession = job.getCharts().getTokenSession();
+        String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+        if(tokenSession!=null && !tokenSession.isBlank() && tokenNikeName != null){
+            try(Connection connection = JdbcUtils.getConnection();
+                PreparedStatement preparedCount = connection.prepareStatement("select count(id) from msg_view where user_src =? and show_state=1 and user_tar like ?");
+                PreparedStatement preparedStatement = connection.prepareStatement("select msgview.user_tar,msgview.id,msgview.src_tar_uuid,msgview.last_msg_time,msgview.last_msg,usdet.img_path from " +
+                        " (select user_tar,id,src_tar_uuid,FROM_UNIXTIME(last_msg_time,'%h:%i') as last_msg_time,last_msg from msg_view where user_src =? and show_state=1 and user_tar like ?) msgview " +
+                        " join user_details usdet on msgview.user_tar = usdet.nike_name order by msgview.last_msg_time DESC limit ?,?")){
+                WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
+                String srcNikName = jobCharts.getNikeName();
+                if(srcNikName!=null && !srcNikName.isBlank()){
+                    preparedCount.setString(1,tokenNikeName);
+                    preparedCount.setString(2,"%"+srcNikName+"%");
+                    preparedStatement.setString(1,tokenNikeName);
+                    preparedStatement.setString(2,"%"+srcNikName+"%");
+                }else{
+                    preparedCount.setString(1,tokenNikeName);
+                    preparedCount.setString(2,"%");
+                    preparedStatement.setString(1,tokenNikeName);
+                    preparedStatement.setString(2,"%");
+                }
+                ResultSet rs1 = preparedCount.executeQuery();
+                int nums = 0;
+                if(rs1.next()){
+                    nums = rs1.getInt(1);
+                }
+                List<UserDetails> list  = null;
+                if(nums > 0){
+                    Paging paging = new Paging();
+                    list = new ArrayList<>();
+                    paging.setCurrentPage(jobCharts.getCurrentPage());
+                    preparedStatement.setInt(3, paging.getStart());
+                    preparedStatement.setInt(4, paging.getPageSize());
+                    ResultSet resultSet = preparedStatement.executeQuery();
+                    while (resultSet.next()){
+                        UserDetails userDetails = new UserDetails();
+                        userDetails.setRegisterTime(resultSet.getString("last_msg_time"));
+                        userDetails.setDescribes(resultSet.getString("last_msg"));
+                        userDetails.setNikeName(resultSet.getString("user_tar"));
+                        userDetails.setImgPath(resultSet.getString("img_path"));
+                        userDetails.setId(resultSet.getString("id"));
+                        userDetails.setSrcTarUUID(resultSet.getString("src_tar_uuid"));
+                        list.add(userDetails);
+                    }
+                    paging.setData(nums,paging.getPageSize(),paging.getCurrentPage());
+                    QueryResult result = new QueryResult();
+                    result.setDatas(list);
+                    result.setPage(paging);
+                    result.setCurrentActiveId(jobCharts.getCurrentActiveId());
+                    rt = WebSocketChannelInHandler.MAP_JSON.writeValueAsString(result);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        return rt;
+    }
 }

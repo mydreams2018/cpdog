@@ -11,4 +11,6 @@ public class UserDetails {
     private String describes;
     private String imgPath;
     private String sortFirst;
+    private String id;
+    private String srcTarUUID;
 }
