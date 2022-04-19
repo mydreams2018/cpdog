@@ -1,0 +1,73 @@
+-- auto-generated definition
+create table apply_history
+(
+    src_user_id varchar(32)   null comment '源用户信息ID',
+    tar_user_id varchar(32)   null comment '目标用户ID',
+    apply_time  varchar(12)   null comment '申请时间',
+    apply_msg   varchar(255)  null comment '申请的信息',
+    apply_state int default 0 null comment '0:默认没处理1:申请成功2:申请失败'
+)
+    comment '好友申请历史记录.保留多条记录.一次操作改变所有现有申请的状态';
+
+-- auto-generated definition
+create table friends_history
+(
+    src_user_id   varchar(32)   null comment '源用户ID',
+    tar_user_id   varchar(32)   null comment '目标用户ID',
+    add_sources   int           null comment '1:来源src.2:来源tar',
+    active_time   mediumtext    null comment '生效的时间',
+    cur_state     int default 0 null comment '当前的状态0:default 1:正常.2:已经删除',
+    delete_source int           null comment '删除来源.1:src 2:tar',
+    delete_time   mediumtext    null comment '删除时间'
+)
+    comment '好友的历史记录.存在多次添加删除的情况.
+.删除记录记的是成为好友后删除的记录';
+
+-- auto-generated definition
+create table msg_describe
+(
+    src_tar_uuid  varchar(38)   not null comment 'msg_view 的关联信息标识'
+        primary key,
+    data_type     int default 1 null comment '数据类型1:文字信息2:文件内容',
+    receive_state int default 0 null comment '接收方状态,0:没有接收.1:已经接收',
+    send_time     bigint        null comment '发送的时间秒值',
+    content       text          null comment '文字信息内容',
+    file_name     varchar(255)  null comment '文件名称,存原始的文件名.和生成的UUID文件名.用:分割',
+    src_user      varchar(32)   null comment '源发送用户',
+    tar_user      varchar(32)   null comment '目标接收用户'
+)
+    comment '发送的信息记录表';
+
+-- auto-generated definition
+create table msg_view
+(
+    id            varchar(38)   not null comment '主键'
+        primary key,
+    user_src      varchar(32)   not null comment '源用户',
+    user_tar      varchar(32)   not null comment '目标用户',
+    show_state    int default 1 null comment '0:不显示1:显示',
+    src_tar_uuid  varchar(38)   null comment '二个用户聊天的唯一确认标识.此标识在信息记录表中用来关联用户的聊天信息',
+    last_msg_time bigint        null comment '最后的信息时间秒数',
+    last_msg      varchar(88)   null comment '最后一次的信息缩略图'
+)
+    comment '聊天视图';
+
+-- auto-generated definition
+create table user_details
+(
+    id            varchar(32)                                    not null comment '用户的唯一ID标识'
+        primary key,
+    phone         varchar(12)                                    not null comment '用户手机号',
+    nike_name     varchar(12)                                    not null comment '用户呢称',
+    register_time varchar(12)                                    null comment '注册时间.年月日',
+    password      varchar(255)                                   not null comment '密码标识',
+    describes     varchar(255)                                   null comment '描述',
+    img_path      varchar(64) default '/images/user/default.jpg' null comment '用户图片地址',
+    sort_first    varchar(1)                                     null comment '排序的首字母',
+    constraint user_details_nike_name_uindex
+        unique (nike_name),
+    constraint user_details_phone_uindex
+        unique (phone)
+)
+    comment '用户详情';
+
