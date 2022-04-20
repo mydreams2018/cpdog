@@ -3,6 +3,7 @@ package cn.kungreat.boot.utils;
 import cn.kungreat.boot.handler.WebSocketChannelInHandler;
 import cn.kungreat.boot.handler.WebSocketChannelOutHandler;
 import cn.kungreat.boot.jb.BaseResponse;
+import cn.kungreat.boot.jb.MsgDescribe;
 import cn.kungreat.boot.jb.QueryResult;
 import cn.kungreat.boot.jb.UserDetails;
 
@@ -625,4 +626,99 @@ public class JdbcTemplate {
         }
         return rt;
     }
+//聊天视图处理
+    public static String handlerChartsViews(WebSocketChannelInHandler.WebSocketState job) {
+        String rt="";
+        String tokenSession = job.getCharts().getTokenSession();
+        String message = job.getCharts().getMessage();
+        String nikeName = job.getCharts().getNikeName();
+        if(tokenSession!=null && !tokenSession.isBlank() && message!=null && !message.isBlank()
+                && nikeName!= null && !nikeName.isBlank()){
+            String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+            if(tokenNikeName!=null){
+                if(message.equals("hide")){
+                    rt=hideChartsViews(nikeName,tokenNikeName);
+                }else if(message.equals("show")){
+                    rt=showChartsDetails(nikeName,tokenNikeName,job);
+                }
+            }
+        }
+        return rt;
+    }
+
+    private static String showChartsDetails(String primaryId, String tokenNikeName,WebSocketChannelInHandler.WebSocketState job) {
+        String rt="";
+        try(Connection connection = JdbcUtils.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement("select id from msg_view where src_tar_uuid=? and user_src=?");
+            PreparedStatement count = connection.prepareStatement("select count(id) from msg_describe where src_tar_uuid=?");
+            PreparedStatement prepareRt =connection.prepareStatement("select id, src_tar_uuid, data_type, receive_state, send_time, content, file_name, src_user, tar_user from msg_describe "+
+                    "  where src_tar_uuid=? order by send_time desc limit ?,?")){
+            preparedStatement.setString(1,primaryId);
+            preparedStatement.setString(2,tokenNikeName);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            //根据 必要的规则能查出数据说明 当前用户是数据的所有者
+            if(resultSet.next()){
+                count.setString(1,primaryId);
+                prepareRt.setString(1,primaryId);
+                ResultSet rs1 = count.executeQuery();
+                int nums = 0;
+                if(rs1.next()){
+                    nums = rs1.getInt(1);
+                }
+                List<MsgDescribe> list  = null;
+                if(nums > 0){
+                    Paging paging = new Paging();
+                    list = new ArrayList<>();
+                    paging.setCurrentPage(job.getCharts().getCurrentPage());
+                    prepareRt.setInt(2,paging.getStart());
+                    prepareRt.setInt(3,paging.getPageSize());
+                    ResultSet resultSet2 = prepareRt.executeQuery();
+                    while (resultSet2.next()){
+                        MsgDescribe msgDescribe = new MsgDescribe();
+                        msgDescribe.setId(resultSet2.getString("id"));
+                        msgDescribe.setSrcTarUUID(resultSet2.getString("src_tar_uuid"));
+                        msgDescribe.setDataType(resultSet2.getInt("data_type"));
+                        msgDescribe.setReceiveState(resultSet2.getInt("receive_state"));
+                        msgDescribe.setSendTime(resultSet2.getLong("send_time"));
+                        msgDescribe.setContent(resultSet2.getString("content"));
+                        msgDescribe.setFileName(resultSet2.getString("file_name"));
+                        msgDescribe.setSrcUser(resultSet2.getString("src_user"));
+                        msgDescribe.setTarUser(resultSet2.getString("tar_user"));
+                        list.add(msgDescribe);
+                    }
+                    paging.setData(nums,paging.getPageSize(),paging.getCurrentPage());
+                    QueryResult result = new QueryResult();
+                    result.setDatas(list);
+                    result.setPage(paging);
+                    result.setCurrentActiveId(job.getCharts().getCurrentActiveId());
+                    rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(result);
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return rt;
+    }
+
+    //隐藏用户的聊天视图
+    public static String hideChartsViews(String primaryId,String userNik){
+        String rt="";
+        final BaseResponse baseResponse = new BaseResponse();
+        try(Connection connection = JdbcUtils.getConnection();
+            PreparedStatement preparedStatement= connection.prepareStatement("update msg_view set show_state=0 where id=? and user_src=?")){
+            preparedStatement.setString(1,primaryId);
+            preparedStatement.setString(2,userNik);
+            preparedStatement.executeUpdate();
+            connection.commit();
+            baseResponse.setCode("200");
+            baseResponse.setUrl("handlerChartsViews");
+            baseResponse.setMsg("hide");
+            baseResponse.setUuid(primaryId);
+            rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return rt;
+    }
+
 }
