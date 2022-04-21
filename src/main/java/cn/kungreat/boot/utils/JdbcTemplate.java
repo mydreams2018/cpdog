@@ -8,10 +8,7 @@ import cn.kungreat.boot.jb.QueryResult;
 import cn.kungreat.boot.jb.UserDetails;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class JdbcTemplate {
 
@@ -665,7 +662,7 @@ public class JdbcTemplate {
                 if(rs1.next()){
                     nums = rs1.getInt(1);
                 }
-                List<MsgDescribe> list  = null;
+                List<MsgDescribe> list  = Collections.emptyList();
                 if(nums > 0){
                     Paging paging = new Paging();
                     list = new ArrayList<>();
@@ -687,6 +684,15 @@ public class JdbcTemplate {
                         list.add(msgDescribe);
                     }
                     paging.setData(nums,paging.getPageSize(),paging.getCurrentPage());
+                    QueryResult result = new QueryResult();
+                    result.setDatas(list);
+                    result.setPage(paging);
+                    result.setCurrentActiveId(job.getCharts().getCurrentActiveId());
+                    result.setDataId(primaryId);
+                    rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(result);
+                }else{
+                    Paging paging = new Paging();
+                    paging.setData(0,paging.getPageSize(),paging.getCurrentPage());
                     QueryResult result = new QueryResult();
                     result.setDatas(list);
                     result.setPage(paging);
@@ -721,5 +727,61 @@ public class JdbcTemplate {
         }
         return rt;
     }
-
+//给指定的用户发送聊天信息
+    public static String handlerChartsSend(WebSocketChannelInHandler.WebSocketState job) {
+        String rt="";
+        String tokenSession = job.getCharts().getTokenSession();
+        String message = job.getCharts().getMessage();
+        String nikeName = job.getCharts().getNikeName();
+        String srcTarUUID = job.getCharts().getSrcTarUUID();
+        if(tokenSession!=null && !tokenSession.isBlank() && message!=null && !message.isBlank()
+                && nikeName!= null && !nikeName.isBlank() && srcTarUUID!=null && !srcTarUUID.isBlank()){
+            String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+            if(tokenNikeName!=null){
+                final BaseResponse baseResponse = new BaseResponse();
+                try(Connection connection = JdbcUtils.getConnection();
+                    PreparedStatement preparedUpdate = connection.prepareStatement("update msg_view set last_msg=?,last_msg_time=unix_timestamp(now()) where user_src=? and user_tar=? and src_tar_uuid=?");
+                    PreparedStatement insert = connection.prepareStatement(" insert into msg_describe(id, src_tar_uuid, data_type, receive_state, send_time, content, file_name, src_user, tar_user ) " +
+                            " values (UUID(),?,?,0,unix_timestamp(now()),?,?,?,?)")){
+                    if(message.length()>82){
+                        preparedUpdate.setString(1,message.substring(0,82));
+                    }else{
+                        preparedUpdate.setString(1,message);
+                    }
+                    preparedUpdate.setString(2,tokenNikeName);
+                    preparedUpdate.setString(3,nikeName);
+                    preparedUpdate.setString(4,srcTarUUID);
+                    int num = preparedUpdate.executeUpdate();
+                    if(num > 0){
+                        insert.setString(1,srcTarUUID);
+                        insert.setInt(2,1);
+                        insert.setString(3,message);
+                        insert.setString(4,"");
+                        insert.setString(5,tokenNikeName);
+                        insert.setString(6,nikeName);
+                        int i = insert.executeUpdate();
+                        if(i>0){
+                            baseResponse.setCode("200");
+                            baseResponse.setUrl("handlerChartsSend");
+                            baseResponse.setMsg(message);
+                            baseResponse.setUuid(job.getUuid());
+                            baseResponse.setSrcTarUUID(srcTarUUID);
+                            rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                            connection.commit();
+                        }else{
+                            baseResponse.setUrl("handlerChartsSend");
+                            baseResponse.setMsg("发送聊天信息失败");
+                            baseResponse.setUuid(job.getUuid());
+                            baseResponse.setSrcTarUUID(srcTarUUID);
+                            rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                            connection.rollback();
+                        }
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }
+        return rt;
+    }
 }
