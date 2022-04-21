@@ -12,4 +12,5 @@ public class QueryResult {
     private Paging page;
     private List datas;
     private String currentActiveId;
+    private String dataId;
 }

@@ -691,6 +691,7 @@ public class JdbcTemplate {
                     result.setDatas(list);
                     result.setPage(paging);
                     result.setCurrentActiveId(job.getCharts().getCurrentActiveId());
+                    result.setDataId(primaryId);
                     rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(result);
                 }
             }
