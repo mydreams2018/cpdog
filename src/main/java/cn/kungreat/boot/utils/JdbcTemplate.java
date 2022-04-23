@@ -6,6 +6,7 @@ import cn.kungreat.boot.jb.BaseResponse;
 import cn.kungreat.boot.jb.MsgDescribe;
 import cn.kungreat.boot.jb.QueryResult;
 import cn.kungreat.boot.jb.UserDetails;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.sql.*;
 import java.util.*;
@@ -740,6 +741,16 @@ public class JdbcTemplate {
             String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
             if(tokenNikeName!=null){
                 final BaseResponse baseResponse = new BaseResponse();
+                if(!isHasFriend(tokenNikeName,nikeName)){
+                    baseResponse.setUrl("handlerChartsSend");
+                    baseResponse.setMsg("发送失败已经不是好友关系了:"+nikeName);
+                    try {
+                        rt = WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                    }
+                    return rt;
+                }
                 try(Connection connection = JdbcUtils.getConnection();
                     PreparedStatement preparedUpdate = connection.prepareStatement("update msg_view set last_msg=?,last_msg_time=unix_timestamp(now()) where user_src=? and user_tar=? and src_tar_uuid=?");
                     PreparedStatement insert = connection.prepareStatement(" insert into msg_describe(id, src_tar_uuid, data_type, receive_state, send_time, content, file_name, src_user, tar_user ) " +
@@ -784,6 +795,22 @@ public class JdbcTemplate {
             }
         }
         return rt;
+    }
+    //查询是否好友关系
+    public static boolean isHasFriend(String src,String tar){
+        boolean is = false;
+        try(Connection connection = JdbcUtils.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement("select src_user_id from friends_history where src_user_id=? and tar_user_id=? and cur_state=1")){
+            preparedStatement.setString(1,src);
+            preparedStatement.setString(2,tar);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                is = true;
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return is;
     }
 //修改用户的描述
     public static String handlerDesUpdate(WebSocketChannelInHandler.WebSocketState job) {
