@@ -64,7 +64,7 @@ public class JdbcTemplate {
         String rt = "";
         final BaseResponse baseResponse = new BaseResponse();
         try(Connection connection = JdbcUtils.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement("select phone,nike_name,img_path from user_details where phone=? and password=?")){
+            PreparedStatement preparedStatement = connection.prepareStatement("select describes,phone,nike_name,img_path from user_details where phone=? and password=?")){
             WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
             if(jobCharts.getPhone().isBlank() || jobCharts.getPassword().isBlank()){
                 baseResponse.setUuid(job.getUuid());
@@ -78,6 +78,7 @@ public class JdbcTemplate {
                     baseResponse.setUuid(job.getUuid());
                     baseResponse.setMsg("用户认证成功");
                     baseResponse.setCode("200");
+                    baseResponse.setDescribes(resultSet.getString("describes"));
                     baseResponse.setUser(resultSet.getString("nike_name"));
                     baseResponse.setSktoken(UUID.randomUUID().toString());
                     baseResponse.setImgPath(resultSet.getString("img_path"));
@@ -780,6 +781,36 @@ public class JdbcTemplate {
                 }catch (Exception e){
                     e.printStackTrace();
                 }
+            }
+        }
+        return rt;
+    }
+//修改用户的描述
+    public static String handlerDesUpdate(WebSocketChannelInHandler.WebSocketState job) {
+        String rt="";
+        String tokenSession = job.getCharts().getTokenSession();
+        String nikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+        String message = job.getCharts().getMessage();
+        if(nikeName !=null && !nikeName.isBlank() && message!=null && !message.isBlank()){
+            final BaseResponse baseResponse = new BaseResponse();
+            try(Connection connection = JdbcUtils.getConnection();
+                PreparedStatement preparedStatement = connection.prepareStatement("update user_details set describes=? where nike_name=?")){
+                preparedStatement.setString(1,message);
+                preparedStatement.setString(2,nikeName);
+                int i = preparedStatement.executeUpdate();
+                if(i>0){
+                    baseResponse.setCode("200");
+                    baseResponse.setMsg("修改备注成功");
+                    baseResponse.setUrl("handlerDesUpdate");
+                    connection.commit();
+                    rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                }else{
+                    baseResponse.setMsg("修改备注失败");
+                    baseResponse.setUrl("handlerDesUpdate");
+                    rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
             }
         }
         return rt;

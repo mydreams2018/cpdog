@@ -14,4 +14,5 @@ public class BaseResponse {
     private String msg="未来错误";
     private String imgPath;
     private String srcTarUUID;
+    private String describes;
 }
