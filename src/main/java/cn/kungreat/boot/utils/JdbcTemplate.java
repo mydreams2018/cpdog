@@ -499,7 +499,7 @@ public class JdbcTemplate {
             connection.commit();
             baseResponse.setCode("200");
             baseResponse.setUrl("handlerCurrentFriend");
-            baseResponse.setMsg("添加聊天视图成功");
+            baseResponse.setMsg("添加聊天视图成功:"+tar);
             rt = WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
         }catch (Exception e){
             e.printStackTrace();
