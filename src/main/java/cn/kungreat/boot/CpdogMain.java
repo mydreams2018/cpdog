@@ -7,12 +7,38 @@ import cn.kungreat.boot.impl.ChooseWorkServerImpl;
 import cn.kungreat.boot.impl.DefaultLogServer;
 import cn.kungreat.boot.impl.NioBossServerSocketImpl;
 import cn.kungreat.boot.impl.NioWorkServerSocketImpl;
+import cn.kungreat.boot.utils.JdbcUtils;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Properties;
 import java.util.logging.Logger;
 
 public class CpdogMain {
+
+    static {
+        InputStream cpdog = ClassLoader.getSystemResourceAsStream("cpdog.properties");
+        Properties props = new Properties();
+        try {
+            props.load(cpdog);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        WebSocketChannelInHandler.FILE_PATH=props.getProperty("user.imgPath");
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(props.getProperty("jdbc.url"));
+        config.setUsername(props.getProperty("user.name"));
+        config.setPassword(props.getProperty("user.password"));
+        config.setAutoCommit(false);
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "50");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "512");
+        JdbcUtils.DATA_SOURCE = new HikariDataSource(config);
+    }
 
     public static void main(String[] args) throws Exception {
         NioBossServerSocket nioBossServerSocket = NioBossServerSocketImpl.create();
