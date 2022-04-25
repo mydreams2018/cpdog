@@ -26,7 +26,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
     //二进制 数据时用来做的缓存
     public static final Map<Integer,String> WEBSOCKETSTATEBYTES = new ConcurrentHashMap<>(256);
 
-    public static final String FILE_PATH = "C:/Users/kungreat/IdeaProjects/dwbbs/web/images/user";
+    public static String FILE_PATH;
     public static final ObjectMapper MAP_JSON = new ObjectMapper(); //create once, reuse
     @Override
     public void before(SocketChannel socketChannel,ByteBuffer buffer) throws Exception {

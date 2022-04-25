@@ -79,7 +79,6 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     in.removeFirst();
                     first = in.peekFirst();
                 }else if(first.getType() == 2 && first.isDone()){
-                    //写出文件 FileSystems.getDefault()
                     System.out.println("文件写出完毕:"+first.getFileName());
                     ByteBuffer fileBuffer = first.getByteBuffer();
                     fileBuffer.flip();
@@ -114,15 +113,19 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     Files.write(first.getFilePath(),bts, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
                     fileBuffer.clear();
                     break;
-                }else if(first.getType() == 8){//关闭信息状态标识
+                }else if(first.getType() == 8){
+                    //关闭信息状态标识
                     System.out.println("out type ==8 ");
                     break;
-                }else if(first.getType() == 999){//初始化的一个空对象标识
+                }else if(first.getType() == 999){
+                    //初始化的一个空对象标识
                     System.out.println("out type 999");
                     break;
-                }else if(first.getType() == 2){//第一次产生的头信息的二进制数据
+                }else if(first.getType() == 2){
+                    //第一次产生的头信息的二进制数据
                     break;
-                }else if(first.getType() == 1){//文本数据过大时没有读取完成不做操作
+                }else if(first.getType() == 1){
+                    //文本数据过大时没有读取完成不做操作
                     break;
                 }else{
                     System.out.println("out type 未知");

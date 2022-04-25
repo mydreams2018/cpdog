@@ -47,6 +47,30 @@
 
 	<build>
 		<plugins>
+<!--			将工程依赖的jar包，复制至target/lib目录下进行管理，方便已生成jar的工程进行引用。-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.3.0</version>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+							<overWriteReleases>false</overWriteReleases>
+							<overWriteSnapshots>false</overWriteSnapshots>
+							<overWriteIfNewer>true</overWriteIfNewer>
+						<!--	排除传递		-->
+							<excludeTransitive>false</excludeTransitive>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -54,8 +78,10 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<addClasspath>false</addClasspath>
-<!--							<mainClass>cn.kungreat.one.ByteBufTs</mainClass>-->
+							<addClasspath>true</addClasspath>
+					<!--			mf文件 class-path 前缀 会自动加上jar包名称		-->
+							<classpathPrefix>lib/</classpathPrefix>
+							<mainClass>cn.kungreat.boot.CpdogMain</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
