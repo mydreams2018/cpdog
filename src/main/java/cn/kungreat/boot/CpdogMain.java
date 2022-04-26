@@ -1,5 +1,6 @@
 package cn.kungreat.boot;
 
+import cn.kungreat.boot.an.CpdogController;
 import cn.kungreat.boot.handler.WebSocketChannelInHandler;
 import cn.kungreat.boot.handler.WebSocketChannelOutHandler;
 import cn.kungreat.boot.handler.WebSocketProtocolHandler;
@@ -11,21 +12,28 @@ import cn.kungreat.boot.utils.JdbcUtils;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-import java.io.IOException;
+import java.io.File;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
+import java.net.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Properties;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.logging.Logger;
 
 public class CpdogMain {
 
+    public static final List<Class<?>> CONTROLLERS = new ArrayList<>();
     static {
         InputStream cpdog = ClassLoader.getSystemResourceAsStream("cpdog.properties");
         Properties props = new Properties();
         try {
             props.load(cpdog);
-        } catch (IOException e) {
+            String scanPack = props.getProperty("scan.packages");
+            setControllers(scanPack);
+        } catch (Exception e) {
             e.printStackTrace();
         }
         WebSocketChannelInHandler.FILE_PATH=props.getProperty("user.imgPath");
@@ -38,6 +46,77 @@ public class CpdogMain {
         config.addDataSourceProperty("prepStmtCacheSize", "50");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "512");
         JdbcUtils.DATA_SOURCE = new HikariDataSource(config);
+    }
+
+    private static void setControllers(String scanPack) throws Exception {
+        String pks = scanPack==null?CpdogMain.class.getPackage().getName().replace(".","/"):scanPack.replace(".","/");
+        URL location = ClassLoader.getSystemClassLoader().getResource(pks);
+        String protocol = location.getProtocol();
+        if(protocol.equals("file")){
+            loopFile(new File(location.getFile()),pks.replace("/","."));
+        }if(protocol.equals("jar")){
+            loopJap(location,pks);
+        }
+        System.out.println(CONTROLLERS);
+    }
+
+    public static void loopFile(File fl,String pks) throws Exception {
+        if(fl.exists()){
+            File[] list = fl.listFiles();
+            if(list != null && list.length > 0){
+                for(int x=0;x<list.length;x++){
+                    File temp = list[x];
+                    String s = temp.toString().replace(File.separator,".");
+                    if(s.endsWith(".class")){
+                        s = s.replace(".class","");
+                        Class cls = Class.forName(pks+s.split(pks)[1]);
+                        if (cls.isAnnotationPresent(CpdogController.class)){
+                            addControllers(cls);
+                        }
+                    }
+                    if(temp.isDirectory()){
+                        loopFile(temp,pks);
+                    }
+                }
+            }
+        }
+    }
+
+    public static void loopJap(URL location,String scanPack) throws Exception {
+        JarURLConnection jarConnection = (JarURLConnection)location.openConnection();
+        JarFile jarFile = jarConnection.getJarFile();
+        Enumeration<JarEntry> entries = jarFile.entries();
+        while (entries.hasMoreElements()){
+            JarEntry jarEntryFile = entries.nextElement();
+            String realName = jarEntryFile.getRealName();
+            if(realName.endsWith(".class") && realName.contains(scanPack)){
+                String tempCls = realName.replace("/",".").replace(".class","");
+                Class cls = Class.forName(tempCls);
+                if (cls.isAnnotationPresent(CpdogController.class)){
+                    addControllers(cls);
+                }
+            }
+        }
+    }
+
+    public static void addControllers(Class<?> cls){
+        if(CONTROLLERS.isEmpty()){
+            CONTROLLERS.add(cls);
+        }else{
+            int sortSrc = cls.getAnnotation(CpdogController.class).index();
+            for(int i = 0; i < CONTROLLERS.size(); i++) {
+                Class<?> aClass = CONTROLLERS.get(i);
+                CpdogController annotation = aClass.getAnnotation(CpdogController.class);
+                int index = annotation.index();
+                if(sortSrc <= index){
+                    CONTROLLERS.add(i,cls);
+                    return;
+                }else if(i==CONTROLLERS.size()-1){
+                    CONTROLLERS.add(cls);
+                    return;
+                }
+            }
+        }
     }
 
     public static void main(String[] args) throws Exception {
