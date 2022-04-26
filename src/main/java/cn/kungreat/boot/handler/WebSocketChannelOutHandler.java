@@ -108,7 +108,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
         String baseUrl = first.getUrl();
         for (int i=0; i < CpdogMain.CONTROLLERS.size(); i++){
             Class<?> aClass = CpdogMain.CONTROLLERS.get(i);
-            Method[] declaredMethods = aClass.getDeclaredMethods();
+            Method[] declaredMethods = aClass.getMethods();
             if(declaredMethods != null && declaredMethods.length>0){
                 for(int x=0;x<declaredMethods.length;x++){
                     Method methods = declaredMethods[x];
