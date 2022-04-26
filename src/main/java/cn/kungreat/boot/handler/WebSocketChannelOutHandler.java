@@ -103,7 +103,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
     public void clearBuffers(SocketChannel socketChannel) {
 
     }
-
+    //通过反射去调用方法根据 类名上有CpdogController 注解按index 优先级调用 只匹配一次
     public void answer(WebSocketChannelInHandler.WebSocketState first,ByteBuffer byteBuffer, SocketChannel socketChannel) throws Exception {
         String baseUrl = first.getUrl();
         for (int i=0; i < CpdogMain.CONTROLLERS.size(); i++){
