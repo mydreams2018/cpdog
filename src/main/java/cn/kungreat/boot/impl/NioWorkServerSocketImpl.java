@@ -257,20 +257,11 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }
             return linkIn;
         }
-//清理特殊情况下 断开的channel todo
+//清理特殊情况下 断开的channel USER_UUIDS-clear  todo
         private void clearBuffer(){
             if(System.currentTimeMillis() > curTimes + (clearCount * 172800000)){
                 clearCount++;
-                try {
-                    Set<SelectionKey> keys = selector.keys();
-                    for (SelectionKey ky: keys) {
-                        SocketChannel channel = (SocketChannel) ky.channel();
 
-                    }
-                }catch (Exception e){
-                    e.printStackTrace();
-                    System.out.println("clear-channel:error");
-                }
             }
         }
     }
