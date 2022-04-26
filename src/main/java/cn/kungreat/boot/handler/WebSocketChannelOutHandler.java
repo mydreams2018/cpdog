@@ -1,9 +1,11 @@
 package cn.kungreat.boot.handler;
 
 import cn.kungreat.boot.ChannelOutHandler;
-import cn.kungreat.boot.utils.JdbcTemplate;
+import cn.kungreat.boot.CpdogMain;
 import cn.kungreat.boot.utils.WebSocketResponse;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
@@ -31,51 +33,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
             WebSocketChannelInHandler.WebSocketState first = in.peekFirst();
             while (first != null) {
                 if(first.getType() == 1 && first.isDone()){
-                    String baseUrl = first.getUrl();
-                    if(baseUrl.equals("register") || baseUrl.equals("login")
-                            || baseUrl.equals("queryUsers") || baseUrl.equals("applyFriends")
-                    || baseUrl.equals("queryUsersFriends") || baseUrl.equals("queryAnswerFriends")
-                    || baseUrl.equals("handlerApplyFriend") || baseUrl.equals("handlerCurrentFriend")
-                    || baseUrl.equals("queryChartsViews") || baseUrl.equals("handlerChartsViews")
-                    || baseUrl.equals("handlerChartsSend") || baseUrl.equals("handlerDesUpdate")){
-                        String rts="";
-                        if(baseUrl.equals("register")){
-                            rts = JdbcTemplate.register(first);
-                        }else if(baseUrl.equals("login")){
-                            rts = JdbcTemplate.login(first);
-                        }else if(baseUrl.equals("queryUsers")){
-                            rts = JdbcTemplate.queryUsers(first);
-                        }else if(baseUrl.equals("applyFriends")){
-                            rts = JdbcTemplate.applyFriends(first);
-                        }else if(baseUrl.equals("queryUsersFriends")){
-                            rts = JdbcTemplate.queryUsersFriends(first);
-                        }else if(baseUrl.equals("queryAnswerFriends")){
-                            rts = JdbcTemplate.queryAnswerFriends(first);
-                        }else if(baseUrl.equals("handlerApplyFriend")){
-                            rts = JdbcTemplate.handlerApplyFriend(first);
-                        }else if(baseUrl.equals("handlerCurrentFriend")){
-                            rts = JdbcTemplate.handlerCurrentFriend(first);
-                        }else if(baseUrl.equals("queryChartsViews")){
-                            rts = JdbcTemplate.queryChartsViews(first);
-                        }else if(baseUrl.equals("handlerChartsViews")){
-                            rts = JdbcTemplate.handlerChartsViews(first);
-                        }else if(baseUrl.equals("handlerChartsSend")){
-                            rts = JdbcTemplate.handlerChartsSend(first);
-                        }else if(baseUrl.equals("handlerDesUpdate")){
-                            rts = JdbcTemplate.handlerDesUpdate(first);
-                        }
-                        byte[] bytes = rts.getBytes(Charset.forName("UTF-8"));
-                        int readLength = 0;
-                        byteBuffer.put(WebSocketResponse.getBytes(bytes));
-                        do{
-                            int min = Math.min(bytes.length - readLength, byteBuffer.remaining());
-                            byteBuffer.put(bytes,readLength,min);
-                            readLength = readLength + min;
-                            byteBuffer.flip();
-                            socketChannel.write(byteBuffer);
-                            byteBuffer.clear();
-                        }while (readLength<bytes.length);
-                    }
+                    answer(first,byteBuffer,socketChannel);
                     in.removeFirst();
                     first = in.peekFirst();
                 }else if(first.getType() == 2 && first.isDone()){
@@ -86,22 +44,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     System.arraycopy(fileBuffer.array(),0,bts,0,fileBuffer.remaining());
                     Files.write(first.getFilePath(),bts, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
                     fileBuffer.clear();
-                    String baseUrl = first.getUrl();
-                    if(baseUrl.equals("uploadUserImg")){
-                        String rts = JdbcTemplate.uploadUserImg(first);
-
-                        byte[] bytes = rts.getBytes(Charset.forName("UTF-8"));
-                        int readLength = 0;
-                        byteBuffer.put(WebSocketResponse.getBytes(bytes));
-                        do{
-                            int min = Math.min(bytes.length - readLength, byteBuffer.remaining());
-                            byteBuffer.put(bytes,readLength,min);
-                            readLength = readLength + min;
-                            byteBuffer.flip();
-                            socketChannel.write(byteBuffer);
-                            byteBuffer.clear();
-                        }while (readLength<bytes.length);
-                    }
+                    answer(first,byteBuffer,socketChannel);
                     in.removeFirst();
                     first = in.peekFirst();
                 }else if(first.getType() == 2 && first.isConvert()){
@@ -159,5 +102,36 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
     @Override
     public void clearBuffers(SocketChannel socketChannel) {
 
+    }
+
+    public void answer(WebSocketChannelInHandler.WebSocketState first,ByteBuffer byteBuffer, SocketChannel socketChannel) throws Exception {
+        String baseUrl = first.getUrl();
+        for (int i=0; i < CpdogMain.CONTROLLERS.size(); i++){
+            Class<?> aClass = CpdogMain.CONTROLLERS.get(i);
+            Method[] declaredMethods = aClass.getDeclaredMethods();
+            if(declaredMethods != null && declaredMethods.length>0){
+                for(int x=0;x<declaredMethods.length;x++){
+                    Method methods = declaredMethods[x];
+                    String name = methods.getName();
+                    if(name.equals(baseUrl)){
+                        if(Modifier.isStatic(methods.getModifiers())){
+                            String rts =(String) methods.invoke(null,first);
+                            byte[] bytes = rts.getBytes(Charset.forName("UTF-8"));
+                            int readLength = 0;
+                            byteBuffer.put(WebSocketResponse.getBytes(bytes));
+                            do{
+                                int min = Math.min(bytes.length - readLength, byteBuffer.remaining());
+                                byteBuffer.put(bytes,readLength,min);
+                                readLength = readLength + min;
+                                byteBuffer.flip();
+                                socketChannel.write(byteBuffer);
+                                byteBuffer.clear();
+                            }while (readLength<bytes.length);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
