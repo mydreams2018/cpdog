@@ -232,6 +232,8 @@ public class ChartsService {
                     return rt;
                 }
                 try(Connection connection = JdbcUtils.getConnection();
+                    PreparedStatement querypreparedUpdate = connection.prepareStatement("select id, user_src, user_tar, show_state, src_tar_uuid, last_msg_time, last_msg from msg_view where user_src=? and user_tar=? and src_tar_uuid=?"
+                                ,ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_UPDATABLE);
                     PreparedStatement preparedUpdate = connection.prepareStatement("update msg_view set last_msg=?,last_msg_time=unix_timestamp(now()) where user_src=? and user_tar=? and src_tar_uuid=?");
                     PreparedStatement insert = connection.prepareStatement(" insert into msg_describe(id, src_tar_uuid, data_type, receive_state, send_time, content, file_name, src_user, tar_user ) " +
                             " values (UUID(),?,?,0,unix_timestamp(now()),?,?,?,?)")){
@@ -239,6 +241,33 @@ public class ChartsService {
                         preparedUpdate.setString(1,message.substring(0,82));
                     }else{
                         preparedUpdate.setString(1,message);
+                    }
+                    querypreparedUpdate.setString(1,nikeName);
+                    querypreparedUpdate.setString(2,tokenNikeName);
+                    querypreparedUpdate.setString(3,srcTarUUID);
+                    ResultSet resultSetTar = querypreparedUpdate.executeQuery();
+                    if(resultSetTar.next()){
+                        resultSetTar.updateLong("last_msg_time",System.currentTimeMillis()/1000);
+                        resultSetTar.updateInt("show_state",1);
+                        if(message.length()>82){
+                            resultSetTar.updateString("last_msg",message.substring(0,82));
+                        }else{
+                            resultSetTar.updateString("last_msg",message);
+                        }
+                        resultSetTar.updateRow();
+                    }else{
+                        resultSetTar.moveToInsertRow();
+                        resultSetTar.updateString("user_src",nikeName);
+                        resultSetTar.updateString("user_tar",tokenNikeName);
+                        resultSetTar.updateString("src_tar_uuid",srcTarUUID);
+                        resultSetTar.updateLong("last_msg_time",System.currentTimeMillis()/1000);
+                        resultSetTar.updateString("id",srcTarUUID);
+                        if(message.length()>82){
+                            resultSetTar.updateString("last_msg",message.substring(0,82));
+                        }else{
+                            resultSetTar.updateString("last_msg",message);
+                        }
+                        resultSetTar.insertRow();
                     }
                     preparedUpdate.setString(2,tokenNikeName);
                     preparedUpdate.setString(3,nikeName);
