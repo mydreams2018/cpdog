@@ -5,6 +5,8 @@ import cn.kungreat.boot.utils.CutoverBytes;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 * 把websocket 的数据 解码出来并且 传入下一个链路
 */
 public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, LinkedList<WebSocketChannelInHandler.WebSocketState>> {
+    private static final Logger logger = LoggerFactory.getLogger(WebSocketChannelInHandler.class);
     //每次发生的完整的事件对象
     public static final Map<Integer,LinkedList<WebSocketState>> WEBSOCKETSTATETREEMAP = new ConcurrentHashMap<>(1024);
     //二进制 数据时用来做的缓存
@@ -51,19 +54,19 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 if((array[0] & 15) != 0){
                     webSocketState.setType(array[0] & 15);
                 }else if(webSocketState.getType() == 999){
-                    System.out.println("警告,类型解释失败.关闭连接");
+                    logger.error("警告,类型解释失败.关闭连接");
                     socketChannel.close();
                     WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
                     WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
                 }else{
-                    System.out.println("这是一个延续帧.保持上一次的数据类型不变");
+                    logger.info("这是一个延续帧.保持上一次的数据类型不变");
                 }
                 if (array[1] < 0) {
                     //设置数据长度
                     webSocketState.setDateLength(array,remaining);
                     webSocketState.setMaskingKey(array);
                 } else{
-                    System.out.println("协议mask标记位不正确关闭连接:");
+                    logger.error("协议mask标记位不正确关闭连接:");
                     socketChannel.close();
                     WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
                     WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
@@ -121,7 +124,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 webSocketState.setByteData(socketChannel.hashCode(),
                         WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()),socketChannel);
             }else if(webSocketState.getType() == 8){
-                System.out.println("break:");
+                logger.info("break:");
                 WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
                 WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
             }
@@ -149,7 +152,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
     @Override
     public ByteBuffer exception(Exception e, SocketChannel socketChannel, Object in) throws Exception {
         socketChannel.close();
-        e.printStackTrace();
+        logger.error(e.getLocalizedMessage());
         WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
         WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
         return null;
@@ -355,7 +358,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 ReceiveObj receiveObj = MAP_JSON.readValue(stringBuffer.toString(),ReceiveObj.class);
                 stringBuffer = null;
                 if(receiveObj == null){
-                    System.out.println("字符内容解释出错:关闭连接");
+                    logger.error("字符内容解释出错:关闭连接");
                     socketChannel.close();
                     WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
                     WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
@@ -368,7 +371,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                     this.uuid=receiveObj.getUuid();
                 }
                 if(this.src.isEmpty() || this.tar.isEmpty() || this.charts == null || this.url.isEmpty() || this.uuid.isEmpty()){
-                    System.out.println("字符内容解释出错:关闭连接");
+                    logger.error("字符内容解释出错:关闭连接");
                     socketChannel.close();
                     WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
                     WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
@@ -437,7 +440,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
             }else{
                 String sbu = WEBSOCKETSTATEBYTES.get(hashcode);
                 if(sbu==null && !byteBuffer.hasRemaining()){
-                    System.out.println("二进制数据解释失败.关闭连接");
+                    logger.error("二进制数据解释失败.关闭连接");
                     socketChannel.close();
                     WEBSOCKETSTATETREEMAP.remove(hashcode);
                     WEBSOCKETSTATEBYTES.remove(hashcode);
@@ -480,13 +483,13 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                     isConvert=true;
                 } catch (Exception e) {
                     e.printStackTrace();
-                    System.out.println("文件创建出错:关闭连接");
+                    logger.error("文件创建出错:关闭连接");
                     socketChannel.close();
                     WEBSOCKETSTATETREEMAP.remove(hashcode);
                     WEBSOCKETSTATEBYTES.remove(hashcode);
                 }
             }else{
-                System.out.println("文件内容解释出错:关闭连接");
+                logger.error("文件内容解释出错:关闭连接");
                 socketChannel.close();
                 WEBSOCKETSTATETREEMAP.remove(hashcode);
                 WEBSOCKETSTATEBYTES.remove(hashcode);

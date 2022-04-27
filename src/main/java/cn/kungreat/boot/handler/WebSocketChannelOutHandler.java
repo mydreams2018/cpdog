@@ -3,6 +3,8 @@ package cn.kungreat.boot.handler;
 import cn.kungreat.boot.ChannelOutHandler;
 import cn.kungreat.boot.CpdogMain;
 import cn.kungreat.boot.utils.WebSocketResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -16,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<WebSocketChannelInHandler.WebSocketState>,String> {
 
+    private static final Logger logger = LoggerFactory.getLogger(WebSocketChannelOutHandler.class);
     /*
     存放用户登录随机生成的UUID 关联信息.UUID在前端是session级别的. [k=uuid v=userid]
     */
@@ -37,7 +40,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     in.removeFirst();
                     first = in.peekFirst();
                 }else if(first.getType() == 2 && first.isDone()){
-                    System.out.println("文件写出完毕:"+first.getFileName());
+                    logger.info("文件写出完毕:{}",first.getFileName());
                     ByteBuffer fileBuffer = first.getByteBuffer();
                     fileBuffer.flip();
                     byte[] bts = new byte[fileBuffer.remaining()];
@@ -58,11 +61,11 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     break;
                 }else if(first.getType() == 8){
                     //关闭信息状态标识
-                    System.out.println("out type ==8 ");
+                    logger.info("out type ==8 ");
                     break;
                 }else if(first.getType() == 999){
                     //初始化的一个空对象标识
-                    System.out.println("out type 999");
+                    logger.info("out type 999");
                     break;
                 }else if(first.getType() == 2){
                     //第一次产生的头信息的二进制数据
@@ -71,7 +74,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     //文本数据过大时没有读取完成不做操作
                     break;
                 }else{
-                    System.out.println("out type 未知");
+                    logger.error("out type 未知");
                     break;
                 }
             }
@@ -87,7 +90,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
 
     @Override
     public LinkedList exception(Exception e, SocketChannel socketChannel, Object in) throws Exception {
-        e.printStackTrace();
+        logger.error(e.getLocalizedMessage());
         socketChannel.close();
         WebSocketChannelInHandler.WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
         WebSocketChannelInHandler.WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());

@@ -55,7 +55,6 @@ public class CpdogMain {
         }if(protocol.equals("jar")){
             loopJap(location,pks);
         }
-        System.out.println(CONTROLLERS);
     }
 
     public static void loopFile(File fl,String pks) throws Exception {

@@ -2,6 +2,8 @@ package cn.kungreat.boot.handler;
 
 import cn.kungreat.boot.ChannelProtocolHandler;
 import cn.kungreat.boot.jb.WebSocketBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
@@ -12,6 +14,7 @@ import java.util.List;
 
 public class WebSocketProtocolHandler implements ChannelProtocolHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(WebSocketProtocolHandler.class);
     /*  websocket 固定拼接的字符串  */
     private static final String MAGICSTRING = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
@@ -40,11 +43,11 @@ public class WebSocketProtocolHandler implements ChannelProtocolHandler {
                 rt = true;
             }else if(!in.hasRemaining()){
                 socketChannel.close();
-                System.out.println("WebSocketProtocolHandler:数据读满了.但是没有解释出协议");
+                logger.error("WebSocketProtocolHandler:数据读满了.但是没有解释出协议");
             }
         }else{
             socketChannel.close();
-            System.out.println("WebSocketProtocolHandler:没有可读取字节");
+            logger.error("WebSocketProtocolHandler:没有可读取字节");
         }
         return rt;
     }

@@ -5,12 +5,13 @@ import cn.kungreat.boot.ChannelOutHandler;
 import cn.kungreat.boot.ChannelProtocolHandler;
 import cn.kungreat.boot.NioWorkServerSocket;
 import cn.kungreat.boot.em.ProtocolState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.SocketOption;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -18,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class NioWorkServerSocketImpl implements NioWorkServerSocket {
+    private static final Logger logger = LoggerFactory.getLogger(NioWorkServerSocketImpl.class);
     private NioWorkServerSocketImpl(){}
     private final static ThreadGroup threadGroup = new WorkThreadGroup("workServer");
     private final static AtomicInteger atomicInteger = new AtomicInteger(0);
@@ -156,13 +158,13 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         protocolStateMap.remove(channelHash);
                     }
                     if(read == -1){
-                        System.out.println(clientChannel.getRemoteAddress()+"自动关闭了");
+                        logger.error(clientChannel.getRemoteAddress()+"自动关闭了");
                         clientChannel.close();
                         treeMap.remove(channelHash);
                         protocolStateMap.remove(channelHash);
                     }
                 }else{
-                    System.out.println(clientChannel.getRemoteAddress()+":客户端监听类型异常");
+                    logger.error(clientChannel.getRemoteAddress()+":客户端监听类型异常");
                 }
             }catch (Exception e){
                 if(clientChannel!=null){
@@ -208,7 +210,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         e.printStackTrace();
                     }
                 }else{
-                    System.out.println("channel-close");
+                    logger.error("channel-close");
                     break;
                 }
             }
@@ -245,7 +247,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         e.printStackTrace();
                     }
                 }else{
-                    System.out.println("channel-close");
+                    logger.error("channel-close");
                     break;
                 }
             }
@@ -253,7 +255,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             if(this.exception != null){
                 this.exception=null;
                 clientChannel.close();
-                System.out.println("走完链路.还存在异常时 关闭连接");
+                logger.error("走完链路.还存在异常时 关闭连接");
             }
             return linkIn;
         }
