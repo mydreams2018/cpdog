@@ -33,6 +33,7 @@ public class ChartsService {
                 baseResponse.setCode("200");
                 baseResponse.setMsg("图片上传成功");
                 baseResponse.setUrl("uploadUserImg");
+                baseResponse.setImgPath("/images/user/"+job.getFileName());
                 rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
             }else{
                 baseResponse.setMsg("图片上传失败");
@@ -338,6 +339,7 @@ public class ChartsService {
                     baseResponse.setCode("200");
                     baseResponse.setMsg("修改备注成功");
                     baseResponse.setUrl("handlerDesUpdate");
+                    baseResponse.setDescribes(message);
                     connection.commit();
                     rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                 }else{
