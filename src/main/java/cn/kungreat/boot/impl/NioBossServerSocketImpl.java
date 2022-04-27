@@ -3,6 +3,8 @@ package cn.kungreat.boot.impl;
 import cn.kungreat.boot.ChooseWorkServer;
 import cn.kungreat.boot.NioBossServerSocket;
 import cn.kungreat.boot.NioWorkServerSocket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -11,8 +13,6 @@ import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class NioBossServerSocketImpl implements NioBossServerSocket {
     private ServerSocketChannel serverSocketChannel;
@@ -22,7 +22,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
     private final static AtomicInteger atomicInteger = new AtomicInteger(0);
     private NioWorkServerSocket[] workServerSockets;
     private ChooseWorkServer chooseWorkServer;
-    private Logger logger;
+    private static final Logger logger = LoggerFactory.getLogger(NioBossServerSocketImpl.class);
     private NioBossServerSocketImpl() {
     }
 
@@ -73,12 +73,6 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
     }
 
     @Override
-    public NioBossServerSocket setLogger(Logger logger) {
-        this.logger=logger;
-        return this;
-    }
-
-    @Override
     public NioBossServerSocketImpl start(SocketAddress local, int backlog, NioWorkServerSocket[] workServerSockets, ChooseWorkServer chooseWorkServer) throws IOException {
         this.workServerSockets=workServerSockets;
         this.chooseWorkServer=chooseWorkServer;
@@ -110,25 +104,25 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                     choose.setOption​(accept);
                     accept.register(choose.getSelector(),SelectionKey.OP_READ);
                     choose.getSelector().wakeup();
-                    NioBossServerSocketImpl.this.logger.log(Level.SEVERE,accept.getRemoteAddress()+"连接成功");
+                    NioBossServerSocketImpl.logger.info(accept.getRemoteAddress()+"连接成功");
                     Thread.State state = choose.getWorkThreads().getState();
                     if(state.equals(Thread.State.NEW)){
                         choose.getWorkThreads().start();
-                        NioBossServerSocketImpl.this.logger.log(Level.INFO,choose.getWorkThreads().getName()+":启动");
+                        NioBossServerSocketImpl.logger.info(choose.getWorkThreads().getName()+":启动");
                     }
                 }else{
                     accept.close();
-                    NioBossServerSocketImpl.this.logger.log(Level.WARNING,accept.getRemoteAddress()+"连接失败");
+                    NioBossServerSocketImpl.logger.info(accept.getRemoteAddress()+"连接失败");
                 }
             }catch (Exception e){
                 e.printStackTrace();
-                NioBossServerSocketImpl.this.logger.log(Level.WARNING,e.getLocalizedMessage()+"连接失败");
+                NioBossServerSocketImpl.logger.error(e.getLocalizedMessage()+"连接失败");
                 if(accept != null){
                     try {
                         accept.close();
                     } catch (IOException ioException) {
                         ioException.printStackTrace();
-                        NioBossServerSocketImpl.this.logger.log(Level.WARNING,ioException.getLocalizedMessage()+"close失败");
+                        NioBossServerSocketImpl.logger.error(ioException.getLocalizedMessage()+"close失败");
                     }
                 }
             }
@@ -136,7 +130,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
 
         @Override
         public void run() {
-            NioBossServerSocketImpl.this.logger.log(Level.INFO,"boss服务启动");
+            NioBossServerSocketImpl.logger.info("boss服务启动");
             try {
                 while(NioBossServerSocketImpl.this.selector.select() >= 0){
                     Set<SelectionKey> selectionKeys = NioBossServerSocketImpl.this.selector.selectedKeys();
@@ -149,14 +143,14 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                             ServerSocketChannel serChannel = (ServerSocketChannel) channel;
                             accept(serChannel);
                         }else{
-                            NioBossServerSocketImpl.this.logger.log(Level.WARNING,"Boss事件类型错误");
+                            NioBossServerSocketImpl.logger.info("Boss事件类型错误");
                         }
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                NioBossServerSocketImpl.this.logger.log(Level.WARNING,"Boss线程挂掉");
-                NioBossServerSocketImpl.this.logger.log(Level.WARNING,e.getLocalizedMessage());
+                NioBossServerSocketImpl.logger.error("Boss线程挂掉");
+                NioBossServerSocketImpl.logger.error(e.getLocalizedMessage());
             }
             run();
         }

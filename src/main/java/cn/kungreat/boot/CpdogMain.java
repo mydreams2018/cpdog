@@ -5,7 +5,6 @@ import cn.kungreat.boot.handler.WebSocketChannelInHandler;
 import cn.kungreat.boot.handler.WebSocketChannelOutHandler;
 import cn.kungreat.boot.handler.WebSocketProtocolHandler;
 import cn.kungreat.boot.impl.ChooseWorkServerImpl;
-import cn.kungreat.boot.impl.DefaultLogServer;
 import cn.kungreat.boot.impl.NioBossServerSocketImpl;
 import cn.kungreat.boot.impl.NioWorkServerSocketImpl;
 import cn.kungreat.boot.utils.JdbcUtils;
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.logging.Logger;
 
 public class CpdogMain {
 
@@ -123,9 +121,6 @@ public class CpdogMain {
         NioBossServerSocket nioBossServerSocket = NioBossServerSocketImpl.create();
         nioBossServerSocket.buildChannel();
         nioBossServerSocket.buildThread();
-        Logger log = DefaultLogServer.createLog("D:/kungreat/IdeaProjects/log2"
-                ,"kungreat.cn");
-        nioBossServerSocket.setLogger(log);
         ChooseWorkServerImpl chooseWorkServer = new ChooseWorkServerImpl();
         NioWorkServerSocketImpl.addChannelInHandlers(new WebSocketChannelInHandler());
         NioWorkServerSocketImpl.addChannelOutHandlers(new WebSocketChannelOutHandler());
