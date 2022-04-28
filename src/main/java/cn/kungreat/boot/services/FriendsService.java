@@ -445,13 +445,13 @@ public class FriendsService {
             int num2 = preparedStatement.executeUpdate();
             if(num1>0 && num2>0){
                 baseResponse.setCode("200");
-                baseResponse.setMsg("删除好友成功:"+src);
+                baseResponse.setMsg("删除好友成功:"+tar);
                 baseResponse.setUser(tar);
                 baseResponse.setUrl("handlerCurrentFriend");
                 rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                 connection.commit();
             }else{
-                baseResponse.setMsg("删除好友失败:"+src);
+                baseResponse.setMsg("删除好友失败:"+tar);
                 baseResponse.setUrl("handlerCurrentFriend");
                 rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                 connection.rollback();

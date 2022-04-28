@@ -41,11 +41,11 @@
     </appender>
 
     <logger name="cn.kungreat.boot" level="info" additivity="false">
-        <appender-ref ref="console" />
+        <appender-ref ref="file_info" />
     </logger>
 
     <root level="info">
-        <appender-ref ref="file_info" />
+        <appender-ref ref="console" />
     </root>
 
 </configuration>
