@@ -55,7 +55,7 @@ public class ChartsService {
             try(Connection connection = JdbcUtils.getConnection();
                 PreparedStatement preparedCount = connection.prepareStatement("select count(id) from msg_view where user_src =? and show_state=1 and user_tar like ?");
                 PreparedStatement preparedStatement = connection.prepareStatement("select msgview.user_tar,msgview.id,msgview.src_tar_uuid,msgview.last_msg_time,msgview.last_msg,usdet.img_path from " +
-                        " (select user_tar,id,src_tar_uuid,FROM_UNIXTIME(last_msg_time,'%h:%i') as last_msg_time,last_msg from msg_view where user_src =? and show_state=1 and user_tar like ?) msgview " +
+                        " (select user_tar,id,src_tar_uuid,last_msg_time,last_msg from msg_view where user_src =? and show_state=1 and user_tar like ?) msgview " +
                         " join user_details usdet on msgview.user_tar = usdet.nike_name order by msgview.last_msg_time DESC limit ?,?")){
                 WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
                 String srcNikName = jobCharts.getNikeName();
