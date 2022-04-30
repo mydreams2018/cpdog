@@ -2,6 +2,7 @@ package cn.kungreat.boot.handler;
 
 import cn.kungreat.boot.ChannelOutHandler;
 import cn.kungreat.boot.CpdogMain;
+import cn.kungreat.boot.GlobalEventListener;
 import cn.kungreat.boot.utils.WebSocketResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +27,18 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
 
 
     @Override
-    public void before(SocketChannel socketChannel, LinkedList<WebSocketChannelInHandler.WebSocketState> in) {
-
+    public void before(SocketChannel socketChannel,LinkedList<WebSocketChannelInHandler.WebSocketState> in) {
+        if(in != null){
+            WebSocketChannelInHandler.WebSocketState first = in.peekFirst();
+            //初始化页面完成记录用户的channel
+            if(first.getType() == 1 && first.isDone() && first.getUrl().equals("initSaveConnection")){
+                String nikeName = USER_UUIDS.get(first.getCharts().getTokenSession());
+                if(nikeName != null){
+                    GlobalEventListener.CONCURRENT_EVENT_MAP.put(nikeName,socketChannel);
+                }
+                in.removeFirst();
+            }
+        }
     }
 
     @Override

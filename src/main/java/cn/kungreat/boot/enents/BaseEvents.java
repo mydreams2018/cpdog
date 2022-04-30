@@ -6,9 +6,8 @@ import cn.kungreat.boot.handler.WebSocketChannelInHandler;
 @CpdogEvent(index = 5)
 public class BaseEvents {
 
-    public static String addFriends(WebSocketChannelInHandler.ReceiveObj receiveObj){
+    public static String enentAddFriends(WebSocketChannelInHandler.ReceiveObj receiveObj){
         String rt = "";
-
         return rt;
     }
 }

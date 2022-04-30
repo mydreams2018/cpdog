@@ -1,5 +1,6 @@
 package cn.kungreat.boot.services;
 
+import cn.kungreat.boot.GlobalEventListener;
 import cn.kungreat.boot.an.CpdogController;
 import cn.kungreat.boot.handler.WebSocketChannelInHandler;
 import cn.kungreat.boot.handler.WebSocketChannelOutHandler;
@@ -107,6 +108,15 @@ public class FriendsService {
                         baseResponse.setUrl("applyFriends");
                         rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                         connection.commit();
+                        //申请好友添加到通知队列中
+                        for (int i=0; i<nikeNamels.size();i++) {
+                            WebSocketChannelInHandler.ReceiveObj eventAdd = new WebSocketChannelInHandler.ReceiveObj();
+                            eventAdd.setSrc(nikeNm);
+                            eventAdd.setTar(nikeNamels.get(i));
+                            eventAdd.setUrl("enentAddFriends");
+                            eventAdd.setUuid(message);
+                            GlobalEventListener.EVENT_BLOCKING_QUEUE.offer(eventAdd);
+                        }
                     }
                 }catch (Exception e){
                     e.printStackTrace();
