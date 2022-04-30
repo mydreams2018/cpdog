@@ -1,6 +1,7 @@
 package cn.kungreat.boot;
 
 import cn.kungreat.boot.an.CpdogController;
+import cn.kungreat.boot.an.CpdogEvent;
 import cn.kungreat.boot.handler.WebSocketChannelInHandler;
 import cn.kungreat.boot.handler.WebSocketChannelOutHandler;
 import cn.kungreat.boot.handler.WebSocketProtocolHandler;
@@ -24,6 +25,7 @@ import java.util.jar.JarFile;
 public class CpdogMain {
 
     public static final List<Class<?>> CONTROLLERS = new ArrayList<>();
+    public static final List<Class<?>> EVENTS = new ArrayList<>();
     static {
         InputStream cpdog = ClassLoader.getSystemResourceAsStream("cpdog.properties");
         Properties props = new Properties();
@@ -70,6 +72,9 @@ public class CpdogMain {
                         if (cls.isAnnotationPresent(CpdogController.class)){
                             addControllers(cls);
                         }
+                        if(cls.isAnnotationPresent(CpdogEvent.class)){
+                            addEvents(cls);
+                        }
                     }
                     if(temp.isDirectory()){
                         loopFile(temp,pks);
@@ -92,6 +97,9 @@ public class CpdogMain {
                 if (cls.isAnnotationPresent(CpdogController.class)){
                     addControllers(cls);
                 }
+                if(cls.isAnnotationPresent(CpdogEvent.class)){
+                    addEvents(cls);
+                }
             }
         }
     }
@@ -110,6 +118,26 @@ public class CpdogMain {
                     return;
                 }else if(i==CONTROLLERS.size()-1){
                     CONTROLLERS.add(cls);
+                    return;
+                }
+            }
+        }
+    }
+
+    public static void addEvents(Class<?> cls){
+        if(EVENTS.isEmpty()){
+            EVENTS.add(cls);
+        }else{
+            int sortSrc = cls.getAnnotation(CpdogEvent.class).index();
+            for(int i = 0; i < EVENTS.size(); i++) {
+                Class<?> aClass = EVENTS.get(i);
+                CpdogEvent annotation = aClass.getAnnotation(CpdogEvent.class);
+                int index = annotation.index();
+                if(sortSrc <= index){
+                    EVENTS.add(i,cls);
+                    return;
+                }else if(i==EVENTS.size()-1){
+                    EVENTS.add(cls);
                     return;
                 }
             }
