@@ -119,18 +119,22 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     if(name.equals(baseUrl)){
                         if(Modifier.isStatic(methods.getModifiers())){
                             String rts =(String) methods.invoke(null,first);
-                            byte[] bytes = rts.getBytes(Charset.forName("UTF-8"));
-                            int readLength = 0;
-                            byteBuffer.put(WebSocketResponse.getBytes(bytes));
-                            do{
-                                int min = Math.min(bytes.length - readLength, byteBuffer.remaining());
-                                byteBuffer.put(bytes,readLength,min);
-                                readLength = readLength + min;
-                                byteBuffer.flip();
-                                socketChannel.write(byteBuffer);
-                                byteBuffer.clear();
-                            }while (readLength<bytes.length);
-                            return;
+                            if(rts.length()>0){
+                                byte[] bytes = rts.getBytes(Charset.forName("UTF-8"));
+                                int readLength = 0;
+                                byteBuffer.put(WebSocketResponse.getBytes(bytes));
+                                synchronized (socketChannel){
+                                    do{
+                                        int min = Math.min(bytes.length - readLength, byteBuffer.remaining());
+                                        byteBuffer.put(bytes,readLength,min);
+                                        readLength = readLength + min;
+                                        byteBuffer.flip();
+                                        socketChannel.write(byteBuffer);
+                                        byteBuffer.clear();
+                                    }while (readLength<bytes.length);
+                                }
+                                return;
+                            }
                         }
                     }
                 }

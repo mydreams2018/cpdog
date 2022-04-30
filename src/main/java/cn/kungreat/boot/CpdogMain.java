@@ -161,5 +161,7 @@ public class CpdogMain {
             workServerSockets[x]=workServerSocket;
         }
         nioBossServerSocket.start(new InetSocketAddress(InetAddress.getLocalHost(),9999),workServerSockets,chooseWorkServer);
+        //主线程监听事件处理
+        GlobalEventListener.loopEvent();
     }
 }

@@ -530,7 +530,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
     }
     @Setter
     @Getter
-    private static final class ReceiveObj{
+    public static final class ReceiveObj{
         private String uuid;
         private String src;
         private String tar;
