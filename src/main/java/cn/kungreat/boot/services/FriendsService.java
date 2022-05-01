@@ -110,14 +110,14 @@ public class FriendsService {
                         rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                         connection.commit();
                         //申请好友添加到通知队列中
+                        String srcImgPath = first.getCharts().getImgPath();
                         for (int i=0; i<nikeNamels.size();i++) {
                             EventBean eventAdd = new EventBean();
                             eventAdd.setSrc(nikeNm);
                             eventAdd.setTar(nikeNamels.get(i));
                             eventAdd.setUrl("enentAddFriends");
                             eventAdd.setDescribes(message);
-                            //前端用这个缓存了用户的图片地址
-                            eventAdd.setImgPath(first.getUuid());
+                            eventAdd.setImgPath(srcImgPath);
                             GlobalEventListener.EVENT_BLOCKING_QUEUE.offer(eventAdd);
                         }
                     }
@@ -218,7 +218,7 @@ public class FriendsService {
                 PreparedStatement preparedCount = connection.prepareStatement("select count(src_user_id) from apply_history where tar_user_id =? and src_user_id like ? and apply_state=0");
                 PreparedStatement preparedStatement = connection.prepareStatement("select histy.src_user_id, histy.apply_time,histy.apply_msg, usdet.img_path from " +
                         " (select src_user_id,apply_time,apply_msg from apply_history where tar_user_id =? and src_user_id like ? and apply_state=0) histy " +
-                        " join user_details usdet on histy.src_user_id = usdet.nike_name order by histy.apply_time limit ?,?")){
+                        " join user_details usdet on histy.src_user_id = usdet.nike_name order by histy.apply_time desc limit ?,?")){
                 WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
                 String srcNikName = jobCharts.getNikeName();
                 if(srcNikName!=null && !srcNikName.isBlank()){
