@@ -3,7 +3,6 @@ package cn.kungreat.boot;
 import cn.kungreat.boot.jb.EventBean;
 import cn.kungreat.boot.utils.WebSocketResponse;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
@@ -74,16 +73,11 @@ public class GlobalEventListener {
                         }
                     }
                 }
+                else if(socketChannel != null && !socketChannel.isOpen()){
+                    CONCURRENT_EVENT_MAP.remove(receiveObj.getTar());
+                }
             }
-        }catch(IOException e){
-            e.printStackTrace();
-            //清空 receiveObj.getTar() 用户的channel缓存
-            if(receiveObj != null){
-                CONCURRENT_EVENT_MAP.remove(receiveObj.getTar());
-            }
-        }catch (ReflectiveOperationException e){
-            e.printStackTrace();
-        }catch (InterruptedException e){
+        }catch (Exception e){
             e.printStackTrace();
         }
         loopEvent();
