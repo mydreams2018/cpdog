@@ -134,6 +134,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                                 byte[] bytes = rts.getBytes(Charset.forName("UTF-8"));
                                 int readLength = 0;
                                 byteBuffer.put(WebSocketResponse.getBytes(bytes));
+                                //下边是一次完整的数据写出.可能EVENT事什通知造成并发.所以加锁
                                 synchronized (socketChannel){
                                     do{
                                         int min = Math.min(bytes.length - readLength, byteBuffer.remaining());

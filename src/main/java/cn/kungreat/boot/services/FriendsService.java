@@ -5,6 +5,7 @@ import cn.kungreat.boot.an.CpdogController;
 import cn.kungreat.boot.handler.WebSocketChannelInHandler;
 import cn.kungreat.boot.handler.WebSocketChannelOutHandler;
 import cn.kungreat.boot.jb.BaseResponse;
+import cn.kungreat.boot.jb.EventBean;
 import cn.kungreat.boot.jb.QueryResult;
 import cn.kungreat.boot.jb.UserDetails;
 import cn.kungreat.boot.utils.JdbcUtils;
@@ -110,11 +111,13 @@ public class FriendsService {
                         connection.commit();
                         //申请好友添加到通知队列中
                         for (int i=0; i<nikeNamels.size();i++) {
-                            WebSocketChannelInHandler.ReceiveObj eventAdd = new WebSocketChannelInHandler.ReceiveObj();
+                            EventBean eventAdd = new EventBean();
                             eventAdd.setSrc(nikeNm);
                             eventAdd.setTar(nikeNamels.get(i));
                             eventAdd.setUrl("enentAddFriends");
-                            eventAdd.setUuid(message);
+                            eventAdd.setDescribes(message);
+                            //前端用这个缓存了用户的图片地址
+                            eventAdd.setImgPath(first.getUuid());
                             GlobalEventListener.EVENT_BLOCKING_QUEUE.offer(eventAdd);
                         }
                     }

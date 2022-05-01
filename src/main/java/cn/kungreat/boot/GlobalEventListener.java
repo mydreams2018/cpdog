@@ -1,6 +1,6 @@
 package cn.kungreat.boot;
 
-import cn.kungreat.boot.handler.WebSocketChannelInHandler;
+import cn.kungreat.boot.jb.EventBean;
 import cn.kungreat.boot.utils.WebSocketResponse;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ public class GlobalEventListener {
     /*
      *所有的事件集合
      */
-    public static final LinkedBlockingQueue<WebSocketChannelInHandler.ReceiveObj> EVENT_BLOCKING_QUEUE = new LinkedBlockingQueue<>();
+    public static final LinkedBlockingQueue<EventBean> EVENT_BLOCKING_QUEUE = new LinkedBlockingQueue<>();
     /*
      * <用户的呢称,对应的管道>
      */
@@ -31,7 +31,7 @@ public class GlobalEventListener {
      * 迭代监听 EVENT_BLOCKING_QUEUE 事件 传递给指定的回调方法
      */
     public static void loopEvent(){
-        WebSocketChannelInHandler.ReceiveObj receiveObj = null;
+        EventBean receiveObj = null;
         String receiveObjUrl ;
         SocketChannel socketChannel ;
         try {
