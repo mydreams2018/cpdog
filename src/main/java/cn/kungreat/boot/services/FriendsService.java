@@ -463,6 +463,13 @@ public class FriendsService {
                 baseResponse.setUrl("handlerCurrentFriend");
                 rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                 connection.commit();
+                //通知对方删除事件 start
+                EventBean eventAdd = new EventBean();
+                eventAdd.setSrc(src);
+                eventAdd.setTar(tar);
+                eventAdd.setUrl("enentDeleteCurFriend");
+                GlobalEventListener.EVENT_BLOCKING_QUEUE.offer(eventAdd);
+                //通知对方删除事件 end
             }else{
                 baseResponse.setMsg("删除好友失败:"+tar);
                 baseResponse.setUrl("handlerCurrentFriend");
