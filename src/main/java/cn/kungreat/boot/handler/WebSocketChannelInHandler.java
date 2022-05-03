@@ -185,9 +185,9 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
          */
         private boolean done=false;
         /**
-         * stringBuffer  缓存
+         * StringBuilder  缓存
          */
-        private StringBuilder stringBuffer = new StringBuilder();
+        private StringBuilder stringBuilder = new StringBuilder();
         /**
          * type  websocket 数据类型标识
          * 0 continuation frame
@@ -329,9 +329,6 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
             this.done = done;
         }
 
-        public StringBuilder getStringBuffer() {
-            return stringBuffer;
-        }
 
         /*
          编码转换成字符串 默认用UTF-8
@@ -348,15 +345,15 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                         break;
                     }
                 }while(true);
-                stringBuffer.append(new String(byteBuffer.array(),0,remaining-ix,Charset.forName("UTF-8")));
+                stringBuilder.append(new String(byteBuffer.array(),0,remaining-ix,Charset.forName("UTF-8")));
                 byteBuffer.position(remaining-ix);
                 byteBuffer.compact();
             }else{
-                stringBuffer.append(new String(byteBuffer.array(),0,remaining,Charset.forName("UTF-8")));
+                stringBuilder.append(new String(byteBuffer.array(),0,remaining,Charset.forName("UTF-8")));
                 byteBuffer.clear();
                 //接收字符串本次完成了.解释成对象
-                ReceiveObj receiveObj = MAP_JSON.readValue(stringBuffer.toString(),ReceiveObj.class);
-                stringBuffer = null;
+                ReceiveObj receiveObj = MAP_JSON.readValue(stringBuilder.toString(),ReceiveObj.class);
+                stringBuilder = null;
                 if(receiveObj == null){
                     logger.error("字符内容解释出错:关闭连接");
                     socketChannel.close();
