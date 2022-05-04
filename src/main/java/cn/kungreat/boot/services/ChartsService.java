@@ -1,12 +1,10 @@
 package cn.kungreat.boot.services;
 
+import cn.kungreat.boot.GlobalEventListener;
 import cn.kungreat.boot.an.CpdogController;
 import cn.kungreat.boot.handler.WebSocketChannelInHandler;
 import cn.kungreat.boot.handler.WebSocketChannelOutHandler;
-import cn.kungreat.boot.jb.BaseResponse;
-import cn.kungreat.boot.jb.MsgDescribe;
-import cn.kungreat.boot.jb.QueryResult;
-import cn.kungreat.boot.jb.UserDetails;
+import cn.kungreat.boot.jb.*;
 import cn.kungreat.boot.utils.JdbcUtils;
 import cn.kungreat.boot.utils.Paging;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -247,7 +245,9 @@ public class ChartsService {
                     querypreparedUpdate.setString(2,tokenNikeName);
                     querypreparedUpdate.setString(3,srcTarUUID);
                     ResultSet resultSetTar = querypreparedUpdate.executeQuery();
+                    String tarMsgViewId = srcTarUUID;
                     if(resultSetTar.next()){
+                        tarMsgViewId=resultSetTar.getString("id");
                         resultSetTar.updateLong("last_msg_time",System.currentTimeMillis()/1000);
                         resultSetTar.updateInt("show_state",1);
                         if(message.length()>82){
@@ -290,6 +290,21 @@ public class ChartsService {
                             baseResponse.setSrcTarUUID(srcTarUUID);
                             rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                             connection.commit();
+                            //通知对方 发送信息事件 start
+                            EventBean eventAdd = new EventBean();
+                            eventAdd.setSrc(tokenNikeName);
+                            eventAdd.setTar(nikeName);
+                            eventAdd.setUrl("enentChartSendMsg");
+                            eventAdd.setSrcTarUUID(srcTarUUID);
+                            eventAdd.setId(tarMsgViewId);
+                            eventAdd.setImgPath(job.getCharts().getImgPath());
+                            if(message.length()>82){
+                                eventAdd.setDescribes(message.substring(0,82));
+                            }else{
+                                eventAdd.setDescribes(message);
+                            }
+                            GlobalEventListener.EVENT_BLOCKING_QUEUE.offer(eventAdd);
+                            //通知对方 发送信息事件 end
                         }else{
                             baseResponse.setUrl("handlerChartsSend");
                             baseResponse.setMsg("发送聊天信息失败");

@@ -19,4 +19,9 @@ public class BaseEvents {
         return rt;
     }
 
+    public static String enentChartSendMsg(EventBean receiveObj) throws Exception{
+        String rt = "";
+        rt= WebSocketChannelInHandler.MAP_JSON.writeValueAsString(receiveObj);
+        return rt;
+    }
 }
