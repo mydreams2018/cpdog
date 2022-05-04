@@ -298,11 +298,7 @@ public class ChartsService {
                             eventAdd.setSrcTarUUID(srcTarUUID);
                             eventAdd.setId(tarMsgViewId);
                             eventAdd.setImgPath(job.getCharts().getImgPath());
-                            if(message.length()>82){
-                                eventAdd.setDescribes(message.substring(0,82));
-                            }else{
-                                eventAdd.setDescribes(message);
-                            }
+                            eventAdd.setDescribes(message);
                             GlobalEventListener.EVENT_BLOCKING_QUEUE.offer(eventAdd);
                             //通知对方 发送信息事件 end
                         }else{
