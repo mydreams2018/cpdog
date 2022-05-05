@@ -13,4 +13,5 @@ public class UserDetails {
     private String sortFirst;
     private String id;
     private String srcTarUUID;
+    private String type;
 }

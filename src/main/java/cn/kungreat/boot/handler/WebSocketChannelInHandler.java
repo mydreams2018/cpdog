@@ -549,5 +549,6 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         private List<String> nikeNamels;
         private String srcTarUUID;
         private String imgPath;
+        private String describes;
     }
 }

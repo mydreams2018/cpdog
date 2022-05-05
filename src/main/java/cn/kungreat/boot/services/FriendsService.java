@@ -282,6 +282,16 @@ public class FriendsService {
             }else if(message.equals("reject")){
                 rt=rejectApplyFriend(nikeName,tokenNikeName);
             }
+            //通知对方 申请好友事件 start
+            EventBean eventAdd = new EventBean();
+            eventAdd.setSrc(tokenNikeName);
+            eventAdd.setTar(nikeName);
+            eventAdd.setUrl("enentApplyFriend");
+            eventAdd.setImgPath(job.getCharts().getImgPath());
+            eventAdd.setDescribes(job.getCharts().getDescribes());
+            eventAdd.setType(message);
+            GlobalEventListener.EVENT_BLOCKING_QUEUE.offer(eventAdd);
+            //通知对方 申请好友事件 end
         }
         return rt;
     }

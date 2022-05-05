@@ -24,4 +24,10 @@ public class BaseEvents {
         rt= WebSocketChannelInHandler.MAP_JSON.writeValueAsString(receiveObj);
         return rt;
     }
+
+    public static String enentApplyFriend(EventBean receiveObj) throws Exception{
+        String rt = "";
+        rt= WebSocketChannelInHandler.MAP_JSON.writeValueAsString(receiveObj);
+        return rt;
+    }
 }
