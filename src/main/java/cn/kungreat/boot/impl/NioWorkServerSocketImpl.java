@@ -153,13 +153,12 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         Object inEnd = runInHandlers(clientChannel, byteBuffer);
                         runOutHandlers(clientChannel,inEnd);
                     }
-                    if(!clientChannel.isOpen()){
-                        treeMap.remove(channelHash);
-                        protocolStateMap.remove(channelHash);
-                    }
                     if(read == -1){
                         logger.error(clientChannel.getRemoteAddress()+"自动关闭了");
                         clientChannel.close();
+                        treeMap.remove(channelHash);
+                        protocolStateMap.remove(channelHash);
+                    }else if(!clientChannel.isOpen()){
                         treeMap.remove(channelHash);
                         protocolStateMap.remove(channelHash);
                     }

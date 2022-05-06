@@ -72,11 +72,9 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     break;
                 }else if(first.getType() == 8){
                     //关闭信息状态标识
-                    logger.info("out type ==8 ");
                     break;
                 }else if(first.getType() == 999){
                     //初始化的一个空对象标识
-                    logger.info("out type 999");
                     break;
                 }else if(first.getType() == 2){
                     //第一次产生的头信息的二进制数据
@@ -85,7 +83,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     //文本数据过大时没有读取完成不做操作
                     break;
                 }else{
-                    logger.error("out type 未知");
+                    logger.error("out type 未知:"+first.getType());
                     break;
                 }
             }
