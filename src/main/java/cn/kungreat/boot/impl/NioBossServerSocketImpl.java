@@ -110,7 +110,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                         choose.getWorkThreads().start();
                         NioBossServerSocketImpl.logger.info("启动{}",choose.getWorkThreads().getName());
                     }
-                }else{
+                }else if(accept != null){
                     accept.close();
                     NioBossServerSocketImpl.logger.info("连接失败{}",accept.getRemoteAddress());
                 }
