@@ -3,9 +3,12 @@ package cn.kungreat.boot.impl;
 import cn.kungreat.boot.ChooseWorkServer;
 import cn.kungreat.boot.NioBossServerSocket;
 import cn.kungreat.boot.NioWorkServerSocket;
+import cn.kungreat.boot.tsl.CpDogSSLContext;
+import cn.kungreat.boot.tsl.ShakeHands;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLEngine;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.SocketOption;
@@ -141,7 +144,8 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                         SelectableChannel channel = next.channel();
                         if(next.isValid() && next.isAcceptable()){
                             ServerSocketChannel serChannel = (ServerSocketChannel) channel;
-                            accept(serChannel);
+//                            accept(serChannel);
+                            ShakeHands.THREAD_POOL_EXECUTOR.execute(new TSLRunnable(serChannel));
                         }else{
                             NioBossServerSocketImpl.logger.info("Boss事件类型错误");
                         }
@@ -153,6 +157,58 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                 NioBossServerSocketImpl.logger.error(e.getLocalizedMessage());
             }
             run();
+        }
+    }
+
+    private final class TSLRunnable implements Runnable{
+
+        private ServerSocketChannel serverSocketChannel;
+
+        private TSLRunnable(ServerSocketChannel channel){
+            this.serverSocketChannel=channel;
+        }
+
+        @Override
+        public void run() {
+            SocketChannel accept = null;
+            SSLEngine sslEngine = null;
+            try{
+                accept = serverSocketChannel.accept();
+                if(accept != null && accept.finishConnect()){
+                    NioWorkServerSocket choose = NioBossServerSocketImpl.this.chooseWorkServer.choose(NioBossServerSocketImpl.this.workServerSockets);
+                    accept.configureBlocking(false);
+                    choose.setOption​(accept);
+                    //TSL握手
+                    sslEngine = CpDogSSLContext.getSSLEngine(accept);
+
+//temp
+//                    accept.register(choose.getSelector(),SelectionKey.OP_READ);
+//                    choose.getSelector().wakeup();
+//                    NioBossServerSocketImpl.logger.info("连接成功{}",accept.getRemoteAddress());
+//                    Thread.State state = choose.getWorkThreads().getState();
+//                    if(state.equals(Thread.State.NEW)){
+//                        choose.getWorkThreads().start();
+//                        NioBossServerSocketImpl.logger.info("启动{}",choose.getWorkThreads().getName());
+//                    }
+                }else if(accept != null){
+                    accept.close();
+                    NioBossServerSocketImpl.logger.info("连接失败{}",accept.getRemoteAddress());
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+                NioBossServerSocketImpl.logger.error("连接失败{}",e.getLocalizedMessage());
+                if(accept != null){
+                    try {
+                        accept.close();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                        NioBossServerSocketImpl.logger.error("close失败{}",ioException.getLocalizedMessage());
+                    }
+                }
+                if(sslEngine!=null){
+                    sslEngine.closeOutbound();
+                }
+            }
         }
     }
 }
