@@ -17,6 +17,7 @@ public class CpDogSSLContext {
 
     static {
         try {
+            // System.setProperty("javax.net.debug", "all"); 显示网络通信的详情信息
             context = SSLContext.getInstance("TLSv1.2");
             context.init(keyManagerFactory("7740639_www.kungreat.cn.jks", "2Hxvob35", "2Hxvob35"),
                     trustManagerFactory("7740639_www.kungreat.cn.jks", "2Hxvob35"),
@@ -72,6 +73,7 @@ public class CpDogSSLContext {
             engine.closeOutbound();
             socketChannel.close();
         } else {
+            engine.closeOutbound();
             socketChannel.close();
             return null;
         }
