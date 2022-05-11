@@ -62,22 +62,21 @@ public class CpDogSSLContext {
         return trustManagerFactory.getTrustManagers();
     }
 
-    public static SSLEngine getSSLEngine(SocketChannel socketChannel) throws Exception {
+    public static TSLSocketLink getSSLEngine(SocketChannel socketChannel) throws Exception {
         SSLEngine engine = context.createSSLEngine();
         engine.setUseClientMode(false);
         engine.setNeedClientAuth(false);
         engine.beginHandshake();
         if (doHandshake(socketChannel, engine)) {
-
-            System.out.println("tsl握手完成:");
+            logger.info("tsl握手完成:");
+            TSLSocketLink tslSocketLink = new TSLSocketLink(engine,ByteBuffer.allocate(8192),ByteBuffer.allocate(8192));
+            return tslSocketLink;
+        } else{
+            logger.info("tsl握手失败:");
             engine.closeOutbound();
             socketChannel.close();
-        } else {
-            engine.closeOutbound();
-            socketChannel.close();
-            return null;
         }
-        return engine;
+        return null;
     }
 
     private static boolean doHandshake(SocketChannel socketChannel, SSLEngine engine) throws Exception {
@@ -166,7 +165,7 @@ public class CpDogSSLContext {
                 break;
             case BUFFER_UNDERFLOW:
                 int netSize = engine.getSession().getPacketBufferSize();
-                if (netSize > insrcDecode.capacity()) {
+                if (netSize > insrcDecode.capacity() && netSize > insrc.capacity()) {
                     logger.info("扩容入站src数据:{}",insrc.capacity());
                     ByteBuffer srcg = ByteBuffer.allocate(netSize);
                     insrc.flip();

@@ -5,10 +5,10 @@ import cn.kungreat.boot.NioBossServerSocket;
 import cn.kungreat.boot.NioWorkServerSocket;
 import cn.kungreat.boot.tsl.CpDogSSLContext;
 import cn.kungreat.boot.tsl.ShakeHands;
+import cn.kungreat.boot.tsl.TSLSocketLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.SSLEngine;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.SocketOption;
@@ -171,7 +171,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
         @Override
         public void run() {
             SocketChannel accept = null;
-            SSLEngine sslEngine = null;
+            TSLSocketLink sslEngine = null;
             try{
                 accept = serverSocketChannel.accept();
                 if(accept != null && accept.finishConnect()){
@@ -180,16 +180,16 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                     choose.setOption​(accept);
                     //TSL握手
                     sslEngine = CpDogSSLContext.getSSLEngine(accept);
-
-//temp
-//                    accept.register(choose.getSelector(),SelectionKey.OP_READ);
-//                    choose.getSelector().wakeup();
-//                    NioBossServerSocketImpl.logger.info("连接成功{}",accept.getRemoteAddress());
-//                    Thread.State state = choose.getWorkThreads().getState();
-//                    if(state.equals(Thread.State.NEW)){
-//                        choose.getWorkThreads().start();
-//                        NioBossServerSocketImpl.logger.info("启动{}",choose.getWorkThreads().getName());
-//                    }
+                    if(sslEngine != null){
+                        accept.register(choose.getSelector(),SelectionKey.OP_READ,sslEngine);
+                        choose.getSelector().wakeup();
+                        NioBossServerSocketImpl.logger.info("连接成功{}",accept.getRemoteAddress());
+                        Thread.State state = choose.getWorkThreads().getState();
+                        if(state.equals(Thread.State.NEW)){
+                            choose.getWorkThreads().start();
+                            NioBossServerSocketImpl.logger.info("启动{}",choose.getWorkThreads().getName());
+                        }
+                    }
                 }else if(accept != null){
                     accept.close();
                     NioBossServerSocketImpl.logger.info("连接失败{}",accept.getRemoteAddress());
@@ -204,9 +204,6 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                         ioException.printStackTrace();
                         NioBossServerSocketImpl.logger.error("close失败{}",ioException.getLocalizedMessage());
                     }
-                }
-                if(sslEngine!=null){
-                    sslEngine.closeOutbound();
                 }
             }
         }
