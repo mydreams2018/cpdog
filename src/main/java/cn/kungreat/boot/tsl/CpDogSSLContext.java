@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
-import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.security.KeyStore;
@@ -33,15 +32,10 @@ public class CpDogSSLContext {
         SunX509  KeyManagerFactory.getDefaultAlgorithm();
     */
     public static KeyManager[] keyManagerFactory(String fileName, String keystorePassword, String keyPassword) throws Exception {
-        String filepath = ClassLoader.getSystemResource(fileName).getPath();
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-        try (FileInputStream fis = new FileInputStream(filepath)) {
-            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            keyStore.load(fis, keystorePassword.toCharArray());
-            keyManagerFactory.init(keyStore, keyPassword.toCharArray());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keyStore.load(ClassLoader.getSystemResourceAsStream(fileName),keystorePassword.toCharArray());
+        keyManagerFactory.init(keyStore, keyPassword.toCharArray());
         return keyManagerFactory.getKeyManagers();
     }
 
@@ -50,15 +44,10 @@ public class CpDogSSLContext {
         TrustManagerFactory.getDefaultAlgorithm()  PKIX
  */
     public static TrustManager[] trustManagerFactory(String fileName, String keystorePassword) throws Exception {
-        String filepath = ClassLoader.getSystemResource(fileName).getPath();
         TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("PKIX");
-        try (FileInputStream fis = new FileInputStream(filepath)) {
-            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            keyStore.load(fis, keystorePassword.toCharArray());
-            trustManagerFactory.init(keyStore);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keyStore.load(ClassLoader.getSystemResourceAsStream(fileName), keystorePassword.toCharArray());
+        trustManagerFactory.init(keyStore);
         return trustManagerFactory.getTrustManagers();
     }
 
