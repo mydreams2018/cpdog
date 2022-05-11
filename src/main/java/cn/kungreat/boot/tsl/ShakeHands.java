@@ -30,7 +30,7 @@ public class ShakeHands {
             SecurityManager s = System.getSecurityManager();
             group = (s != null) ? s.getThreadGroup() :
                     Thread.currentThread().getThreadGroup();
-            namePrefix = "pool-" +
+            namePrefix = "ShakeHands-" +
                     poolNumber.getAndIncrement() +
                     "-thread-";
         }
@@ -73,7 +73,7 @@ public class ShakeHands {
          * @param e the executor attempting to execute this task
          */
         public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
-            logger.error("线程池队列已经满了...");
+            logger.info("线程池队列已经满了...");
         }
     }
 
