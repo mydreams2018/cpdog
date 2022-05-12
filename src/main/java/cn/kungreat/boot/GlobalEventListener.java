@@ -1,6 +1,7 @@
 package cn.kungreat.boot;
 
 import cn.kungreat.boot.jb.EventBean;
+import cn.kungreat.boot.tsl.CpDogSSLContext;
 import cn.kungreat.boot.utils.WebSocketResponse;
 
 import java.lang.reflect.Method;
@@ -16,7 +17,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 */
 public class GlobalEventListener {
 
-    private static final ByteBuffer EVENT_BUFFER = ByteBuffer.allocateDirect(2048);
+    private static final ByteBuffer EVENT_BUFFER = ByteBuffer.allocate(2048);
     /*
      *所有的事件集合
      */
@@ -61,7 +62,8 @@ public class GlobalEventListener {
                                                     EVENT_BUFFER.put(bytes,readLength,min);
                                                     readLength = readLength + min;
                                                     EVENT_BUFFER.flip();
-                                                    socketChannel.write(EVENT_BUFFER);
+//                                                    socketChannel.write(EVENT_BUFFER);
+                                                    CpDogSSLContext.outEncode(socketChannel,EVENT_BUFFER);
                                                     EVENT_BUFFER.clear();
                                                 }while (readLength<bytes.length);
                                             }

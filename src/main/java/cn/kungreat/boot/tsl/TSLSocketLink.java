@@ -11,11 +11,11 @@ import java.nio.ByteBuffer;
 public class TSLSocketLink {
     private SSLEngine engine;
     private ByteBuffer inSrc;
-    private ByteBuffer outSrc;
+    private ByteBuffer outEnc;
 
-    public TSLSocketLink(SSLEngine engine, ByteBuffer inSrc, ByteBuffer outSrc) {
+    public TSLSocketLink(SSLEngine engine, ByteBuffer inSrc, ByteBuffer out) {
         this.engine = engine;
         this.inSrc = inSrc;
-        this.outSrc = outSrc;
+        this.outEnc = out;
     }
 }

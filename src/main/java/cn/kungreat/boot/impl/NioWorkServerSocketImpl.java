@@ -5,6 +5,8 @@ import cn.kungreat.boot.ChannelOutHandler;
 import cn.kungreat.boot.ChannelProtocolHandler;
 import cn.kungreat.boot.NioWorkServerSocket;
 import cn.kungreat.boot.em.ProtocolState;
+import cn.kungreat.boot.tsl.CpDogSSLContext;
+import cn.kungreat.boot.tsl.TSLSocketLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +32,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private final TreeMap<Integer,ByteBuffer> treeMap = new TreeMap<>();
     private final TreeMap<Integer,ProtocolState> protocolStateMap = new TreeMap<>();
     //出站buffer 设置为jvm外管理.减少一次copy 不用array
-    private final ByteBuffer outBuf = ByteBuffer.allocateDirect(8192);
+    private final ByteBuffer outBuf = ByteBuffer.allocate(8192);
     private final HashMap<SocketOption<?>,Object> optionMap = new HashMap<>();
     private Thread workThreads;
     private Selector selector;
@@ -139,9 +141,19 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         byteBuffer = ByteBuffer.allocate(NioWorkServerSocketImpl.this.bufferSize);
                         treeMap.put(channelHash,byteBuffer);
                     }
-                    int read = clientChannel.read(byteBuffer);
+                    TSLSocketLink attachment = (TSLSocketLink)next.attachment();
+                    ByteBuffer inSrc = attachment.getInSrc();
+                    int read = clientChannel.read(inSrc);
                     while(read > 0){
-                        read = clientChannel.read(byteBuffer);
+                        read = clientChannel.read(inSrc);
+                    }
+                    inSrc.flip();
+                    ByteBuffer inDecode = CpDogSSLContext.inDecode(attachment, byteBuffer,6);
+                    attachment.getInSrc().compact();
+                    if(inDecode != byteBuffer){
+                        //说明扩容了
+                        byteBuffer = inDecode;
+                        treeMap.put(channelHash,byteBuffer);
                     }
                     if(protocolStateMap.get(channelHash) == null
                             || protocolStateMap.get(channelHash) != ProtocolState.FINISH){

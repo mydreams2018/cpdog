@@ -8,10 +8,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.security.KeyStore;
 import java.security.SecureRandom;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CpDogSSLContext {
     private static final Logger logger = LoggerFactory.getLogger(CpDogSSLContext.class);
-
+    public static final ConcurrentHashMap<Integer,TSLSocketLink> TSL_SOCKET_LINK = new ConcurrentHashMap<>(1024);
     public static SSLContext context = null;
 
     static {
@@ -58,7 +59,8 @@ public class CpDogSSLContext {
         engine.beginHandshake();
         if (doHandshake(socketChannel, engine)) {
             logger.info("tsl握手完成:");
-            TSLSocketLink tslSocketLink = new TSLSocketLink(engine,ByteBuffer.allocate(8192),ByteBuffer.allocate(8192));
+            TSLSocketLink tslSocketLink = new TSLSocketLink(engine,ByteBuffer.allocate(32768),ByteBuffer.allocate(32768));
+            TSL_SOCKET_LINK.put(socketChannel.hashCode(),tslSocketLink);
             return tslSocketLink;
         } else{
             logger.info("tsl握手失败:");
@@ -144,7 +146,7 @@ public class CpDogSSLContext {
     private static void changeInStates(SSLEngine engine, SSLEngineResult sslEngineResult,ByteBuffer insrc,ByteBuffer insrcDecode) throws SSLException {
         switch (sslEngineResult.getStatus()) {
             case BUFFER_OVERFLOW:
-                logger.info("扩容入站解密数据:{}",insrcDecode.capacity()*2);
+                logger.info("扩容入站解密数据:{}",insrcDecode.capacity());
                 int applicationBufferSize = engine.getSession().getApplicationBufferSize();
                 ByteBuffer b = ByteBuffer.allocate(applicationBufferSize + insrcDecode.position());
                 insrcDecode.flip();
@@ -177,7 +179,7 @@ public class CpDogSSLContext {
                                          ,SocketChannel socketChannel) throws Exception {
         switch (sslEngineResult.getStatus()) {
             case BUFFER_OVERFLOW:
-                logger.info("扩容出站加密数据:{}",outsrcDecode.capacity()*2);
+                logger.info("扩容出站加密数据:{}",outsrcDecode.capacity());
                 ByteBuffer buf = ByteBuffer.allocate(outsrcDecode.capacity() * 2);
                 outsrcDecode.flip();
                 buf.put(outsrcDecode);
@@ -201,7 +203,83 @@ public class CpDogSSLContext {
                         socketChannel.write(outsrcDecode);
                     }
                     outsrcDecode.clear();
+                    engine.closeOutbound();
                 }
+        }
+    }
+
+    public static ByteBuffer inDecode(TSLSocketLink socketLink,ByteBuffer decode,int spin) throws SSLException {
+        spin--;
+        ByteBuffer inSrc = socketLink.getInSrc();
+        SSLEngine engine = socketLink.getEngine();
+        SSLEngineResult unwrap = engine.unwrap(inSrc, decode);
+        switch (unwrap.getStatus()) {
+            case BUFFER_OVERFLOW:
+                logger.info("read-扩容入站解密数据:{}",decode.capacity());
+                int applicationBufferSize = engine.getSession().getApplicationBufferSize();
+                ByteBuffer b = ByteBuffer.allocate(applicationBufferSize + decode.position());
+                decode.flip();
+                b.put(decode);
+                return inDecode(socketLink,b,spin);//扩容后尝试再次转换
+            case BUFFER_UNDERFLOW:
+                int netSize = engine.getSession().getPacketBufferSize();
+                if (netSize > decode.capacity() && netSize > inSrc.capacity()) {
+                    logger.info("read-扩容入站src数据:{}",inSrc.capacity());
+                    ByteBuffer srcg = ByteBuffer.allocate(netSize);
+                    srcg.put(inSrc);
+                    socketLink.setInSrc(srcg);
+                }
+                break;
+            case OK:
+                break;
+            case CLOSED:
+                if (!engine.isInboundDone()) {
+                    engine.closeInbound();
+                }
+        }
+        if(inSrc.hasRemaining() && spin > 0){
+            /* 由于解密的特殊性、必需自旋一定的数量.因为可能收到数据全、但是它解密认为数据不全.也有可能真的不全..  */
+            return inDecode(socketLink,decode,spin);
+        }
+        return decode;
+    }
+
+    public static void outEncode(SocketChannel socketChannel,ByteBuffer outSrc) throws Exception {
+        TSLSocketLink tslSocketLink = TSL_SOCKET_LINK.get(socketChannel.hashCode());
+        SSLEngine engine = tslSocketLink.getEngine();
+        ByteBuffer outEnc = tslSocketLink.getOutEnc();
+        SSLEngineResult wrap = engine.wrap(outSrc,outEnc);
+        switch (wrap.getStatus()){
+            case BUFFER_OVERFLOW:
+                logger.info("out-扩容出站加密数据:{}",outEnc.capacity());
+                ByteBuffer buf = ByteBuffer.allocate(outEnc.capacity() * 2);
+                outEnc.flip();
+                buf.put(outEnc);
+                tslSocketLink.setOutEnc(buf);
+                outEncode(socketChannel,outSrc);
+                return;
+            case BUFFER_UNDERFLOW:
+                throw new RuntimeException("out-我不认为我们应该到这里");
+            case OK:
+                outEnc.flip();
+                if(outEnc.hasRemaining()){
+                    socketChannel.write(outEnc);
+                }
+                outEnc.clear();
+                break;
+            case CLOSED:
+                if(!engine.isOutboundDone()){
+                    outEnc.flip();
+                    if(outEnc.hasRemaining()){
+                        socketChannel.write(outEnc);
+                    }
+                    outEnc.clear();
+                    engine.closeOutbound();
+                }
+        }
+        if(outSrc.hasRemaining() && !engine.isOutboundDone()){
+            logger.info("多次调用了outEncode--");
+            outEncode(socketChannel,outSrc);
         }
     }
 }

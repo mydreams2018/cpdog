@@ -2,6 +2,7 @@ package cn.kungreat.boot.handler;
 
 import cn.kungreat.boot.ChannelProtocolHandler;
 import cn.kungreat.boot.jb.WebSocketBean;
+import cn.kungreat.boot.tsl.CpDogSSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,6 +100,7 @@ public class WebSocketProtocolHandler implements ChannelProtocolHandler {
         in.clear();
         in.put(stringBuffer.toString().getBytes("UTF-8"));
         in.flip();
-        socketChannel.write(in);
+//        socketChannel.write(in);
+        CpDogSSLContext.outEncode(socketChannel,in);
     }
 }
