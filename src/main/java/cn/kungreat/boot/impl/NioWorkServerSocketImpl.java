@@ -150,8 +150,8 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     inSrc.flip();
                     ByteBuffer inDecode = CpDogSSLContext.inDecode(attachment, byteBuffer,6);
                     attachment.getInSrc().compact();
-                    if(inDecode != byteBuffer){
-                        //说明扩容了
+                    if(byteBuffer != inDecode){
+                        //说明扩容了 byteBuffer
                         byteBuffer = inDecode;
                         treeMap.put(channelHash,byteBuffer);
                     }
