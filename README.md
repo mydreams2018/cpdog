@@ -29,8 +29,10 @@ const queryCurrentFriends ={
 #### 版本说明
 05-01日: 更新了后端通知机制的设计.基于注解方式实现方法的调用.
 
+05-12日: 加入TLS加密协议、使用原生SSLEngine实现.
+
 #### 线上测试地址
-http://www.kungreat.cn/
+https://www.kungreat.cn/
 #### 详细介绍地址
 https://space.bilibili.com/384704339
 #### 界面图
@@ -63,6 +65,8 @@ https://space.bilibili.com/384704339
 [mysql、jackson、HikariCP、logback]
 
 使用mysql数据库.jackson前后端数据交互.HikariCP数据库连接池.logback日志体系
+
+加入了TLS加密协议、使用原生的SSLEngine完成、目前基本的通知机制也已经完成
 
 #### 安装教程
 
