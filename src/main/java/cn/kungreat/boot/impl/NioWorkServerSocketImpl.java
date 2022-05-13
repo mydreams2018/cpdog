@@ -170,9 +170,11 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         clientChannel.close();
                         treeMap.remove(channelHash);
                         protocolStateMap.remove(channelHash);
+                        CpDogSSLContext.TSL_SOCKET_LINK.remove(channelHash);
                     }else if(!clientChannel.isOpen()){
                         treeMap.remove(channelHash);
                         protocolStateMap.remove(channelHash);
+                        CpDogSSLContext.TSL_SOCKET_LINK.remove(channelHash);
                     }
                 }else{
                     logger.error(clientChannel.getRemoteAddress()+":客户端监听类型异常");
@@ -184,11 +186,12 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     } catch (IOException ioException) {
                         ioException.printStackTrace();
                     }
+                    treeMap.remove(clientChannel.hashCode());
+                    protocolStateMap.remove(clientChannel.hashCode());
+                    CpDogSSLContext.TSL_SOCKET_LINK.remove(clientChannel.hashCode());
                 }else{
                     next.cancel();
                 }
-                treeMap.remove(clientChannel.hashCode());
-                protocolStateMap.remove(clientChannel.hashCode());
                 e.printStackTrace();
             }
         }

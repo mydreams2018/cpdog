@@ -73,6 +73,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     break;
                 }else if(first.getType() == 8){
                     //关闭信息状态标识
+                    socketChannel.close();
                     break;
                 }else if(first.getType() == 999){
                     //初始化的一个空对象标识

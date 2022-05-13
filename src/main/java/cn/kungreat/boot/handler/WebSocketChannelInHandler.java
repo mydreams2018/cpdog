@@ -66,7 +66,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                     webSocketState.setDateLength(array,remaining);
                     webSocketState.setMaskingKey(array);
                 } else{
-                    logger.error("协议mask标记位不正确关闭连接:");
+                    logger.info("协议mask标记位不正确关闭连接:");
                     socketChannel.close();
                     WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
                     WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
