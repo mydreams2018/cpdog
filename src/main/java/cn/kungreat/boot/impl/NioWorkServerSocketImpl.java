@@ -165,19 +165,18 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         Object inEnd = runInHandlers(clientChannel, byteBuffer);
                         runOutHandlers(clientChannel,inEnd);
                     }
-                    if(read == -1){
-                        logger.error(clientChannel.getRemoteAddress()+"自动关闭了");
-                        clientChannel.close();
+                    if(!clientChannel.isOpen()){
                         treeMap.remove(channelHash);
                         protocolStateMap.remove(channelHash);
                         CpDogSSLContext.TSL_SOCKET_LINK.remove(channelHash);
-                    }else if(!clientChannel.isOpen()){
+                    } else if(read == -1){
+                        clientChannel.close();
                         treeMap.remove(channelHash);
                         protocolStateMap.remove(channelHash);
                         CpDogSSLContext.TSL_SOCKET_LINK.remove(channelHash);
                     }
                 }else{
-                    logger.error(clientChannel.getRemoteAddress()+":客户端监听类型异常");
+                    logger.info(clientChannel.getRemoteAddress()+":客户端监听类型异常");
                 }
             }catch (Exception e){
                 if(clientChannel!=null){
