@@ -187,8 +187,7 @@ public class CpDogSSLContext {
                 currentThreadOut.setOutsrcEncode(buf);
                 break;
             case BUFFER_UNDERFLOW:
-                logger.info("我不认为我们应该到这里:out");
-                break;
+                throw new RuntimeException("outssl-我不认为我们应该到这里");
             case OK:
                 outsrcDecode.flip();
                 if(outsrcDecode.hasRemaining()){
