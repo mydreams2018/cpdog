@@ -31,13 +31,13 @@ const queryCurrentFriends ={
 
 05-12日: 加入TLS加密协议、使用原生SSLEngine实现.
 
+05-15日: 加入了移动端的css样式.自适应
+
 #### 线上测试地址
 https://www.kungreat.cn/
 #### 详细介绍地址
 https://space.bilibili.com/384704339
 #### 界面图
-
-**<u>注意目前只做了pc端css布局、只支持宽900px像素以上的设备浏览访问.</u>**
 
 1. 注册界面<img src="./images_md/register.PNG" style="zoom:50%;" />
 2. 登录 <img src="./images_md/login.PNG" alt="login" style="zoom:50%;" />
@@ -53,10 +53,16 @@ https://space.bilibili.com/384704339
 
 <img src="./images_md/viewsend.PNG" alt="viewsend" style="zoom:50%;" />
 
+7:手机界面
+
+<img src="./images_md/pscts.PNG" alt="pscts" style="zoom:50%;" />
+
 #### 软件架构
 
 软件架构说明
 基于Reactor 设计模式、使用原生java-nio实现的websocket 通信框架.
+
+支持多线程、高并发、每个work一个线程绑定一个唯一的channel 减少不必要的并发性
 
 完全基于NIO实现.最少的包装、协议的解释、数据的传输、尽量少的第三方依赖、
 
@@ -111,19 +117,5 @@ https://space.bilibili.com/384704339
 1.   需要配合前端使用.
 2.  https://gitee.com/mydreams2018/dwbbs
 
-#### 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
 
 
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
