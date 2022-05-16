@@ -16,8 +16,8 @@ public class ShakeHands {
 
     private static final Logger logger = LoggerFactory.getLogger(ShakeHands.class);
 
-    public static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(1,5,3600,
-            TimeUnit.SECONDS,new ArrayBlockingQueue(100,true),new CpdogThreadFactory(),new DiscardPolicy());
+    public static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(2,5,3600,
+            TimeUnit.SECONDS,new ArrayBlockingQueue(9),new CpdogThreadFactory(),new DiscardPolicy());
 
 
     final static class CpdogThreadFactory implements ThreadFactory {
