@@ -58,7 +58,7 @@ public class ShakeHands {
 
         private ByteBuffer insrc = ByteBuffer.allocate(8192);
         private ByteBuffer insrcDecode = ByteBuffer.allocate(8192);
-        private ByteBuffer outsrcEncode = ByteBuffer.allocate(8192);
+        private ByteBuffer outsrcEncode = ByteBuffer.allocate(32768);
 
     }
 
@@ -72,7 +72,7 @@ public class ShakeHands {
          * @param e the executor attempting to execute this task
          */
         public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
-            logger.info("线程池队列已经满了...");
+            logger.error("线程池队列已经满了...");
         }
     }
 
