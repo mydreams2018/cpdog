@@ -187,7 +187,8 @@ public class CpDogSSLContext {
                 currentThreadOut.setOutsrcEncode(buf);
                 break;
             case BUFFER_UNDERFLOW:
-                throw new RuntimeException("outssl-我不认为我们应该到这里");
+                logger.error("outssl-我不认为我们应该到这里");
+                break;
             case OK:
                 outsrcDecode.flip();
                 if(outsrcDecode.hasRemaining()){
@@ -258,7 +259,8 @@ public class CpDogSSLContext {
                 outEncode(socketChannel,outSrc);
                 return;
             case BUFFER_UNDERFLOW:
-                throw new RuntimeException("out-我不认为我们应该到这里");
+                logger.error("out-我不认为我们应该到这里");
+                break;
             case OK:
                 outEnc.flip();
                 if(outEnc.hasRemaining()){
@@ -277,7 +279,7 @@ public class CpDogSSLContext {
                 }
         }
         if(outSrc.hasRemaining() && !engine.isOutboundDone()){
-            logger.info("多次调用了outEncode--");
+            logger.error("多次调用了outEncode--");
             outEncode(socketChannel,outSrc);
         }
     }
