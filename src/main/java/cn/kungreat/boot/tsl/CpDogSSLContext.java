@@ -75,11 +75,9 @@ public class CpDogSSLContext {
         ShakeHands.CpdogThread currentThread = (ShakeHands.CpdogThread) Thread.currentThread();
         ByteBuffer insrc = currentThread.getInsrc();
         ByteBuffer insrcDecode = currentThread.getInsrcDecode();
-        ByteBuffer outsrc = currentThread.getOutsrc();
         ByteBuffer outsrcEncode = currentThread.getOutsrcEncode();
         insrc.clear();
         insrcDecode.clear();
-        outsrc.clear();
         outsrcEncode.clear();
 
         SSLEngineResult.HandshakeStatus handshakeStatus = engine.getHandshakeStatus();

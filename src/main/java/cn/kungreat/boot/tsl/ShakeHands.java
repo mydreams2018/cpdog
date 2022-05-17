@@ -58,7 +58,6 @@ public class ShakeHands {
 
         private ByteBuffer insrc = ByteBuffer.allocate(8192);
         private ByteBuffer insrcDecode = ByteBuffer.allocate(8192);
-        private ByteBuffer outsrc = ByteBuffer.allocate(8192);
         private ByteBuffer outsrcEncode = ByteBuffer.allocate(8192);
 
     }
