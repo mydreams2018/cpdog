@@ -94,6 +94,7 @@ public class CpDogSSLContext {
                             insrc.flip();
                             temsrc.put(insrc);
                             currentThread.setInsrc(temsrc);
+                            insrc = temsrc;
                         }
                     }
                     insrc.flip();
