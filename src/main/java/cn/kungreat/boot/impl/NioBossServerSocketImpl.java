@@ -182,13 +182,13 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                     sslEngine = CpDogSSLContext.getSSLEngine(accept);
                     if(sslEngine != null){
                         accept.register(choose.getSelector(),SelectionKey.OP_READ,sslEngine);
-                        choose.getSelector().wakeup();
                         NioBossServerSocketImpl.logger.info("连接成功{}",accept.getRemoteAddress());
                         Thread.State state = choose.getWorkThreads().getState();
                         if(state.equals(Thread.State.NEW)){
                             choose.getWorkThreads().start();
                             NioBossServerSocketImpl.logger.info("启动{}",choose.getWorkThreads().getName());
                         }
+                        choose.getSelector().wakeup();
                     }
                 }else if(accept != null){
                     accept.close();

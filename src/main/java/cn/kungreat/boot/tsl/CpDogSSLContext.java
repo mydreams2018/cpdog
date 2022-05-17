@@ -59,7 +59,13 @@ public class CpDogSSLContext {
         engine.beginHandshake();
         if (doHandshake(socketChannel, engine)) {
             logger.info("tsl握手完成:");
-            TSLSocketLink tslSocketLink = new TSLSocketLink(engine,ByteBuffer.allocate(32768),ByteBuffer.allocate(32768));
+            ShakeHands.CpdogThread currentThread = (ShakeHands.CpdogThread) Thread.currentThread();
+            ByteBuffer changeInsrc = currentThread.getInsrc();
+            changeInsrc.flip();
+            // 可能有读取多的没有用完的数据、需要转换到channel所绑定的TSLSocketLink中去
+            // [很少发生. 在极端的情况下数据读完了、后续不会触发work对象注册的-read事件、会造成websocket握手没有触发.数据是在的]
+            ByteBuffer Insrc = ByteBuffer.allocate(32768).put(changeInsrc);
+            TSLSocketLink tslSocketLink = new TSLSocketLink(engine,Insrc,ByteBuffer.allocate(32768));
             TSL_SOCKET_LINK.put(socketChannel.hashCode(),tslSocketLink);
             return tslSocketLink;
         } else{
