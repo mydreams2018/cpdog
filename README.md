@@ -114,8 +114,8 @@ https://space.bilibili.com/384704339
 
 #### 使用说明
 
-1.   需要配合前端使用.
-2.  https://gitee.com/mydreams2018/dwbbs
+1.  需要配合前端使用.
+2.  https://github.com/mydreams2018/dwbbs
 
 
 
