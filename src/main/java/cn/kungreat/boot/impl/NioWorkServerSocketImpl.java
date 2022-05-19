@@ -6,6 +6,7 @@ import cn.kungreat.boot.ChannelProtocolHandler;
 import cn.kungreat.boot.NioWorkServerSocket;
 import cn.kungreat.boot.em.ProtocolState;
 import cn.kungreat.boot.tsl.CpDogSSLContext;
+import cn.kungreat.boot.tsl.InitLinkedList;
 import cn.kungreat.boot.tsl.TSLSocketLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private static ChannelProtocolHandler channelProtocolHandler ;
     private final TreeMap<Integer,ByteBuffer> treeMap = new TreeMap<>();
     private final TreeMap<Integer,ProtocolState> protocolStateMap = new TreeMap<>();
-    public final LinkedList<SelectionKey> tlsInitKey = (LinkedList<SelectionKey>)Collections.synchronizedList(new LinkedList<SelectionKey>());
+    public final LinkedList<SelectionKey> tlsInitKey = new InitLinkedList();
     private final ByteBuffer outBuf = ByteBuffer.allocate(8192);
     private final HashMap<SocketOption<?>,Object> optionMap = new HashMap<>();
     private Thread workThreads;
