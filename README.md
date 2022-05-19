@@ -118,4 +118,5 @@ https://space.bilibili.com/384704339
 2.  https://github.com/mydreams2018/dwbbs
 
 
-
+#### 感谢 jetbrains 提供的开源版 免费许可证
+   <img src="https://www.kungreat.cn/images/images_md/jeb2.PNG" alt="package" style="zoom:50%;" />
