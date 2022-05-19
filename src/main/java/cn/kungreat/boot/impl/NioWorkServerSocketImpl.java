@@ -31,7 +31,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private static ChannelProtocolHandler channelProtocolHandler ;
     private final TreeMap<Integer,ByteBuffer> treeMap = new TreeMap<>();
     private final TreeMap<Integer,ProtocolState> protocolStateMap = new TreeMap<>();
-    public final LinkedList<SelectionKey> tlsInitKey = new LinkedList<>();
+    public final LinkedList<SelectionKey> tlsInitKey = (LinkedList<SelectionKey>)Collections.synchronizedList(new LinkedList<SelectionKey>());
     private final ByteBuffer outBuf = ByteBuffer.allocate(8192);
     private final HashMap<SocketOption<?>,Object> optionMap = new HashMap<>();
     private Thread workThreads;
@@ -134,11 +134,12 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             run();
         }
         /* TLS握手完后 可能有读取多的没有用完的数据、 需要在此触发一次*/
-        public void runTlsInit(){
+        private void runTlsInit(){
             SelectionKey peekFirst = tlsInitKey.peekFirst();
-            if(peekFirst != null){
+            while(peekFirst != null){
                 tlsInitKey.removeFirst();
                 InitHandler(peekFirst);
+                peekFirst = tlsInitKey.peekFirst();
             }
         }
         public void InitHandler(SelectionKey next){
