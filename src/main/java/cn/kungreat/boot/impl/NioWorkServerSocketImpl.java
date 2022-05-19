@@ -31,7 +31,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private static ChannelProtocolHandler channelProtocolHandler ;
     private final TreeMap<Integer,ByteBuffer> treeMap = new TreeMap<>();
     private final TreeMap<Integer,ProtocolState> protocolStateMap = new TreeMap<>();
-    //出站buffer 设置为jvm外管理.减少一次copy 不用array
+    public final LinkedList<SelectionKey> tlsInitKey = new LinkedList<>();
     private final ByteBuffer outBuf = ByteBuffer.allocate(8192);
     private final HashMap<SocketOption<?>,Object> optionMap = new HashMap<>();
     private Thread workThreads;
@@ -60,7 +60,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     public static void addChannelProtocolHandler(ChannelProtocolHandler protocolHandler) {
         NioWorkServerSocketImpl.channelProtocolHandler = protocolHandler;
     }
-
+    @Override
+    public LinkedList<SelectionKey> getTlsInitKey(){
+        return this.tlsInitKey;
+    }
     @Override
     public <T> NioWorkServerSocket setOption​(SocketOption<T> name, T value) throws IOException {
         optionMap.put(name,value);
@@ -122,12 +125,81 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         iterator.remove();
                         handler(next);
                     }
+                    runTlsInit();
                     clearBuffer();
                 }
             }catch (Exception e){
                 e.printStackTrace();
             }
             run();
+        }
+        /* TLS握手完后 可能有读取多的没有用完的数据、 需要在此触发一次*/
+        public void runTlsInit(){
+            SelectionKey peekFirst = tlsInitKey.peekFirst();
+            if(peekFirst != null){
+                tlsInitKey.removeFirst();
+                InitHandler(peekFirst);
+            }
+        }
+        public void InitHandler(SelectionKey next){
+            SocketChannel clientChannel = null;
+            try{
+                clientChannel = (SocketChannel) next.channel();
+                    int channelHash = clientChannel.hashCode();
+                    ByteBuffer byteBuffer = treeMap.get(channelHash);
+                    if(byteBuffer == null){
+                        byteBuffer = ByteBuffer.allocate(NioWorkServerSocketImpl.this.bufferSize);
+                        treeMap.put(channelHash,byteBuffer);
+                    }
+                    TSLSocketLink attachment = (TSLSocketLink)next.attachment();
+                    ByteBuffer inSrc = attachment.getInSrc();
+                    int read = clientChannel.read(inSrc);
+                    while(read > 0){
+                        read = clientChannel.read(inSrc);
+                    }
+                    inSrc.flip();
+                    ByteBuffer inDecode = CpDogSSLContext.inDecode(attachment, byteBuffer,6);
+                    attachment.getInSrc().compact();
+                    if(byteBuffer != inDecode){
+                        //说明扩容了 byteBuffer
+                        byteBuffer = inDecode;
+                        treeMap.put(channelHash,byteBuffer);
+                    }
+                    if(protocolStateMap.get(channelHash) == null
+                            || protocolStateMap.get(channelHash) != ProtocolState.FINISH){
+                        //协议处理
+                        if(channelProtocolHandler.handlers(clientChannel, byteBuffer)){
+                            protocolStateMap.put(channelHash,ProtocolState.FINISH);
+                        }
+                    }else{
+                        Object inEnd = runInHandlers(clientChannel, byteBuffer);
+                        runOutHandlers(clientChannel,inEnd);
+                    }
+                    if(!clientChannel.isOpen()){
+                        treeMap.remove(channelHash);
+                        protocolStateMap.remove(channelHash);
+                        CpDogSSLContext.TSL_SOCKET_LINK.remove(channelHash);
+                    } else if(read == -1){
+                        clientChannel.close();
+                        treeMap.remove(channelHash);
+                        protocolStateMap.remove(channelHash);
+                        CpDogSSLContext.TSL_SOCKET_LINK.remove(channelHash);
+                    }
+            }catch (Exception e){
+                if(clientChannel!=null){
+                    try {
+                        clientChannel.close();
+                    } catch(IOException ioException) {
+                        ioException.printStackTrace();
+                    }
+                    treeMap.remove(clientChannel.hashCode());
+                    protocolStateMap.remove(clientChannel.hashCode());
+                    CpDogSSLContext.TSL_SOCKET_LINK.remove(clientChannel.hashCode());
+                }else{
+                    next.cancel();
+                }
+                e.printStackTrace();
+            }
         }
 
         public void handler(SelectionKey next){

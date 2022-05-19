@@ -186,7 +186,11 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                     //TSL握手
                     sslEngine = CpDogSSLContext.getSSLEngine(this.tlsSocketChannel);
                     if(sslEngine != null){
-                        this.tlsSocketChannel.register(choose.getSelector(),SelectionKey.OP_READ,sslEngine);
+                        SelectionKey selectionKey = this.tlsSocketChannel.register(choose.getSelector(), SelectionKey.OP_READ, sslEngine);
+                        if(sslEngine.getInSrc().position() >0){
+                            //说明有多的数据需要处理.手动安排走一次work链路
+                            choose.getTlsInitKey().add(selectionKey);
+                        }
                         NioBossServerSocketImpl.logger.info("连接成功{}",this.tlsSocketChannel.getRemoteAddress());
                         Thread.State state = choose.getWorkThreads().getState();
                         if(state.equals(Thread.State.NEW)){
@@ -202,14 +206,12 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
             }catch (Exception e){
                 e.printStackTrace();
                 NioBossServerSocketImpl.logger.error("连接失败{}",e.getLocalizedMessage());
-                if(this.tlsSocketChannel != null){
                     try {
                         this.tlsSocketChannel.close();
                     } catch (IOException ioException) {
                         ioException.printStackTrace();
                         NioBossServerSocketImpl.logger.error("close失败{}",ioException.getLocalizedMessage());
                     }
-                }
             }
         }
     }
