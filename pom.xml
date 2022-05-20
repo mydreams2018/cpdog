@@ -15,8 +15,9 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<maven.test.skip>true</maven.test.skip>
 		<skipTests>true</skipTests>
-		<maven.compiler.source>11</maven.compiler.source>
-		<maven.compiler.target>11</maven.compiler.target>
+		<java.version>17</java.version>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
 		<jackson.version>2.12.4</jackson.version>
 	</properties>
 
@@ -24,7 +25,9 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.8</version>
+			<version>1.18.24</version>
+<!--			在编译、测试时有效，但是在运行时无效。 -->
+			<scope>provided</scope>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
