@@ -17,7 +17,7 @@ public class ShakeHands {
     private static final Logger logger = LoggerFactory.getLogger(ShakeHands.class);
 
     public static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(2,5,3600,
-            TimeUnit.SECONDS,new ArrayBlockingQueue(99,true),new CpdogThreadFactory(),new DiscardPolicy());
+            TimeUnit.SECONDS,new ArrayBlockingQueue<>(99,true),new CpdogThreadFactory(),new DiscardPolicy());
 
 
     final static class CpdogThreadFactory implements ThreadFactory {
@@ -27,12 +27,8 @@ public class ShakeHands {
         private final String namePrefix;
 
         public CpdogThreadFactory(){
-            SecurityManager s = System.getSecurityManager();
-            group = (s != null) ? s.getThreadGroup() :
-                    Thread.currentThread().getThreadGroup();
-            namePrefix = "ShakeHands-" +
-                    poolNumber.getAndIncrement() +
-                    "-thread-";
+            group = Thread.currentThread().getThreadGroup();
+            namePrefix = "ShakeHands-" + poolNumber.getAndIncrement() + "-thread-";
         }
 
        public Thread newThread(Runnable r) {
