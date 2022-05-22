@@ -10,8 +10,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CoderResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
@@ -238,7 +241,8 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
          * isConvert 传送文件时使用 表示数据是否已经转换
          */
         private boolean isConvert;
-
+        private CharsetDecoder charsetDecoder = Charset.forName("UTF-8").newDecoder();
+        private CharBuffer charBuffer = CharBuffer.allocate(1024);
         public boolean isFinish() {
             return finish;
         }
@@ -331,22 +335,22 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
 
 
         /*
-         编码转换成字符串 默认用UTF-8
+         编码转换成字符串 默认用UTF-8 charsetDecoder  charBuffer
         */
         public void setStringData(SocketChannel socketChannel) throws Exception {
             byteBuffer.flip();
             int remaining = byteBuffer.remaining();
             if(!done){
-                int ix = 0;
+                CoderResult coderResult;
                 do{
-                    ix++;
-                    byte b = byteBuffer.get(remaining - ix);
-                    if(b>0 || (b<=-12 && b>=-62)){
-                        break;
-                    }
-                }while(true);
-                stringBuilder.append(new String(byteBuffer.array(),0,remaining-ix,Charset.forName("UTF-8")));
-                byteBuffer.position(remaining-ix);
+                    coderResult = charsetDecoder.decode(byteBuffer, charBuffer, false);
+                    charBuffer.flip();
+                    stringBuilder.append(charBuffer);
+                    charBuffer.clear();
+                }while (coderResult.isOverflow());
+                if(coderResult.isError()){
+                    throw new RuntimeException("!!!解码错误-111!!!");
+                }
                 byteBuffer.compact();
             }else{
                 stringBuilder.append(new String(byteBuffer.array(),0,remaining,Charset.forName("UTF-8")));
