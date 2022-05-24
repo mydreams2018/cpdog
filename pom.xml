@@ -75,6 +75,8 @@
 							<overWriteIfNewer>true</overWriteIfNewer>
 						<!--	排除传递		-->
 							<excludeTransitive>false</excludeTransitive>
+							<!-- 排除不必要的jar包 -->
+							<excludeGroupIds>org.projectlombok</excludeGroupIds>
 						</configuration>
 					</execution>
 				</executions>
