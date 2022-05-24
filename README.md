@@ -35,6 +35,8 @@ const queryCurrentFriends ={
 
 05-20日: 更新JDK版本为17、代码中并没有新的语法结构、可以根据需要自行更改配置...修复TLS握手阶段的数据留存问题
 
+05-23日: 更新bytebuffer网络编码入站优化、使用官方提供的实现类.
+
 #### 线上测试地址
 https://www.kungreat.cn/
 #### 详细介绍地址
