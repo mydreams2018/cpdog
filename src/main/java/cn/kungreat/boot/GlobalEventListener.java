@@ -8,7 +8,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -31,7 +31,7 @@ public class GlobalEventListener {
      * 迭代监听 EVENT_BLOCKING_QUEUE 事件 传递给指定的回调方法
      */
     public static void loopEvent(){
-        EventBean receiveObj = null;
+        EventBean receiveObj ;
         String receiveObjUrl ;
         SocketChannel socketChannel ;
         try {
@@ -43,7 +43,7 @@ public class GlobalEventListener {
                     outer:for(int i=0;i<CpdogMain.EVENTS.size();i++){
                         Class<?> aClass = CpdogMain.EVENTS.get(i);
                         Method[] declaredMethods = aClass.getMethods();
-                        if(declaredMethods != null && declaredMethods.length>0){
+                        if(declaredMethods.length>0){
                             for(int x=0;x<declaredMethods.length;x++){
                                 Method methods = declaredMethods[x];
                                 String name = methods.getName();
@@ -52,7 +52,7 @@ public class GlobalEventListener {
                                         EVENT_BUFFER.clear();
                                         String rts = (String) methods.invoke(null,receiveObj);
                                         if(rts.length() > 0){
-                                            byte[] bytes = rts.getBytes(Charset.forName("UTF-8"));
+                                            byte[] bytes = rts.getBytes(StandardCharsets.UTF_8);
                                             int readLength = 0;
                                             EVENT_BUFFER.put(WebSocketResponse.getBytes(bytes));
                                             //必须处理并发.数据一次完整的写出.

@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class NioBossServerSocketImpl implements NioBossServerSocket {
     private ServerSocketChannel serverSocketChannel;
     private Selector selector;
-    private static ThreadGroup threadGroup = new BossThreadGroup("bossServer");
+    private static final ThreadGroup threadGroup = new BossThreadGroup("bossServer");
     private Thread bossThreads;
     private final static AtomicInteger atomicInteger = new AtomicInteger(0);
     private NioWorkServerSocket[] workServerSockets;

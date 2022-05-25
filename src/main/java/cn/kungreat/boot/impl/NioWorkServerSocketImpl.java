@@ -39,7 +39,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private Selector selector;
     //清理缓冲区 不存在的channel对象 172800000  48小时清理一次
     private int clearCount = 1;
-    private long curTimes = System.currentTimeMillis();
+    private final long curTimes = System.currentTimeMillis();
 
     public static NioWorkServerSocket create(){
         return new NioWorkServerSocketImpl();

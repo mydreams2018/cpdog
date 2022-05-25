@@ -68,7 +68,7 @@ public class CpdogMain {
                     String s = temp.toString().replace(File.separator,".");
                     if(s.endsWith(".class")){
                         s = s.replace(".class","");
-                        Class cls = Class.forName(pks+s.split(pks)[1]);
+                        Class<?> cls = Class.forName(pks+s.split(pks)[1]);
                         if (cls.isAnnotationPresent(CpdogController.class)){
                             addControllers(cls);
                         }
@@ -93,7 +93,7 @@ public class CpdogMain {
             String realName = jarEntryFile.getRealName();
             if(realName.endsWith(".class") && realName.contains(scanPack)){
                 String tempCls = realName.replace("/",".").replace(".class","");
-                Class cls = Class.forName(tempCls);
+                Class<?> cls = Class.forName(tempCls);
                 if (cls.isAnnotationPresent(CpdogController.class)){
                     addControllers(cls);
                 }

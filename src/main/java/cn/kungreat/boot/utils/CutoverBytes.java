@@ -12,7 +12,7 @@ public class CutoverBytes {
                 (byte) ((a >> 24)),
                 (byte) ((a >> 16) & 255),
                 (byte) ((a >> 8)  & 255),
-                (byte) ((a >> 0)  & 255)
+                (byte) ((a)  & 255)
         };
     }
     /***
@@ -28,7 +28,7 @@ public class CutoverBytes {
                 (byte) ((a >> 24)  & 255),
                 (byte) ((a >> 16)  & 255),
                 (byte) ((a >> 8)   & 255),
-                (byte) ((a >> 0)   & 255)
+                (byte) ((a)   & 255)
         };
     }
     /***
@@ -43,7 +43,7 @@ public class CutoverBytes {
                 ((long)(bytes[4] & 255) << 24) +
                 ((bytes[5] & 255) << 16) +
                 ((bytes[6] & 255) <<  8) +
-                ((bytes[7] & 255) <<  0));
+                (bytes[7] & 255));
     }
     /***
      * @param bytes 数组
@@ -53,6 +53,6 @@ public class CutoverBytes {
         return ((bytes[0] << 24) +
                 ((bytes[1] & 255) << 16) +
                 ((bytes[2] & 255) <<  8) +
-                ((bytes[3] & 255) <<  0));
+                (bytes[3] & 255));
     }
 }
