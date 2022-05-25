@@ -90,9 +90,17 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
             if (currentPos < remaining && remainingTotal > 0) {
                 byte[] array = buffer.array();
                 //拿到必需要的数据 还有额外的数据读.......
-                long maxReadLength = remaining - currentPos;
+                int maxReadLength = remaining - currentPos;
                 ByteBuffer tarBuffer = webSocketState.getByteBuffer();
-                long runLength = Math.min(tarBuffer.remaining(), Math.min(maxReadLength, remainingTotal));
+                //必要的时候需要扩容.TLS
+                if(tarBuffer.remaining() < maxReadLength){
+                    ByteBuffer newTarBuffer = ByteBuffer.allocate(maxReadLength);
+                    tarBuffer.flip();
+                    newTarBuffer.put(tarBuffer);
+                    tarBuffer = newTarBuffer;
+                    webSocketState.setByteBuffer(tarBuffer);
+                }
+                long runLength = Math.min(maxReadLength, remainingTotal);
                 //当前已经读取的长度索引
                 long readLength = webSocketState.getReadLength();
                 long maskingIndex = webSocketState.getMaskingIndex();
