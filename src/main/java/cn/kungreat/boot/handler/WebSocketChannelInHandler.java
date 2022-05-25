@@ -15,6 +15,7 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
@@ -241,7 +242,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
          * isConvert 传送文件时使用 表示数据是否已经转换
          */
         private boolean isConvert;
-        private CharsetDecoder charsetDecoder = Charset.forName("UTF-8").newDecoder();
+        private CharsetDecoder charsetDecoder = StandardCharsets.UTF_8.newDecoder();
         private CharBuffer charBuffer = CharBuffer.allocate(1024);
         public boolean isFinish() {
             return finish;
@@ -353,7 +354,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 }
                 byteBuffer.compact();
             }else{
-                stringBuilder.append(new String(byteBuffer.array(),0,remaining,Charset.forName("UTF-8")));
+                stringBuilder.append(new String(byteBuffer.array(),0,remaining, StandardCharsets.UTF_8));
                 byteBuffer.clear();
                 //接收字符串本次完成了.解释成对象
                 ReceiveObj receiveObj = MAP_JSON.readValue(stringBuilder.toString(),ReceiveObj.class);
@@ -426,7 +427,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 if(WEBSOCKETSTATEBYTES.get(hashcode) == null){
                     byteBuffer.flip();
                     int remaining = byteBuffer.remaining();
-                    WEBSOCKETSTATEBYTES.put(hashcode,new String(byteBuffer.array(),0,remaining,Charset.forName("UTF-8")));
+                    WEBSOCKETSTATEBYTES.put(hashcode,new String(byteBuffer.array(),0,remaining, StandardCharsets.UTF_8));
                     list.removeLast();
                     byteBuffer.clear();
                 }else{
