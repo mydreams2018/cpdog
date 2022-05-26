@@ -37,6 +37,14 @@ const queryCurrentFriends ={
 
 05-23日: 更新bytebuffer网络编码入站优化、使用官方提供的实现类.
 
+#### 未来计划
+
+1: 加入ByteBuffer 容器的复用机制
+
+2: 加入WebSocketState 对象整体的复用机制 
+
+3: 流程/清理 设计是否能优化
+
 #### 线上测试地址
 https://www.kungreat.cn/
 #### 详细介绍地址
