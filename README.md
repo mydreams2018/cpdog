@@ -39,7 +39,7 @@ const queryCurrentFriends ={
 
 #### 未来计划
 
-1: 加入ByteBuffer 容器的复用机制
+1: 加入TLSSocketLink 容器的复用机制
 
 2: 加入WebSocketState 对象整体的复用机制 
 
