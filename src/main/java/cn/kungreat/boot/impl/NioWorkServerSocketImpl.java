@@ -7,7 +7,7 @@ import cn.kungreat.boot.NioWorkServerSocket;
 import cn.kungreat.boot.em.ProtocolState;
 import cn.kungreat.boot.tls.CpDogSSLContext;
 import cn.kungreat.boot.tls.InitLinkedList;
-import cn.kungreat.boot.tls.TSLSocketLink;
+import cn.kungreat.boot.tls.TLSSocketLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,7 +153,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         byteBuffer = ByteBuffer.allocate(NioWorkServerSocketImpl.this.bufferSize);
                         treeMap.put(channelHash,byteBuffer);
                     }
-                    TSLSocketLink attachment = (TSLSocketLink)next.attachment();
+                    TLSSocketLink attachment = (TLSSocketLink)next.attachment();
                     ByteBuffer inSrc = attachment.getInSrc();
                     int read = clientChannel.read(inSrc);
                     while(read > 0){
@@ -180,12 +180,12 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     if(!clientChannel.isOpen()){
                         treeMap.remove(channelHash);
                         protocolStateMap.remove(channelHash);
-                        CpDogSSLContext.TSL_SOCKET_LINK.remove(channelHash);
+                        CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
                     } else if(read == -1){
                         clientChannel.close();
                         treeMap.remove(channelHash);
                         protocolStateMap.remove(channelHash);
-                        CpDogSSLContext.TSL_SOCKET_LINK.remove(channelHash);
+                        CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
                     }
             }catch (Exception e){
                 if(clientChannel!=null){
@@ -196,7 +196,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     }
                     treeMap.remove(clientChannel.hashCode());
                     protocolStateMap.remove(clientChannel.hashCode());
-                    CpDogSSLContext.TSL_SOCKET_LINK.remove(clientChannel.hashCode());
+                    CpDogSSLContext.TLS_SOCKET_LINK.remove(clientChannel.hashCode());
                 }else{
                     next.cancel();
                 }
@@ -215,7 +215,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         byteBuffer = ByteBuffer.allocate(NioWorkServerSocketImpl.this.bufferSize);
                         treeMap.put(channelHash,byteBuffer);
                     }
-                    TSLSocketLink attachment = (TSLSocketLink)next.attachment();
+                    TLSSocketLink attachment = (TLSSocketLink)next.attachment();
                     ByteBuffer inSrc = attachment.getInSrc();
                     int read = clientChannel.read(inSrc);
                     while(read > 0){
@@ -242,12 +242,12 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     if(!clientChannel.isOpen()){
                         treeMap.remove(channelHash);
                         protocolStateMap.remove(channelHash);
-                        CpDogSSLContext.TSL_SOCKET_LINK.remove(channelHash);
+                        CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
                     } else if(read == -1){
                         clientChannel.close();
                         treeMap.remove(channelHash);
                         protocolStateMap.remove(channelHash);
-                        CpDogSSLContext.TSL_SOCKET_LINK.remove(channelHash);
+                        CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
                     }
                 }else{
                     logger.info(clientChannel.getRemoteAddress()+":客户端监听类型异常");
@@ -261,7 +261,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     }
                     treeMap.remove(clientChannel.hashCode());
                     protocolStateMap.remove(clientChannel.hashCode());
-                    CpDogSSLContext.TSL_SOCKET_LINK.remove(clientChannel.hashCode());
+                    CpDogSSLContext.TLS_SOCKET_LINK.remove(clientChannel.hashCode());
                 }else{
                     next.cancel();
                 }

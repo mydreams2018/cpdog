@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CpDogSSLContext {
     private static final Logger logger = LoggerFactory.getLogger(CpDogSSLContext.class);
-    public static final ConcurrentHashMap<Integer,TSLSocketLink> TSL_SOCKET_LINK = new ConcurrentHashMap<>(1024);
+    public static final ConcurrentHashMap<Integer, TLSSocketLink> TLS_SOCKET_LINK = new ConcurrentHashMap<>(1024);
     public static SSLContext context = null;
 
     static {
@@ -52,24 +52,24 @@ public class CpDogSSLContext {
         return trustManagerFactory.getTrustManagers();
     }
 
-    public static TSLSocketLink getSSLEngine(SocketChannel socketChannel) throws Exception {
+    public static TLSSocketLink getSSLEngine(SocketChannel socketChannel) throws Exception {
         SSLEngine engine = context.createSSLEngine();
         engine.setUseClientMode(false);
         engine.setNeedClientAuth(false);
         engine.beginHandshake();
         if (doHandshake(socketChannel, engine)) {
-            logger.info("tsl握手完成:");
+            logger.info("tls握手完成:");
             ShakeHands.CpdogThread currentThread = (ShakeHands.CpdogThread) Thread.currentThread();
             ByteBuffer changeInsrc = currentThread.getInsrc();
             changeInsrc.flip();
-            // 可能有读取多的没有用完的数据、需要转换到channel所绑定的TSLSocketLink中去
+            // 可能有读取多的没有用完的数据、需要转换到channel所绑定的TLSSocketLink中去
             // [很少发生. 在极端的情况下数据读完了、后续不会触发work对象注册的-read事件、会造成websocket握手没有触发.数据是在的]
             ByteBuffer Insrc = ByteBuffer.allocate(32768).put(changeInsrc);
-            TSLSocketLink tslSocketLink = new TSLSocketLink(engine,Insrc,ByteBuffer.allocate(32768));
-            TSL_SOCKET_LINK.put(socketChannel.hashCode(),tslSocketLink);
-            return tslSocketLink;
+            TLSSocketLink tlsSocketLink = new TLSSocketLink(engine,Insrc,ByteBuffer.allocate(32768));
+            TLS_SOCKET_LINK.put(socketChannel.hashCode(),tlsSocketLink);
+            return tlsSocketLink;
         } else{
-            logger.info("tsl握手失败:");
+            logger.info("tls握手失败:");
             engine.closeOutbound();
             socketChannel.close();
         }
@@ -77,7 +77,7 @@ public class CpDogSSLContext {
     }
 
     private static boolean doHandshake(SocketChannel socketChannel, SSLEngine engine) throws Exception {
-        logger.info("TSL开始握手...");
+        logger.info("TLS开始握手...");
         ShakeHands.CpdogThread currentThread = (ShakeHands.CpdogThread) Thread.currentThread();
         ByteBuffer insrc = currentThread.getInsrc();
         ByteBuffer insrcDecode = currentThread.getInsrcDecode();
@@ -213,7 +213,7 @@ public class CpDogSSLContext {
         }
     }
 
-    public static ByteBuffer inDecode(TSLSocketLink socketLink,ByteBuffer decode,int spin) throws SSLException {
+    public static ByteBuffer inDecode(TLSSocketLink socketLink, ByteBuffer decode, int spin) throws SSLException {
         spin--;
         ByteBuffer inSrc = socketLink.getInSrc();
         SSLEngine engine = socketLink.getEngine();
@@ -250,9 +250,9 @@ public class CpDogSSLContext {
     }
 
     public static void outEncode(SocketChannel socketChannel,ByteBuffer outSrc) throws Exception {
-        TSLSocketLink tslSocketLink = TSL_SOCKET_LINK.get(socketChannel.hashCode());
-        SSLEngine engine = tslSocketLink.getEngine();
-        ByteBuffer outEnc = tslSocketLink.getOutEnc();
+        TLSSocketLink tlsSocketLink = TLS_SOCKET_LINK.get(socketChannel.hashCode());
+        SSLEngine engine = tlsSocketLink.getEngine();
+        ByteBuffer outEnc = tlsSocketLink.getOutEnc();
         SSLEngineResult wrap = engine.wrap(outSrc,outEnc);
         switch (wrap.getStatus()){
             case BUFFER_OVERFLOW:
@@ -260,7 +260,7 @@ public class CpDogSSLContext {
                 ByteBuffer buf = ByteBuffer.allocate(outEnc.capacity() * 2);
                 outEnc.flip();
                 buf.put(outEnc);
-                tslSocketLink.setOutEnc(buf);
+                tlsSocketLink.setOutEnc(buf);
                 outEncode(socketChannel,outSrc);
                 return;
             case BUFFER_UNDERFLOW:

@@ -10,7 +10,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /*
-* 负责tsl 握手的过程
+* 负责tls 握手的过程
 */
 public class ShakeHands {
 

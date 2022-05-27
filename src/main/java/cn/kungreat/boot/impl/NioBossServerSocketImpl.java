@@ -5,7 +5,7 @@ import cn.kungreat.boot.NioBossServerSocket;
 import cn.kungreat.boot.NioWorkServerSocket;
 import cn.kungreat.boot.tls.CpDogSSLContext;
 import cn.kungreat.boot.tls.ShakeHands;
-import cn.kungreat.boot.tls.TSLSocketLink;
+import cn.kungreat.boot.tls.TLSSocketLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -162,28 +162,28 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
         private void addTask(ServerSocketChannel serverChannel) throws IOException {
             SocketChannel accept = serverChannel.accept();
             if(accept != null){
-                ShakeHands.THREAD_POOL_EXECUTOR.execute(new TSLRunnable(accept));
+                ShakeHands.THREAD_POOL_EXECUTOR.execute(new TLSRunnable(accept));
             }
         }
     }
 
-    private final class TSLRunnable implements Runnable{
+    private final class TLSRunnable implements Runnable{
 
         private SocketChannel tlsSocketChannel;
 
-        private TSLRunnable(SocketChannel channel){
+        private TLSRunnable(SocketChannel channel){
             this.tlsSocketChannel=channel;
         }
 
         @Override
         public void run() {
-            TSLSocketLink sslEngine;
+            TLSSocketLink sslEngine;
             try{
                 if(this.tlsSocketChannel.finishConnect()){
                     NioWorkServerSocket choose = NioBossServerSocketImpl.this.chooseWorkServer.choose(NioBossServerSocketImpl.this.workServerSockets);
                     this.tlsSocketChannel.configureBlocking(false);
                     choose.setOption​(this.tlsSocketChannel);
-                    //TSL握手
+                    //TLS握手
                     sslEngine = CpDogSSLContext.getSSLEngine(this.tlsSocketChannel);
                     if(sslEngine != null){
                         SelectionKey selectionKey = this.tlsSocketChannel.register(choose.getSelector(), SelectionKey.OP_READ, sslEngine);

@@ -8,12 +8,12 @@ import java.nio.ByteBuffer;
 
 @Setter
 @Getter
-public class TSLSocketLink {
+public class TLSSocketLink {
     private SSLEngine engine;
     private ByteBuffer inSrc;
     private ByteBuffer outEnc;
 
-    public TSLSocketLink(SSLEngine engine, ByteBuffer inSrc, ByteBuffer out) {
+    public TLSSocketLink(SSLEngine engine, ByteBuffer inSrc, ByteBuffer out) {
         this.engine = engine;
         this.inSrc = inSrc;
         this.outEnc = out;
