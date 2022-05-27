@@ -1,7 +1,7 @@
 package cn.kungreat.boot;
 
 import cn.kungreat.boot.jb.EventBean;
-import cn.kungreat.boot.tsl.CpDogSSLContext;
+import cn.kungreat.boot.tls.CpDogSSLContext;
 import cn.kungreat.boot.utils.WebSocketResponse;
 
 import java.lang.reflect.Method;

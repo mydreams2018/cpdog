@@ -2,7 +2,7 @@ package cn.kungreat.boot.handler;
 
 import cn.kungreat.boot.ChannelProtocolHandler;
 import cn.kungreat.boot.jb.WebSocketBean;
-import cn.kungreat.boot.tsl.CpDogSSLContext;
+import cn.kungreat.boot.tls.CpDogSSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

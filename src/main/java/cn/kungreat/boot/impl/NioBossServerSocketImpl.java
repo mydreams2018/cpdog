@@ -3,9 +3,9 @@ package cn.kungreat.boot.impl;
 import cn.kungreat.boot.ChooseWorkServer;
 import cn.kungreat.boot.NioBossServerSocket;
 import cn.kungreat.boot.NioWorkServerSocket;
-import cn.kungreat.boot.tsl.CpDogSSLContext;
-import cn.kungreat.boot.tsl.ShakeHands;
-import cn.kungreat.boot.tsl.TSLSocketLink;
+import cn.kungreat.boot.tls.CpDogSSLContext;
+import cn.kungreat.boot.tls.ShakeHands;
+import cn.kungreat.boot.tls.TSLSocketLink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

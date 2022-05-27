@@ -1,4 +1,4 @@
-package cn.kungreat.boot.tsl;
+package cn.kungreat.boot.tls;
 
 import java.nio.channels.SelectionKey;
 import java.util.LinkedList;

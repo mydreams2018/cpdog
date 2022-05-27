@@ -3,7 +3,7 @@ package cn.kungreat.boot.handler;
 import cn.kungreat.boot.ChannelOutHandler;
 import cn.kungreat.boot.CpdogMain;
 import cn.kungreat.boot.GlobalEventListener;
-import cn.kungreat.boot.tsl.CpDogSSLContext;
+import cn.kungreat.boot.tls.CpDogSSLContext;
 import cn.kungreat.boot.utils.WebSocketResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

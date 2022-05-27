@@ -1,4 +1,4 @@
-package cn.kungreat.boot.tsl;
+package cn.kungreat.boot.tls;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

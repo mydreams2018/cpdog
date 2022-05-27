@@ -1,4 +1,4 @@
-package cn.kungreat.boot.tsl;
+package cn.kungreat.boot.tls;
 
 import lombok.Getter;
 import lombok.Setter;
