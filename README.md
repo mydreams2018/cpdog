@@ -1,6 +1,10 @@
 # cpdog
 
 #### 介绍
+
+不要在线上测试性能.线上服务器只有普通4核8G内存,跑了前端nginx mysql java 三个服务
+<img src="https://www.kungreat.cn/images/images_md/fku.PNG" style="zoom:50%;" />
+
 H5开源web聊天,目前已经完成了用户的注册、登录、添加好友、删除好友、
 
 查询好友、添加聊天、显示聊天、上传用户图片、修改用户备注功能、
