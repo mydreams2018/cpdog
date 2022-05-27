@@ -14,12 +14,10 @@ public class TLSSocketLink {
     private ByteBuffer inSrc;
     private ByteBuffer inSrcDecode;
     private ProtocolState protocolState = null;
-    private ByteBuffer outEnc;
 
-    public TLSSocketLink(SSLEngine engine, ByteBuffer inSrc,ByteBuffer inSrcDecode, ByteBuffer out) {
+    public TLSSocketLink(SSLEngine engine, ByteBuffer inSrc,ByteBuffer inSrcDecode) {
         this.engine = engine;
         this.inSrc = inSrc;
         this.inSrcDecode = inSrcDecode;
-        this.outEnc = out;
     }
 }

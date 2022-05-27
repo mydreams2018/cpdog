@@ -1,5 +1,6 @@
 package cn.kungreat.boot.tls;
 
+import cn.kungreat.boot.CpdogMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +66,7 @@ public class CpDogSSLContext {
             // 可能有读取多的没有用完的数据、需要转换到channel所绑定的TLSSocketLink中去
             // [很少发生. 在极端的情况下数据读完了、后续不会触发work对象注册的-read事件、会造成websocket握手没有触发.数据是在的]
             ByteBuffer Insrc = ByteBuffer.allocate(32768).put(changeInsrc);
-            TLSSocketLink tlsSocketLink = new TLSSocketLink(engine,Insrc,ByteBuffer.allocate(32768),ByteBuffer.allocate(32768));
+            TLSSocketLink tlsSocketLink = new TLSSocketLink(engine,Insrc,ByteBuffer.allocate(32768));
             TLS_SOCKET_LINK.put(socketChannel.hashCode(),tlsSocketLink);
             return tlsSocketLink;
         } else{
@@ -252,7 +253,7 @@ public class CpDogSSLContext {
     public static void outEncode(SocketChannel socketChannel,ByteBuffer outSrc) throws Exception {
         TLSSocketLink tlsSocketLink = TLS_SOCKET_LINK.get(socketChannel.hashCode());
         SSLEngine engine = tlsSocketLink.getEngine();
-        ByteBuffer outEnc = tlsSocketLink.getOutEnc();
+        ByteBuffer outEnc = CpdogMain.THREAD_LOCAL.get();
         SSLEngineResult wrap = engine.wrap(outSrc,outEnc);
         switch (wrap.getStatus()){
             case BUFFER_OVERFLOW:
@@ -260,7 +261,7 @@ public class CpDogSSLContext {
                 ByteBuffer buf = ByteBuffer.allocate(outEnc.capacity() * 2);
                 outEnc.flip();
                 buf.put(outEnc);
-                tlsSocketLink.setOutEnc(buf);
+                CpdogMain.THREAD_LOCAL.set(buf);
                 outEncode(socketChannel,outSrc);
                 return;
             case BUFFER_UNDERFLOW:

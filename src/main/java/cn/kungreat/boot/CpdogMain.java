@@ -15,6 +15,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.io.File;
 import java.io.InputStream;
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -26,6 +27,9 @@ public class CpdogMain {
 
     public static final List<Class<?>> CONTROLLERS = new ArrayList<>();
     public static final List<Class<?>> EVENTS = new ArrayList<>();
+    //线程内共享数据 event work 有使用 存出站的加密数据
+    public static final ThreadLocal<ByteBuffer> THREAD_LOCAL = new ThreadLocal<>();
+
     static {
         InputStream cpdog = ClassLoader.getSystemResourceAsStream("cpdog.properties");
         Properties props = new Properties();

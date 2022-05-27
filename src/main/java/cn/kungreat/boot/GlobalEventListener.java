@@ -31,6 +31,9 @@ public class GlobalEventListener {
      * 迭代监听 EVENT_BLOCKING_QUEUE 事件 传递给指定的回调方法
      */
     public static void loopEvent(){
+        if(CpdogMain.THREAD_LOCAL.get() == null){
+            CpdogMain.THREAD_LOCAL.set(ByteBuffer.allocate(8192));
+        }
         EventBean receiveObj ;
         String receiveObjUrl ;
         SocketChannel socketChannel ;
@@ -82,6 +85,7 @@ public class GlobalEventListener {
         }catch (Exception e){
             e.printStackTrace();
         }
+        CpdogMain.THREAD_LOCAL.get().clear();
         loopEvent();
     }
 }
