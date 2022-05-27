@@ -26,12 +26,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private NioWorkServerSocketImpl(){}
     private final static ThreadGroup threadGroup = new WorkThreadGroup("workServer");
     private final static AtomicInteger atomicInteger = new AtomicInteger(0);
-    private int bufferSize;
     private static final List<ChannelInHandler<?,?>> channelInHandlers = new ArrayList<>();
     private static final List<ChannelOutHandler<?,?>> channelOutHandlers = new ArrayList<>();
     private static ChannelProtocolHandler channelProtocolHandler ;
-    private final TreeMap<Integer,ByteBuffer> treeMap = new TreeMap<>();
-    private final TreeMap<Integer,ProtocolState> protocolStateMap = new TreeMap<>();
     public final LinkedList<SelectionKey> tlsInitKey = new InitLinkedList();
     private final ByteBuffer outBuf = ByteBuffer.allocate(8192);
     private final HashMap<SocketOption<?>,Object> optionMap = new HashMap<>();
@@ -87,9 +84,8 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     }
 
     @Override
-    public NioWorkServerSocket buildSelector(int bufferSize) throws IOException {
+    public NioWorkServerSocket buildSelector() throws IOException {
         this.selector = Selector.open();
-        this.bufferSize = Math.max(bufferSize,2048);
         return this;
     }
 
@@ -148,12 +144,8 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             try{
                 clientChannel = (SocketChannel) next.channel();
                     int channelHash = clientChannel.hashCode();
-                    ByteBuffer byteBuffer = treeMap.get(channelHash);
-                    if(byteBuffer == null){
-                        byteBuffer = ByteBuffer.allocate(NioWorkServerSocketImpl.this.bufferSize);
-                        treeMap.put(channelHash,byteBuffer);
-                    }
                     TLSSocketLink attachment = (TLSSocketLink)next.attachment();
+                    ByteBuffer byteBuffer = attachment.getInSrcDecode();
                     ByteBuffer inSrc = attachment.getInSrc();
                     int read = clientChannel.read(inSrc);
                     while(read > 0){
@@ -165,26 +157,22 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     if(byteBuffer != inDecode){
                         //说明扩容了 byteBuffer
                         byteBuffer = inDecode;
-                        treeMap.put(channelHash,byteBuffer);
+                        attachment.setInSrcDecode(byteBuffer);
                     }
-                    if(protocolStateMap.get(channelHash) == null
-                            || protocolStateMap.get(channelHash) != ProtocolState.FINISH){
+                    if(attachment.getProtocolState() == null
+                            || attachment.getProtocolState() != ProtocolState.FINISH){
                         //协议处理
                         if(channelProtocolHandler.handlers(clientChannel, byteBuffer)){
-                            protocolStateMap.put(channelHash,ProtocolState.FINISH);
+                            attachment.setProtocolState(ProtocolState.FINISH);
                         }
                     }else{
                         Object inEnd = runInHandlers(clientChannel, byteBuffer);
                         runOutHandlers(clientChannel,inEnd);
                     }
                     if(!clientChannel.isOpen()){
-                        treeMap.remove(channelHash);
-                        protocolStateMap.remove(channelHash);
                         CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
                     } else if(read == -1){
                         clientChannel.close();
-                        treeMap.remove(channelHash);
-                        protocolStateMap.remove(channelHash);
                         CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
                     }
             }catch (Exception e){
@@ -194,8 +182,6 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     } catch(IOException ioException) {
                         ioException.printStackTrace();
                     }
-                    treeMap.remove(clientChannel.hashCode());
-                    protocolStateMap.remove(clientChannel.hashCode());
                     CpDogSSLContext.TLS_SOCKET_LINK.remove(clientChannel.hashCode());
                 }else{
                     next.cancel();
@@ -210,12 +196,8 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                 clientChannel = (SocketChannel) next.channel();
                 if(next.isValid() && next.isReadable()){
                     int channelHash = clientChannel.hashCode();
-                    ByteBuffer byteBuffer = treeMap.get(channelHash);
-                    if(byteBuffer == null){
-                        byteBuffer = ByteBuffer.allocate(NioWorkServerSocketImpl.this.bufferSize);
-                        treeMap.put(channelHash,byteBuffer);
-                    }
                     TLSSocketLink attachment = (TLSSocketLink)next.attachment();
+                    ByteBuffer byteBuffer = attachment.getInSrcDecode();
                     ByteBuffer inSrc = attachment.getInSrc();
                     int read = clientChannel.read(inSrc);
                     while(read > 0){
@@ -227,26 +209,22 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     if(byteBuffer != inDecode){
                         //说明扩容了 byteBuffer
                         byteBuffer = inDecode;
-                        treeMap.put(channelHash,byteBuffer);
+                        attachment.setInSrcDecode(byteBuffer);
                     }
-                    if(protocolStateMap.get(channelHash) == null
-                            || protocolStateMap.get(channelHash) != ProtocolState.FINISH){
+                    if(attachment.getProtocolState() == null
+                            || attachment.getProtocolState() != ProtocolState.FINISH){
                         //协议处理
                         if(channelProtocolHandler.handlers(clientChannel, byteBuffer)){
-                            protocolStateMap.put(channelHash,ProtocolState.FINISH);
+                            attachment.setProtocolState(ProtocolState.FINISH);
                         }
                     }else{
                         Object inEnd = runInHandlers(clientChannel, byteBuffer);
                         runOutHandlers(clientChannel,inEnd);
                     }
                     if(!clientChannel.isOpen()){
-                        treeMap.remove(channelHash);
-                        protocolStateMap.remove(channelHash);
                         CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
                     } else if(read == -1){
                         clientChannel.close();
-                        treeMap.remove(channelHash);
-                        protocolStateMap.remove(channelHash);
                         CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
                     }
                 }else{
@@ -259,8 +237,6 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     } catch (IOException ioException) {
                         ioException.printStackTrace();
                     }
-                    treeMap.remove(clientChannel.hashCode());
-                    protocolStateMap.remove(clientChannel.hashCode());
                     CpDogSSLContext.TLS_SOCKET_LINK.remove(clientChannel.hashCode());
                 }else{
                     next.cancel();

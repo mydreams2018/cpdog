@@ -156,7 +156,7 @@ public class CpdogMain {
         for(int x=0;x<workServerSockets.length;x++){
             NioWorkServerSocket workServerSocket = NioWorkServerSocketImpl.create();
             workServerSocket.buildThread();
-            workServerSocket.buildSelector(8192);
+            workServerSocket.buildSelector();
 //            workServerSocket.setOption​(StandardSocketOptions.SO_KEEPALIVE,true);
             workServerSockets[x]=workServerSocket;
         }

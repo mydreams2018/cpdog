@@ -1,5 +1,6 @@
 package cn.kungreat.boot.tls;
 
+import cn.kungreat.boot.em.ProtocolState;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,11 +12,14 @@ import java.nio.ByteBuffer;
 public class TLSSocketLink {
     private SSLEngine engine;
     private ByteBuffer inSrc;
+    private ByteBuffer inSrcDecode;
+    private ProtocolState protocolState = null;
     private ByteBuffer outEnc;
 
-    public TLSSocketLink(SSLEngine engine, ByteBuffer inSrc, ByteBuffer out) {
+    public TLSSocketLink(SSLEngine engine, ByteBuffer inSrc,ByteBuffer inSrcDecode, ByteBuffer out) {
         this.engine = engine;
         this.inSrc = inSrc;
+        this.inSrcDecode = inSrcDecode;
         this.outEnc = out;
     }
 }

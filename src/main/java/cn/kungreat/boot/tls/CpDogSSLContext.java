@@ -65,7 +65,7 @@ public class CpDogSSLContext {
             // 可能有读取多的没有用完的数据、需要转换到channel所绑定的TLSSocketLink中去
             // [很少发生. 在极端的情况下数据读完了、后续不会触发work对象注册的-read事件、会造成websocket握手没有触发.数据是在的]
             ByteBuffer Insrc = ByteBuffer.allocate(32768).put(changeInsrc);
-            TLSSocketLink tlsSocketLink = new TLSSocketLink(engine,Insrc,ByteBuffer.allocate(32768));
+            TLSSocketLink tlsSocketLink = new TLSSocketLink(engine,Insrc,ByteBuffer.allocate(32768),ByteBuffer.allocate(32768));
             TLS_SOCKET_LINK.put(socketChannel.hashCode(),tlsSocketLink);
             return tlsSocketLink;
         } else{
