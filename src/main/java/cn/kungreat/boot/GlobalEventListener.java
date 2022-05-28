@@ -17,7 +17,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 */
 public class GlobalEventListener {
 
-    private static final ByteBuffer EVENT_BUFFER = ByteBuffer.allocate(2048);
+    private static final ByteBuffer EVENT_BUFFER = ByteBuffer.allocate(8192);
     /*
      *所有的事件集合
      */

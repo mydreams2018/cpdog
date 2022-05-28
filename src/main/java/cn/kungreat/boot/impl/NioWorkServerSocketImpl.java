@@ -128,7 +128,6 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }catch (Exception e){
                 e.printStackTrace();
             }
-            CpdogMain.THREAD_LOCAL.get().clear();
             run();
         }
         /* TLS握手完后 可能有读取多的没有用完的数据、 需要在此触发一次*/
@@ -142,6 +141,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
         }
         public void InitHandler(SelectionKey next){
             SocketChannel clientChannel = null;
+            CpdogMain.THREAD_LOCAL.get().clear();
             try{
                 clientChannel = (SocketChannel) next.channel();
                     int channelHash = clientChannel.hashCode();
@@ -172,11 +172,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     }
                     if(!clientChannel.isOpen()){
                         CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
-                        CpdogMain.THREAD_LOCAL.get().clear();
                     } else if(read == -1){
                         clientChannel.close();
                         CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
-                        CpdogMain.THREAD_LOCAL.get().clear();
                     }
             }catch (Exception e){
                 if(clientChannel!=null){
@@ -190,12 +188,12 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     next.cancel();
                 }
                 e.printStackTrace();
-                CpdogMain.THREAD_LOCAL.get().clear();
             }
         }
 
         public void handler(SelectionKey next){
             SocketChannel clientChannel = null;
+            CpdogMain.THREAD_LOCAL.get().clear();
             try{
                 clientChannel = (SocketChannel) next.channel();
                 if(next.isValid() && next.isReadable()){
@@ -227,11 +225,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     }
                     if(!clientChannel.isOpen()){
                         CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
-                        CpdogMain.THREAD_LOCAL.get().clear();
                     } else if(read == -1){
                         clientChannel.close();
                         CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
-                        CpdogMain.THREAD_LOCAL.get().clear();
                     }
                 }else{
                     logger.info(clientChannel.getRemoteAddress()+":客户端监听类型异常");
@@ -248,7 +244,6 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     next.cancel();
                 }
                 e.printStackTrace();
-                CpdogMain.THREAD_LOCAL.get().clear();
             }
         }
 
