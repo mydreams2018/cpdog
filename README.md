@@ -41,9 +41,9 @@ const queryCurrentFriends ={
 
 05-23日: 更新bytebuffer网络编码入站优化、使用官方提供的实现类.
 
-#### 未来计划
+05-29日: 完成 TLSSocketLink 容器的复用机制
 
-1: 加入TLSSocketLink 容器的复用机制
+#### 未来计划
 
 2: 加入WebSocketState 对象整体的复用机制 
 
