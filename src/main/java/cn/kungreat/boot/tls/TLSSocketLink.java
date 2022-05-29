@@ -20,4 +20,11 @@ public class TLSSocketLink {
         this.inSrc = inSrc;
         this.inSrcDecode = inSrcDecode;
     }
+
+    public void clear(){
+        this.engine=null;
+        this.protocolState=null;
+        this.inSrc.clear();
+        this.inSrcDecode.clear();
+    }
 }

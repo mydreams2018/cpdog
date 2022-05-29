@@ -171,10 +171,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         runOutHandlers(clientChannel,inEnd);
                     }
                     if(!clientChannel.isOpen()){
-                        CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
+                        CpDogSSLContext.reuserTLSSocketLink(channelHash);
                     } else if(read == -1){
                         clientChannel.close();
-                        CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
+                        CpDogSSLContext.reuserTLSSocketLink(channelHash);
                     }
             }catch (Exception e){
                 if(clientChannel!=null){
@@ -183,7 +183,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     } catch(IOException ioException) {
                         ioException.printStackTrace();
                     }
-                    CpDogSSLContext.TLS_SOCKET_LINK.remove(clientChannel.hashCode());
+                    CpDogSSLContext.reuserTLSSocketLink(clientChannel.hashCode());
                 }else{
                     next.cancel();
                 }
@@ -224,10 +224,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         runOutHandlers(clientChannel,inEnd);
                     }
                     if(!clientChannel.isOpen()){
-                        CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
+                        CpDogSSLContext.reuserTLSSocketLink(channelHash);
                     } else if(read == -1){
                         clientChannel.close();
-                        CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
+                        CpDogSSLContext.reuserTLSSocketLink(channelHash);
                     }
                 }else{
                     logger.info(clientChannel.getRemoteAddress()+":客户端监听类型异常");
@@ -239,7 +239,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     } catch (IOException ioException) {
                         ioException.printStackTrace();
                     }
-                    CpDogSSLContext.TLS_SOCKET_LINK.remove(clientChannel.hashCode());
+                    CpDogSSLContext.reuserTLSSocketLink(clientChannel.hashCode());
                 }else{
                     next.cancel();
                 }
