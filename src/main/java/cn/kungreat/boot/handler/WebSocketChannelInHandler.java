@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.StandardCharsets;
@@ -22,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /*
 * 把websocket 的数据 解码出来并且 传入下一个链路
@@ -35,13 +35,15 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
 
     public static String FILE_PATH;
     public static final ObjectMapper MAP_JSON = new ObjectMapper(); //create once, reuse
+    // 用来存放复用的 WebSocketState
+    public static final LinkedBlockingQueue<WebSocketState> REUSER_WEBSTATE = new LinkedBlockingQueue<>(5120);
     @Override
     public void before(SocketChannel socketChannel,ByteBuffer buffer) throws Exception {
         buffer.flip();
         LinkedList<WebSocketState> listSos = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode());
         if (listSos == null) {
             listSos = new LinkedList<>();
-            listSos.add(new WebSocketState(buffer.capacity()));
+            listSos.add(reuserWebSocketState(buffer.capacity()));
             WEBSOCKETSTATETREEMAP.put(socketChannel.hashCode(), listSos);
         }
         WebSocketState webSocketState = listSos.getLast();
@@ -142,7 +144,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
             }
             if(webSocketState.isDone()){
                 if(webSocketState.getType() != 8){
-                    WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).add(new WebSocketState(buffer.capacity()));
+                    WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).add(reuserWebSocketState(buffer.capacity()));
                     loopData(socketChannel,buffer);
                 }
             }
@@ -179,6 +181,14 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
     public void clearBuffers(SocketChannel socketChannel) {
         WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
         WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
+    }
+
+    public WebSocketState reuserWebSocketState(int capacity){
+        WebSocketState webSocketState = REUSER_WEBSTATE.poll();
+        if(webSocketState != null){
+            return webSocketState;
+        }
+        return new WebSocketState(capacity);
     }
 
    public static final class WebSocketState {
@@ -536,6 +546,29 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
 
         public void setUuid(String uuid) {
             this.uuid = uuid;
+        }
+//    初始化操作.复用此对象
+        public void clear(){
+            this.type=999;
+            this.finish=false;
+            this.done=false;
+            this.stringBuilder=new StringBuilder();
+            this.dateLength=0;
+            this.readLength=0;
+            this.maskingIndex=0;
+            this.currentPos=0;
+            if(this.byteBuffer!=null){
+                this.byteBuffer.clear();
+            }
+            this.src=null;
+            this.tar=null;
+            this.charts=null;
+            this.url=null;
+            this.uuid=null;
+            this.fileName=null;
+            this.filePath=null;
+            this.isConvert=false;
+            this.charBuffer.clear();
         }
     }
     @Setter
