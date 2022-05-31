@@ -8,6 +8,7 @@ import cn.kungreat.boot.utils.WebSocketResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
@@ -60,23 +61,12 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     first = in.peekFirst();
                 }else if(first.getType() == 2 && first.isDone()){
                     logger.info("文件写出完毕:{}",first.getFileName());
-                    ByteBuffer fileBuffer = first.getByteBuffer();
-                    fileBuffer.flip();
-                    byte[] bts = new byte[fileBuffer.remaining()];
-                    System.arraycopy(fileBuffer.array(),0,bts,0,fileBuffer.remaining());
-                    Files.write(first.getFilePath(),bts, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
-                    fileBuffer.clear();
+                    writeFiles(first);
                     answer(first,byteBuffer,socketChannel);
                     reuserAddWebSocketState(in.removeFirst());
                     first = in.peekFirst();
                 }else if(first.getType() == 2 && first.isConvert()){
-                    //写出文件
-                    ByteBuffer fileBuffer = first.getByteBuffer();
-                    fileBuffer.flip();
-                    byte[] bts = new byte[fileBuffer.remaining()];
-                    System.arraycopy(fileBuffer.array(),0,bts,0,fileBuffer.remaining());
-                    Files.write(first.getFilePath(),bts, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
-                    fileBuffer.clear();
+                    writeFiles(first);
                     break;
                 }else if(first.getType() == 8){
                     //关闭信息状态标识
@@ -104,6 +94,15 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
     @Override
     public void after(SocketChannel socketChannel, LinkedList<WebSocketChannelInHandler.WebSocketState> in) {
 
+    }
+    //写出文件
+    public void writeFiles(WebSocketChannelInHandler.WebSocketState first) throws IOException {
+        ByteBuffer fileBuffer = first.getByteBuffer();
+        fileBuffer.flip();
+        byte[] bts = new byte[fileBuffer.remaining()];
+        System.arraycopy(fileBuffer.array(),0,bts,0,fileBuffer.remaining());
+        Files.write(first.getFilePath(),bts, StandardOpenOption.WRITE, StandardOpenOption.APPEND);
+        fileBuffer.clear();
     }
 
     @Override
