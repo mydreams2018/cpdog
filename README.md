@@ -43,9 +43,9 @@ const queryCurrentFriends ={
 
 05-29日: 完成 TLSSocketLink 容器的复用机制
 
-#### 未来计划
+05-31日: 完成 WebSocketState 对象整体的复用机制
 
-2: 加入WebSocketState 对象整体的复用机制 
+#### 未来计划
 
 3: 流程/清理 设计是否能优化
 
