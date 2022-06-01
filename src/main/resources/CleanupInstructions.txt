@@ -1,0 +1,3 @@
+GlobalEventListener -> CONCURRENT_EVENT_MAP
+   呢称:channel
+   MAP结构、最多存放数量为用户数量、由于关闭channel时拿不到KEY:呢称、故清理非常麻烦、此处暂时不做清理
