@@ -135,7 +135,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             SelectionKey peekFirst = tlsInitKey.peekFirst();
             while(peekFirst != null){
                 tlsInitKey.removeFirst();
-                InitHandler(peekFirst);
+                if(peekFirst.isValid()){
+                    InitHandler(peekFirst);
+                }
                 peekFirst = tlsInitKey.peekFirst();
             }
         }
@@ -196,27 +198,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
         }
 
         public void handler(SelectionKey next){
-            SocketChannel clientChannel = null;
-            CpdogMain.THREAD_LOCAL.get().clear();
-            try{
-                clientChannel = (SocketChannel) next.channel();
-                if(next.isValid() && next.isReadable()){
-                    baseHandler(next, clientChannel);
-                }else{
-                    logger.info(clientChannel.getRemoteAddress()+":客户端监听类型异常");
-                }
-            }catch (Exception e){
-                if(clientChannel!=null){
-                    try {
-                        clientChannel.close();
-                    } catch (IOException ioException) {
-                        ioException.printStackTrace();
-                    }
-                    CpDogSSLContext.reuserTLSSocketLink(clientChannel.hashCode());
-                }else{
-                    next.cancel();
-                }
-                e.printStackTrace();
+            if(next.isValid() && next.isReadable()){
+                InitHandler(next);
+            }else{
+                logger.error("客户端监听类型异常:");
             }
         }
 
