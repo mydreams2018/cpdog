@@ -144,38 +144,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             CpdogMain.THREAD_LOCAL.get().clear();
             try{
                 clientChannel = (SocketChannel) next.channel();
-                    int channelHash = clientChannel.hashCode();
-                    TLSSocketLink attachment = (TLSSocketLink)next.attachment();
-                    ByteBuffer byteBuffer = attachment.getInSrcDecode();
-                    ByteBuffer inSrc = attachment.getInSrc();
-                    int read = clientChannel.read(inSrc);
-                    while(read > 0){
-                        read = clientChannel.read(inSrc);
-                    }
-                    inSrc.flip();
-                    ByteBuffer inDecode = CpDogSSLContext.inDecode(attachment, byteBuffer,6);
-                    attachment.getInSrc().compact();
-                    if(byteBuffer != inDecode){
-                        //说明扩容了 byteBuffer
-                        byteBuffer = inDecode;
-                        attachment.setInSrcDecode(byteBuffer);
-                    }
-                    if(attachment.getProtocolState() == null
-                            || attachment.getProtocolState() != ProtocolState.FINISH){
-                        //协议处理
-                        if(channelProtocolHandler.handlers(clientChannel, byteBuffer)){
-                            attachment.setProtocolState(ProtocolState.FINISH);
-                        }
-                    }else{
-                        Object inEnd = runInHandlers(clientChannel, byteBuffer);
-                        runOutHandlers(clientChannel,inEnd);
-                    }
-                    if(!clientChannel.isOpen()){
-                        CpDogSSLContext.reuserTLSSocketLink(channelHash);
-                    } else if(read == -1){
-                        clientChannel.close();
-                        CpDogSSLContext.reuserTLSSocketLink(channelHash);
-                    }
+                baseHandler(next, clientChannel);
             }catch (Exception e){
                 if(clientChannel!=null){
                     try {
@@ -191,44 +160,48 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }
         }
 
+        private void baseHandler(SelectionKey next, SocketChannel clientChannel) throws Exception {
+            int channelHash = clientChannel.hashCode();
+            TLSSocketLink attachment = (TLSSocketLink)next.attachment();
+            ByteBuffer byteBuffer = attachment.getInSrcDecode();
+            ByteBuffer inSrc = attachment.getInSrc();
+            int read = clientChannel.read(inSrc);
+            while(read > 0){
+                read = clientChannel.read(inSrc);
+            }
+            inSrc.flip();
+            ByteBuffer inDecode = CpDogSSLContext.inDecode(attachment, byteBuffer,6);
+            attachment.getInSrc().compact();
+            if(byteBuffer != inDecode){
+                //说明扩容了 byteBuffer
+                byteBuffer = inDecode;
+                attachment.setInSrcDecode(byteBuffer);
+            }
+            if(channelProtocolHandler != null && attachment.getProtocolState() == null
+                    || attachment.getProtocolState() != ProtocolState.FINISH){
+                //协议处理
+                if(channelProtocolHandler.handlers(clientChannel, byteBuffer)){
+                    attachment.setProtocolState(ProtocolState.FINISH);
+                }
+            }else{
+                Object inEnd = runInHandlers(clientChannel, byteBuffer);
+                runOutHandlers(clientChannel,inEnd);
+            }
+            if(!clientChannel.isOpen()){
+                CpDogSSLContext.reuserTLSSocketLink(channelHash);
+            } else if(read == -1){
+                clientChannel.close();
+                CpDogSSLContext.reuserTLSSocketLink(channelHash);
+            }
+        }
+
         public void handler(SelectionKey next){
             SocketChannel clientChannel = null;
             CpdogMain.THREAD_LOCAL.get().clear();
             try{
                 clientChannel = (SocketChannel) next.channel();
                 if(next.isValid() && next.isReadable()){
-                    int channelHash = clientChannel.hashCode();
-                    TLSSocketLink attachment = (TLSSocketLink)next.attachment();
-                    ByteBuffer byteBuffer = attachment.getInSrcDecode();
-                    ByteBuffer inSrc = attachment.getInSrc();
-                    int read = clientChannel.read(inSrc);
-                    while(read > 0){
-                        read = clientChannel.read(inSrc);
-                    }
-                    inSrc.flip();
-                    ByteBuffer inDecode = CpDogSSLContext.inDecode(attachment, byteBuffer,6);
-                    attachment.getInSrc().compact();
-                    if(byteBuffer != inDecode){
-                        //说明扩容了 byteBuffer
-                        byteBuffer = inDecode;
-                        attachment.setInSrcDecode(byteBuffer);
-                    }
-                    if(attachment.getProtocolState() == null
-                            || attachment.getProtocolState() != ProtocolState.FINISH){
-                        //协议处理
-                        if(channelProtocolHandler.handlers(clientChannel, byteBuffer)){
-                            attachment.setProtocolState(ProtocolState.FINISH);
-                        }
-                    }else{
-                        Object inEnd = runInHandlers(clientChannel, byteBuffer);
-                        runOutHandlers(clientChannel,inEnd);
-                    }
-                    if(!clientChannel.isOpen()){
-                        CpDogSSLContext.reuserTLSSocketLink(channelHash);
-                    } else if(read == -1){
-                        clientChannel.close();
-                        CpDogSSLContext.reuserTLSSocketLink(channelHash);
-                    }
+                    baseHandler(next, clientChannel);
                 }else{
                     logger.info(clientChannel.getRemoteAddress()+":客户端监听类型异常");
                 }
@@ -326,7 +299,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
         }
 //清理特殊情况下 断开的channel USER_UUIDS-clear  todo
         private void clearBuffer(){
-            if(System.currentTimeMillis() > curTimes + (clearCount * 172800000)){
+            if(System.currentTimeMillis() > curTimes + (clearCount * 172800000L)){
                 clearCount++;
 
             }
