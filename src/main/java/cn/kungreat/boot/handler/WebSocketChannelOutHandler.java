@@ -109,8 +109,6 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
     public LinkedList exception(Exception e, SocketChannel socketChannel, Object in) throws Exception {
         logger.error(e.getLocalizedMessage());
         socketChannel.close();
-        WebSocketChannelInHandler.WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
-        WebSocketChannelInHandler.WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
         return null;
     }
 
