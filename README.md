@@ -45,9 +45,11 @@ const queryCurrentFriends ={
 
 05-31日: 完成 WebSocketState 对象整体的复用机制
 
+06-02: 流程/清理 
+
 #### 未来计划
 
-3: 流程/清理 设计是否能优化
+
 
 #### 线上测试地址
 https://www.kungreat.cn/
