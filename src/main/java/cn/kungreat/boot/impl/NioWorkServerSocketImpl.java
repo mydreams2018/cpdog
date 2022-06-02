@@ -154,7 +154,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     } catch(IOException ioException) {
                         ioException.printStackTrace();
                     }
-                    CpDogSSLContext.reuserTLSSocketLink(clientChannel.hashCode());
+                    baseClear(clientChannel);
                 }else{
                     next.cancel();
                 }
@@ -163,7 +163,6 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
         }
 
         private void baseHandler(SelectionKey next, SocketChannel clientChannel) throws Exception {
-            int channelHash = clientChannel.hashCode();
             TLSSocketLink attachment = (TLSSocketLink)next.attachment();
             ByteBuffer byteBuffer = attachment.getInSrcDecode();
             ByteBuffer inSrc = attachment.getInSrc();
@@ -190,11 +189,17 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                 runOutHandlers(clientChannel,inEnd);
             }
             if(!clientChannel.isOpen()){
-                CpDogSSLContext.reuserTLSSocketLink(channelHash);
+                baseClear(clientChannel);
             } else if(read == -1){
                 clientChannel.close();
-                CpDogSSLContext.reuserTLSSocketLink(channelHash);
+                baseClear(clientChannel);
             }
+        }
+
+        private void baseClear(final SocketChannel clientChannel){
+            int channelHash = clientChannel.hashCode();
+            CpDogSSLContext.reuserTLSSocketLink(channelHash);
+            clearHandlerLink(clientChannel);
         }
 
         public void handler(SelectionKey next){
@@ -287,6 +292,15 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             if(System.currentTimeMillis() > curTimes + (clearCount * 172800000L)){
                 clearCount++;
 
+            }
+        }
+//管道关闭时清理后续 链路. 链路需要自已实现清理方法 注意可能出现的异常情况
+        private void clearHandlerLink(final SocketChannel socketChannel){
+            try {
+                channelInHandlers.forEach(e-> e.clearBuffers(socketChannel));
+                channelOutHandlers.forEach(e-> e.clearBuffers(socketChannel));
+            }catch (Exception e){
+                logger.error("clearHandlerLink-error{}",e.getMessage());
             }
         }
     }
