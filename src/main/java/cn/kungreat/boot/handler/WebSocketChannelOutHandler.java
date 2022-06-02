@@ -13,7 +13,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.LinkedList;
 import java.util.Map;
@@ -106,7 +106,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
     }
 
     @Override
-    public LinkedList exception(Exception e, SocketChannel socketChannel, Object in) throws Exception {
+    public LinkedList<WebSocketChannelInHandler.WebSocketState> exception(Exception e, SocketChannel socketChannel, Object in) throws Exception {
         logger.error(e.getLocalizedMessage());
         socketChannel.close();
         return null;
@@ -135,7 +135,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                         if(Modifier.isStatic(methods.getModifiers())){
                             String rts =(String) methods.invoke(null,first);
                             if(rts.length()>0){
-                                byte[] bytes = rts.getBytes(Charset.forName("UTF-8"));
+                                byte[] bytes = rts.getBytes(StandardCharsets.UTF_8);
                                 int readLength = 0;
                                 byteBuffer.put(WebSocketResponse.getBytes(bytes));
                                 //下边是一次完整的数据写出.可能EVENT事什通知造成并发.所以加锁

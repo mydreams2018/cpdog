@@ -6,3 +6,14 @@ CpDogSSLContext -> TLS_SOCKET_LINK
   channel.hash:TLSSocketLink
   MAP结构 TLS握手完成后创建、channel关闭时删除 正常关闭时没有问题[特殊情况下待设计...]
 
+WebSocketChannelInHandler -> WEBSOCKETSTATETREEMAP
+                          -> WEBSOCKETSTATEBYTES
+          MAP结构
+存储WebSocketState每次的信息对象  、channel关闭时删除 正常关闭时没有问题[特殊情况下待设计...]
+
+WebSocketChannelOutHandler -> USER_UUIDS
+    呢称:uuid
+    MAP结构     用户login后存放的 呢称:随机UUID->前端session级别的
+    后端认证用户的唯一标识.每次生成的UUID不同.为保证用户的安全性.
+    最多存放数量为用户数量 生命周期比channel长很多
+    [目前没有删除机制-页面关闭并不能删除-{只有在浏览器关闭时/前端session删除时 才能清理 没有办法监听到事件的触发}]
