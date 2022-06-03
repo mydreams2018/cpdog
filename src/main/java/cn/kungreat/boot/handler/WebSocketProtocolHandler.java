@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -81,24 +82,24 @@ public class WebSocketProtocolHandler implements ChannelProtocolHandler {
     private String getSecWebSocketKey(String src) throws Exception {
         String rt = src+MAGICSTRING;
         MessageDigest instance = MessageDigest.getInstance("SHA");
-        instance.update(rt.getBytes("UTF-8"));
+        instance.update(rt.getBytes(StandardCharsets.UTF_8));
         byte[] digest = instance.digest();
         return Base64.getEncoder().encodeToString(digest);
     }
 
     private void writeProtocol(String secWebSocketKey,SocketChannel socketChannel,ByteBuffer in) throws Exception {
-        StringBuffer stringBuffer = new StringBuffer(256);
-        stringBuffer.append("HTTP/1.1 101 Switching Protocols");
-        stringBuffer.append(System.lineSeparator());
-        stringBuffer.append("Upgrade: websocket");
-        stringBuffer.append(System.lineSeparator());
-        stringBuffer.append("Connection: Upgrade");
-        stringBuffer.append(System.lineSeparator());
-        stringBuffer.append("Sec-WebSocket-Accept: "+secWebSocketKey);
-        stringBuffer.append(System.lineSeparator());
-        stringBuffer.append(System.lineSeparator());
+        StringBuilder stringBuilder = new StringBuilder(256);
+        stringBuilder.append("HTTP/1.1 101 Switching Protocols");
+        stringBuilder.append(System.lineSeparator());
+        stringBuilder.append("Upgrade: websocket");
+        stringBuilder.append(System.lineSeparator());
+        stringBuilder.append("Connection: Upgrade");
+        stringBuilder.append(System.lineSeparator());
+        stringBuilder.append("Sec-WebSocket-Accept: "+secWebSocketKey);
+        stringBuilder.append(System.lineSeparator());
+        stringBuilder.append(System.lineSeparator());
         in.clear();
-        in.put(stringBuffer.toString().getBytes("UTF-8"));
+        in.put(stringBuilder.toString().getBytes(StandardCharsets.UTF_8));
         in.flip();
 //        socketChannel.write(in);
         CpDogSSLContext.outEncode(socketChannel,in);
