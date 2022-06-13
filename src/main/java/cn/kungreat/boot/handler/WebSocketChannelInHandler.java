@@ -460,22 +460,22 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         }
 
         private void setDataBase(String[] split,int hashcode,SocketChannel socketChannel)throws IOException {
-            for(int x=0;x<split.length;x++){
-                String[] temp = split[x].split("=");
-                if(temp[0].equals("src") && temp.length>1){
-                    this.src=temp[1];
+            for (String s : split) {
+                String[] temp = s.split("=");
+                if (temp[0].equals("src") && temp.length > 1) {
+                    this.src = temp[1];
                 }
-                if(temp[0].equals("tar") && temp.length>1){
-                    this.tar=temp[1];
+                if (temp[0].equals("tar") && temp.length > 1) {
+                    this.tar = temp[1];
                 }
-                if(temp[0].equals("fileName") && temp.length>1){
-                    this.fileName=temp[1];
+                if (temp[0].equals("fileName") && temp.length > 1) {
+                    this.fileName = temp[1];
                 }
-                if(temp[0].equals("url") && temp.length>1){
-                    this.url=temp[1];
+                if (temp[0].equals("url") && temp.length > 1) {
+                    this.url = temp[1];
                 }
-                if(temp[0].equals("uuid") && temp.length>1){
-                    this.uuid=temp[1];
+                if (temp[0].equals("uuid") && temp.length > 1) {
+                    this.uuid = temp[1];
                 }
             }
             if(this.src!=null && this.src.length()>0

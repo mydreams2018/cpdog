@@ -212,12 +212,12 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
 
         private Object runInHandlers(final SocketChannel clientChannel,final ByteBuffer byteBuffer) {
             Object linkIn = byteBuffer;
-            for(int x=0;x<channelInHandlers.size();x++){
+            for(ChannelInHandler<?, ?> channelInHandler: channelInHandlers){
                 if(clientChannel.isOpen()){
                     try {
                         if(this.exception==null){
-                            ChannelInHandler<?, ?> channelInHandler = channelInHandlers.get(x);
-                            Class<? extends ChannelInHandler> channelInHandlerClass = channelInHandler.getClass();
+
+                            Class<?> channelInHandlerClass = channelInHandler.getClass();
                             Method before = channelInHandlerClass.getMethod("before", SocketChannel.class, channelInHandler.getInClass());
                             before.invoke(channelInHandler,clientChannel,linkIn);
                             Method handler = channelInHandlerClass.getMethod("handler", SocketChannel.class, channelInHandler.getInClass());
@@ -226,9 +226,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                             after.invoke(channelInHandler,clientChannel,linkIn);
                             linkIn = invoke;
                         }else{
-                            ChannelInHandler<?, ?> channelInHandler = channelInHandlers.get(x);
+
                             Object handlerIn = channelInHandler.exception(this.exception, clientChannel, linkIn);
-                            Class<? extends ChannelInHandler> channelInHandlerClass = channelInHandler.getClass();
+                            Class<?> channelInHandlerClass = channelInHandler.getClass();
                             Method handler = channelInHandlerClass.getMethod("handler", SocketChannel.class, channelInHandler.getInClass());
                             linkIn = handler.invoke(channelInHandler,clientChannel,handlerIn);
                             this.exception = null;
@@ -249,32 +249,31 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             ByteBuffer outBuf = getOutBuf();
             outBuf.clear();
             Object linkIn = in;
-            for(int x=0;x<channelOutHandlers.size();x++){
-                if(clientChannel.isOpen()){
+            for (ChannelOutHandler<?, ?> channelOutHandler : channelOutHandlers) {
+                if (clientChannel.isOpen()) {
                     try {
-                        if(this.exception==null){
-                            ChannelOutHandler<?, ?> channelOutHandler = channelOutHandlers.get(x);
-                            Class<? extends ChannelOutHandler> channelOutHandlerClass = channelOutHandler.getClass();
+                        if (this.exception == null) {
+                            Class<?> channelOutHandlerClass = channelOutHandler.getClass();
                             Method before = channelOutHandlerClass.getMethod("before", SocketChannel.class, channelOutHandler.getInClass());
-                            before.invoke(channelOutHandler,clientChannel,linkIn);
-                            Method handler = channelOutHandlerClass.getMethod("handler",ByteBuffer.class, SocketChannel.class, channelOutHandler.getInClass());
-                            Object invoke = handler.invoke(channelOutHandler, outBuf,clientChannel, linkIn);
-                            Method after = channelOutHandlerClass.getMethod("after", SocketChannel.class, channelOutHandler.getInClass());
-                            after.invoke(channelOutHandler,clientChannel,linkIn);
-                            linkIn = invoke;
-                        }else{
-                            ChannelOutHandler<?, ?> channelOutHandler = channelOutHandlers.get(x);
-                            Object handlerIn = channelOutHandler.exception(this.exception, clientChannel, linkIn);
-                            Class<? extends ChannelOutHandler> channelOutHandlerClass = channelOutHandler.getClass();
+                            before.invoke(channelOutHandler, clientChannel, linkIn);
                             Method handler = channelOutHandlerClass.getMethod("handler", ByteBuffer.class, SocketChannel.class, channelOutHandler.getInClass());
-                            linkIn = handler.invoke(channelOutHandler, outBuf,clientChannel,handlerIn);
+                            Object invoke = handler.invoke(channelOutHandler, outBuf, clientChannel, linkIn);
+                            Method after = channelOutHandlerClass.getMethod("after", SocketChannel.class, channelOutHandler.getInClass());
+                            after.invoke(channelOutHandler, clientChannel, linkIn);
+                            linkIn = invoke;
+                        } else {
+
+                            Object handlerIn = channelOutHandler.exception(this.exception, clientChannel, linkIn);
+                            Class<?> channelOutHandlerClass = channelOutHandler.getClass();
+                            Method handler = channelOutHandlerClass.getMethod("handler", ByteBuffer.class, SocketChannel.class, channelOutHandler.getInClass());
+                            linkIn = handler.invoke(channelOutHandler, outBuf, clientChannel, handlerIn);
                             this.exception = null;
                         }
-                    }catch(Exception e){
+                    } catch (Exception e) {
                         this.exception = e;
                         e.printStackTrace();
                     }
-                }else{
+                } else {
                     logger.error("channel-close");
                     break;
                 }

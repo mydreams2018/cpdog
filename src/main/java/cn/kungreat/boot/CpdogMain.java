@@ -67,21 +67,20 @@ public class CpdogMain {
         if(fl.exists()){
             File[] list = fl.listFiles();
             if(list != null && list.length > 0){
-                for(int x=0;x<list.length;x++){
-                    File temp = list[x];
-                    String s = temp.toString().replace(File.separator,".");
-                    if(s.endsWith(".class")){
-                        s = s.replace(".class","");
-                        Class<?> cls = Class.forName(pks+s.split(pks)[1]);
-                        if (cls.isAnnotationPresent(CpdogController.class)){
+                for (File temp : list) {
+                    String s = temp.toString().replace(File.separator, ".");
+                    if (s.endsWith(".class")) {
+                        s = s.replace(".class", "");
+                        Class<?> cls = Class.forName(pks + s.split(pks)[1]);
+                        if (cls.isAnnotationPresent(CpdogController.class)) {
                             addControllers(cls);
                         }
-                        if(cls.isAnnotationPresent(CpdogEvent.class)){
+                        if (cls.isAnnotationPresent(CpdogEvent.class)) {
                             addEvents(cls);
                         }
                     }
-                    if(temp.isDirectory()){
-                        loopFile(temp,pks);
+                    if (temp.isDirectory()) {
+                        loopFile(temp, pks);
                     }
                 }
             }

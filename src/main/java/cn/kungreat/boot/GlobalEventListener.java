@@ -47,30 +47,29 @@ public class GlobalEventListener {
                         Class<?> aClass = CpdogMain.EVENTS.get(i);
                         Method[] declaredMethods = aClass.getMethods();
                         if(declaredMethods.length>0){
-                            for(int x=0;x<declaredMethods.length;x++){
-                                Method methods = declaredMethods[x];
+                            for (Method methods : declaredMethods) {
                                 String name = methods.getName();
-                                if(name.equals(receiveObjUrl)){
-                                    if(Modifier.isStatic(methods.getModifiers())){
+                                if (name.equals(receiveObjUrl)) {
+                                    if (Modifier.isStatic(methods.getModifiers())) {
                                         EVENT_BUFFER.clear();
-                                        String rts = (String) methods.invoke(null,receiveObj);
-                                        if(rts.length() > 0){
+                                        String rts = (String) methods.invoke(null, receiveObj);
+                                        if (rts.length() > 0) {
                                             byte[] bytes = rts.getBytes(StandardCharsets.UTF_8);
                                             int readLength = 0;
                                             EVENT_BUFFER.put(WebSocketResponse.getBytes(bytes));
                                             //必须处理并发.数据一次完整的写出.
-                                            synchronized (socketChannel){
-                                                do{
+                                            synchronized (socketChannel) {
+                                                do {
                                                     int min = Math.min(bytes.length - readLength, EVENT_BUFFER.remaining());
-                                                    EVENT_BUFFER.put(bytes,readLength,min);
+                                                    EVENT_BUFFER.put(bytes, readLength, min);
                                                     readLength = readLength + min;
                                                     EVENT_BUFFER.flip();
 //                                                    socketChannel.write(EVENT_BUFFER);
-                                                    CpDogSSLContext.outEncode(socketChannel,EVENT_BUFFER);
+                                                    CpDogSSLContext.outEncode(socketChannel, EVENT_BUFFER);
                                                     EVENT_BUFFER.clear();
-                                                }while (readLength<bytes.length);
+                                                } while (readLength < bytes.length);
                                             }
-                                           break outer;
+                                            break outer;
                                         }
                                     }
                                 }
