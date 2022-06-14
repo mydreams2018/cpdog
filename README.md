@@ -30,6 +30,9 @@ const queryCurrentFriends ={
     }
 }
 ```
+#### 感谢 jetbrains 提供的开源版 免费许可证
+   <img src="https://www.kungreat.cn/images/images_md/jeb2.PNG" alt="package" style="zoom:50%;" />
+
 #### 版本说明
 05-01日: 更新了后端通知机制的设计.基于注解方式实现方法的调用.
 
@@ -134,7 +137,3 @@ https://space.bilibili.com/384704339
 
 1.  需要配合前端使用.
 2.  https://github.com/mydreams2018/dwbbs
-
-
-#### 感谢 jetbrains 提供的开源版 免费许可证
-   <img src="https://www.kungreat.cn/images/images_md/jeb2.PNG" alt="package" style="zoom:50%;" />
