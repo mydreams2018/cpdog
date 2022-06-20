@@ -15,7 +15,7 @@ public class test {
         byte[] bytes = "刘大胖".getBytes(StandardCharsets.UTF_8);
         ByteBuffer wrap = ByteBuffer.wrap(bytes, 0, bytes.length - 1);
         CharBuffer charBuffer = CharBuffer.allocate(256);
-        Charset charset = Charset.forName("UTF-8");
+        Charset charset = StandardCharsets.UTF_8;
         CoderResult decode = charset.newDecoder().decode(wrap, charBuffer, false);
         System.out.println(charBuffer.flip());
         if(decode.isError()){
