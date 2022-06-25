@@ -1,6 +1,9 @@
 package cn.kungreat.test;
 
+import com.sun.net.httpserver.HttpServer;
+
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
@@ -24,5 +27,7 @@ public class test {
         System.out.println(decode.isMalformed());
         System.out.println(decode.isOverflow());
         System.out.println(decode.isUnderflow());
+
+        HttpServer server = HttpServer.create(new InetSocketAddress(8000), 50);
     }
 }
