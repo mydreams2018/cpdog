@@ -1,6 +1,11 @@
 package cn.kungreat.boot.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class WorkThreadGroup extends ThreadGroup{
+
+    private static final Logger logger = LoggerFactory.getLogger(WorkThreadGroup.class);
 
     public WorkThreadGroup(String name) {
         super(name);
@@ -8,6 +13,6 @@ public class WorkThreadGroup extends ThreadGroup{
 
     @Override
     public void uncaughtException(Thread t, Throwable e) {
-        super.uncaughtException(t, e);
+        logger.error(t.getName(),e);
     }
 }
