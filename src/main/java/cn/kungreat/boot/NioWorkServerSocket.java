@@ -9,8 +9,8 @@ import java.util.LinkedList;
 
 public interface NioWorkServerSocket {
 
-    <T> NioWorkServerSocket setOption​(SocketOption<T> name, T value) throws IOException;
-    void setOption​(SocketChannel channel) throws IOException;
+    <T> NioWorkServerSocket setOption(SocketOption<T> name, T value) throws IOException;
+    void setOption(SocketChannel channel) throws IOException;
     NioWorkServerSocket buildThread();
     NioWorkServerSocket buildSelector() throws IOException;
     NioWorkServerSocket start();

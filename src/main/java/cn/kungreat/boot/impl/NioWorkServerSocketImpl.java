@@ -60,13 +60,13 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
         return this.tlsInitKey;
     }
     @Override
-    public <T> NioWorkServerSocket setOption​(SocketOption<T> name, T value) throws IOException {
+    public <T> NioWorkServerSocket setOption(SocketOption<T> name, T value) throws IOException {
         optionMap.put(name,value);
         return this;
     }
 
     @Override
-    public void setOption​(SocketChannel channel) throws IOException {
+    public void setOption(SocketChannel channel) throws IOException {
         Set<Map.Entry<SocketOption<?>, Object>> entries = optionMap.entrySet();
         for(Map.Entry<SocketOption<?>, Object> entry: entries){
             SocketOption name = entry.getKey();

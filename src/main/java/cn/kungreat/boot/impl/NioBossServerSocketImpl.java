@@ -53,7 +53,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
     }
 
     @Override
-    public <T> NioBossServerSocket setOption​(SocketOption<T> name, T value) throws IOException {
+    public <T> NioBossServerSocket setOption(SocketOption<T> name, T value) throws IOException {
         this.serverSocketChannel.setOption(name, value);
         return this;
     }
@@ -104,7 +104,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                 if(accept != null && accept.finishConnect()){
                     NioWorkServerSocket choose = NioBossServerSocketImpl.this.chooseWorkServer.choose(NioBossServerSocketImpl.this.workServerSockets);
                     accept.configureBlocking(false);
-                    choose.setOption​(accept);
+                    choose.setOption(accept);
                     accept.register(choose.getSelector(),SelectionKey.OP_READ);
                     choose.getSelector().wakeup();
                     NioBossServerSocketImpl.logger.info("连接成功{}",accept.getRemoteAddress());
@@ -182,7 +182,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                 if(this.tlsSocketChannel.finishConnect()){
                     NioWorkServerSocket choose = NioBossServerSocketImpl.this.chooseWorkServer.choose(NioBossServerSocketImpl.this.workServerSockets);
                     this.tlsSocketChannel.configureBlocking(false);
-                    choose.setOption​(this.tlsSocketChannel);
+                    choose.setOption(this.tlsSocketChannel);
                     //TLS握手
                     sslEngine = CpDogSSLContext.getSSLEngine(this.tlsSocketChannel);
                     if(sslEngine != null){

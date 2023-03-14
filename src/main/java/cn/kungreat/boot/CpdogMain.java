@@ -160,7 +160,7 @@ public class CpdogMain {
             NioWorkServerSocket workServerSocket = NioWorkServerSocketImpl.create();
             workServerSocket.buildThread();
             workServerSocket.buildSelector();
-//            workServerSocket.setOption​(StandardSocketOptions.SO_KEEPALIVE,true);
+            workServerSocket.setOption(StandardSocketOptions.SO_KEEPALIVE,true);
             workServerSockets[x]=workServerSocket;
         }
         nioBossServerSocket.start(new InetSocketAddress(InetAddress.getLocalHost(),9999),workServerSockets,chooseWorkServer);

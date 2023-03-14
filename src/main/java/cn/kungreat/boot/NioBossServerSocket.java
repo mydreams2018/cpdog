@@ -9,7 +9,7 @@ import java.util.Set;
 public interface NioBossServerSocket {
 
     NioBossServerSocket buildChannel() throws IOException;
-    <T> NioBossServerSocket setOption​(SocketOption<T> name, T value) throws IOException;
+    <T> NioBossServerSocket setOption(SocketOption<T> name, T value) throws IOException;
     <T> T getOption(SocketOption<T> name) throws IOException;
     Set<SocketOption<?>> supportedOptions();
     NioBossServerSocket buildThread();
