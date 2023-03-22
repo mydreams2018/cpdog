@@ -249,9 +249,10 @@ public class CpDogSSLContext {
                 int netSize = engine.getSession().getPacketBufferSize();
                 if (netSize > decode.capacity() && netSize > inSrc.capacity()) {
                     logger.info("read-扩容入站src数据:{}",inSrc.capacity());
-                    ByteBuffer srcg = ByteBuffer.allocate(netSize);
-                    srcg.put(inSrc);
-                    socketLink.setInSrc(srcg);
+                    ByteBuffer srcGrow = ByteBuffer.allocate(netSize);
+                    srcGrow.put(inSrc);
+                    srcGrow.flip();
+                    socketLink.setInSrc(srcGrow);
                 }
                 break;
             case OK:
