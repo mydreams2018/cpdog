@@ -152,8 +152,6 @@ public class CpDogSSLContext {
                     changeInStates(engine,unwrapAgaing,insrc,insrcDecode);
                     handshakeStatus = unwrapAgaing.getHandshakeStatus();
                     break;
-                case FINISHED:
-                    return true;
                 case NOT_HANDSHAKING:
                     return false;
             }
