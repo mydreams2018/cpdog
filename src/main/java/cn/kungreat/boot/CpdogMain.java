@@ -49,7 +49,7 @@ public class CpdogMain {
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "50");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "512");
-        JdbcUtils.DATA_SOURCE = new HikariDataSource(config);
+        JdbcUtils.dataSource = new HikariDataSource(config);
     }
 
     private static void setControllers(String scanPack) throws Exception {

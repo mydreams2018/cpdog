@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 public class JdbcUtils {
 
-    public static HikariDataSource DATA_SOURCE;
+    public static HikariDataSource dataSource;
 
 /*    默认10个连接池
     One Connection Cycle is defined as single DataSource.getConnection()/Connection.close().
@@ -19,7 +19,7 @@ public class JdbcUtils {
     public static Connection getConnection(){
         Connection connection = null;
         try {
-            connection =  DATA_SOURCE.getConnection();
+            connection =  dataSource.getConnection();
             connection.rollback();
         } catch (SQLException throwables) {
             throwables.printStackTrace();

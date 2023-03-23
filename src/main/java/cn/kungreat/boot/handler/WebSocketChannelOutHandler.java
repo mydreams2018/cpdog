@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<WebSocketChannelInHandler.WebSocketState>,String> {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketChannelOutHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketChannelOutHandler.class);
     /*
     存放用户登录随机生成的UUID 关联信息.UUID在前端是session级别的. [k=uuid v=userid]
     */
@@ -46,7 +46,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
     private void reuserAddWebSocketState(WebSocketChannelInHandler.WebSocketState webSocketState){
         if(webSocketState != null){
             webSocketState.clear();
-            WebSocketChannelInHandler.REUSER_WEBSTATE.offer(webSocketState);
+            WebSocketChannelInHandler.REUSE_WEB_STATE.offer(webSocketState);
         }
     }
 
@@ -60,7 +60,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     reuserAddWebSocketState(in.removeFirst());
                     first = in.peekFirst();
                 }else if(first.getType() == 2 && first.isDone()){
-                    logger.info("文件写出完毕:{}",first.getFileName());
+                    LOGGER.info("文件写出完毕:{}",first.getFileName());
                     writeFiles(first);
                     answer(first,byteBuffer,socketChannel);
                     reuserAddWebSocketState(in.removeFirst());
@@ -82,7 +82,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                     //文本数据过大时没有读取完成不做操作
                     break;
                 }else{
-                    logger.error("out type 未知:"+first.getType());
+                    LOGGER.error("out type 未知:"+first.getType());
                     break;
                 }
             }
@@ -107,7 +107,7 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
 
     @Override
     public LinkedList<WebSocketChannelInHandler.WebSocketState> exception(Exception e, SocketChannel socketChannel, Object in) throws Exception {
-        logger.error(e.getLocalizedMessage());
+        LOGGER.error(e.getLocalizedMessage());
         socketChannel.close();
         return null;
     }

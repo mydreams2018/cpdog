@@ -13,11 +13,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class CpDogSSLContext {
-    private static final Logger logger = LoggerFactory.getLogger(CpDogSSLContext.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CpDogSSLContext.class);
     public static final ConcurrentHashMap<Integer, TLSSocketLink> TLS_SOCKET_LINK = new ConcurrentHashMap<>(1024);
     public static SSLContext context = null;
     //用来存放复用的 TLSSocketLink
-    public static final LinkedBlockingQueue<TLSSocketLink> REUSER_TLS_SOCKET_LINK = new LinkedBlockingQueue<>(1024);
+    public static final LinkedBlockingQueue<TLSSocketLink> REUSE_TLS_SOCKET_LINK = new LinkedBlockingQueue<>(1024);
     static {
         try {
             // System.setProperty("javax.net.debug", "all"); 显示网络通信的详情信息
@@ -59,7 +59,7 @@ public class CpDogSSLContext {
         TLSSocketLink remove = CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
         if(remove != null){
             remove.clear();
-            REUSER_TLS_SOCKET_LINK.offer(remove);
+            REUSE_TLS_SOCKET_LINK.offer(remove);
         }
     }
 
@@ -69,13 +69,13 @@ public class CpDogSSLContext {
         engine.setNeedClientAuth(false);
         engine.beginHandshake();
         if (doHandshake(socketChannel, engine)) {
-            logger.info("tls握手完成:");
+            LOGGER.info("tls握手完成:");
             ShakeHands.CpdogThread currentThread = (ShakeHands.CpdogThread) Thread.currentThread();
             ByteBuffer changeInsrc = currentThread.getInsrc();
             changeInsrc.flip();
             // 可能有读取多的没有用完的数据、需要转换到channel所绑定的TLSSocketLink中去
             // [很少发生. 在极端的情况下数据读完了、后续不会触发work对象注册的-read事件、会造成websocket握手没有触发.数据是在的]
-            TLSSocketLink poll = REUSER_TLS_SOCKET_LINK.poll();
+            TLSSocketLink poll = REUSE_TLS_SOCKET_LINK.poll();
             if(poll != null){
                 //复用 TLSSocketLink  减少 创建/GC
                 poll.getInSrc().put(changeInsrc);
@@ -88,7 +88,7 @@ public class CpDogSSLContext {
             TLS_SOCKET_LINK.put(socketChannel.hashCode(),tlsSocketLink);
             return tlsSocketLink;
         } else{
-            logger.error("tls握手失败:");
+            LOGGER.error("tls握手失败:");
             engine.closeOutbound();
             socketChannel.close();
         }
@@ -96,7 +96,7 @@ public class CpDogSSLContext {
     }
 
     private static boolean doHandshake(SocketChannel socketChannel, SSLEngine engine) throws Exception {
-        logger.info("TLS开始握手...");
+        LOGGER.info("TLS开始握手...");
         ShakeHands.CpdogThread currentThread = (ShakeHands.CpdogThread) Thread.currentThread();
         ByteBuffer insrc = currentThread.getInsrc();
         ByteBuffer insrcDecode = currentThread.getInsrcDecode();
@@ -112,7 +112,7 @@ public class CpDogSSLContext {
                     int read = socketChannel.read(insrc);
                     if(read == 0){
                         if(!insrc.hasRemaining()){
-                            logger.info("原始数据扩容:{}",insrc.capacity()*2);
+                            LOGGER.info("原始数据扩容:{}",insrc.capacity()*2);
                             ByteBuffer temsrc = ByteBuffer.allocate(insrc.capacity()*2);
                             insrc.flip();
                             temsrc.put(insrc);
@@ -126,7 +126,7 @@ public class CpDogSSLContext {
                     changeInStates(engine,unwrap,insrc,insrcDecode);
                     handshakeStatus = unwrap.getHandshakeStatus();
                     if(read == -1){
-                        logger.info("握手关闭了、流==-1 调用closeInbound");
+                        LOGGER.info("握手关闭了、流==-1 调用closeInbound");
                         engine.closeInbound();
                         handshakeStatus = engine.getHandshakeStatus();
                     }
@@ -170,7 +170,7 @@ public class CpDogSSLContext {
     private static void changeInStates(SSLEngine engine, SSLEngineResult sslEngineResult,ByteBuffer insrc,ByteBuffer insrcDecode) throws SSLException {
         switch (sslEngineResult.getStatus()) {
             case BUFFER_OVERFLOW:
-                logger.info("扩容入站解密数据:{}",insrcDecode.capacity());
+                LOGGER.info("扩容入站解密数据:{}",insrcDecode.capacity());
                 int applicationBufferSize = engine.getSession().getApplicationBufferSize();
                 ByteBuffer b = ByteBuffer.allocate(applicationBufferSize + insrcDecode.position());
                 insrcDecode.flip();
@@ -181,7 +181,7 @@ public class CpDogSSLContext {
             case BUFFER_UNDERFLOW:
                 int netSize = engine.getSession().getPacketBufferSize();
                 if (netSize > insrcDecode.capacity() && netSize > insrc.capacity()) {
-                    logger.info("扩容入站src数据:{}",insrc.capacity());
+                    LOGGER.info("扩容入站src数据:{}",insrc.capacity());
                     ByteBuffer srcg = ByteBuffer.allocate(netSize);
                     insrc.flip();
                     srcg.put(insrc);
@@ -203,7 +203,7 @@ public class CpDogSSLContext {
                                          ,SocketChannel socketChannel) throws Exception {
         switch (sslEngineResult.getStatus()) {
             case BUFFER_OVERFLOW:
-                logger.info("扩容出站加密数据:{}",outsrcDecode.capacity());
+                LOGGER.info("扩容出站加密数据:{}",outsrcDecode.capacity());
                 ByteBuffer buf = ByteBuffer.allocate(outsrcDecode.capacity() * 2);
                 outsrcDecode.flip();
                 buf.put(outsrcDecode);
@@ -211,7 +211,7 @@ public class CpDogSSLContext {
                 currentThreadOut.setOutsrcEncode(buf);
                 break;
             case BUFFER_UNDERFLOW:
-                logger.error("outssl-我不认为我们应该到这里");
+                LOGGER.error("outssl-我不认为我们应该到这里");
                 break;
             case OK:
                 outsrcDecode.flip();
@@ -239,7 +239,7 @@ public class CpDogSSLContext {
         SSLEngineResult unwrap = engine.unwrap(inSrc, decode);
         switch (unwrap.getStatus()) {
             case BUFFER_OVERFLOW:
-                logger.info("read-扩容入站解密数据:{}",decode.capacity());
+                LOGGER.info("read-扩容入站解密数据:{}",decode.capacity());
                 int applicationBufferSize = engine.getSession().getApplicationBufferSize();
                 ByteBuffer b = ByteBuffer.allocate(applicationBufferSize + decode.position());
                 decode.flip();
@@ -248,7 +248,7 @@ public class CpDogSSLContext {
             case BUFFER_UNDERFLOW:
                 int netSize = engine.getSession().getPacketBufferSize();
                 if (netSize > decode.capacity() && netSize > inSrc.capacity()) {
-                    logger.info("read-扩容入站src数据:{}",inSrc.capacity());
+                    LOGGER.info("read-扩容入站src数据:{}",inSrc.capacity());
                     ByteBuffer srcGrow = ByteBuffer.allocate(netSize);
                     srcGrow.put(inSrc);
                     srcGrow.flip();
@@ -276,7 +276,7 @@ public class CpDogSSLContext {
         SSLEngineResult wrap = engine.wrap(outSrc,outEnc);
         switch (wrap.getStatus()){
             case BUFFER_OVERFLOW:
-                logger.info("out-扩容出站加密数据:{}",outEnc.capacity());
+                LOGGER.info("out-扩容出站加密数据:{}",outEnc.capacity());
                 ByteBuffer buf = ByteBuffer.allocate(outEnc.capacity() * 2);
                 outEnc.flip();
                 buf.put(outEnc);
@@ -284,7 +284,7 @@ public class CpDogSSLContext {
                 outEncode(socketChannel,outSrc);
                 return;
             case BUFFER_UNDERFLOW:
-                logger.error("out-我不认为我们应该到这里");
+                LOGGER.error("out-我不认为我们应该到这里");
                 break;
             case OK:
                 outEnc.flip();
@@ -304,7 +304,7 @@ public class CpDogSSLContext {
                 }
         }
         if(outSrc.hasRemaining() && !engine.isOutboundDone()){
-            logger.error("多次调用了outEncode--");
+            LOGGER.error("多次调用了outEncode--");
             outEncode(socketChannel,outSrc);
         }
     }

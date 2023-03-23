@@ -14,21 +14,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 */
 public class ShakeHands {
 
-    private static final Logger logger = LoggerFactory.getLogger(ShakeHands.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ShakeHands.class);
 
     public static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(2,5,3600,
             TimeUnit.SECONDS,new ArrayBlockingQueue<>(99,false),new CpdogThreadFactory(),new DiscardPolicy());
 
 
     final static class CpdogThreadFactory implements ThreadFactory {
-        private static final AtomicInteger poolNumber = new AtomicInteger(1);
+        private static final AtomicInteger POOL_NUMBER = new AtomicInteger(1);
         private final ThreadGroup group;
         private final AtomicInteger threadNumber = new AtomicInteger(1);
         private final String namePrefix;
 
         public CpdogThreadFactory(){
             group = Thread.currentThread().getThreadGroup();
-            namePrefix = "ShakeHands-" + poolNumber.getAndIncrement() + "-thread-";
+            namePrefix = "ShakeHands-" + POOL_NUMBER.getAndIncrement() + "-thread-";
         }
 
        public Thread newThread(Runnable r) {
@@ -68,7 +68,7 @@ public class ShakeHands {
          * @param e the executor attempting to execute this task
          */
         public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
-            logger.error("线程池队列已经满了...");
+            LOGGER.error("线程池队列已经满了...");
         }
     }
 

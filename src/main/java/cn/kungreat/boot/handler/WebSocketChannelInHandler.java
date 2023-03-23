@@ -27,24 +27,24 @@ import java.util.concurrent.LinkedBlockingQueue;
 * 把websocket 的数据 解码出来并且 传入下一个链路
 */
 public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, LinkedList<WebSocketChannelInHandler.WebSocketState>> {
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketChannelInHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketChannelInHandler.class);
     //每次发生的完整的事件对象
-    public static final Map<Integer,LinkedList<WebSocketState>> WEBSOCKETSTATETREEMAP = new ConcurrentHashMap<>(1024);
+    public static final Map<Integer,LinkedList<WebSocketState>> WEB_SOCKET_STATE_TREEMAP = new ConcurrentHashMap<>(1024);
     //二进制 数据时用来做的缓存
-    public static final Map<Integer,String> WEBSOCKETSTATEBYTES = new ConcurrentHashMap<>(256);
+    public static final Map<Integer,String> WEB_SOCKET_STATE_BYTES = new ConcurrentHashMap<>(256);
 
     public static String FILE_PATH;
     public static final ObjectMapper MAP_JSON = new ObjectMapper(); //create once, reuse
     // 用来存放复用的 WebSocketState
-    public static final LinkedBlockingQueue<WebSocketState> REUSER_WEBSTATE = new LinkedBlockingQueue<>(5120);
+    public static final LinkedBlockingQueue<WebSocketState> REUSE_WEB_STATE = new LinkedBlockingQueue<>(5120);
     @Override
     public void before(SocketChannel socketChannel,ByteBuffer buffer) throws Exception {
         buffer.flip();
-        LinkedList<WebSocketState> listSos = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode());
+        LinkedList<WebSocketState> listSos = WEB_SOCKET_STATE_TREEMAP.get(socketChannel.hashCode());
         if (listSos == null) {
             listSos = new LinkedList<>();
             listSos.add(reuserWebSocketState(buffer.capacity()));
-            WEBSOCKETSTATETREEMAP.put(socketChannel.hashCode(), listSos);
+            WEB_SOCKET_STATE_TREEMAP.put(socketChannel.hashCode(), listSos);
         }
         WebSocketState webSocketState = listSos.getLast();
         long remainingTotal = webSocketState.getDateLength() - webSocketState.getReadLength();
@@ -60,17 +60,17 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 if((array[0] & 15) != 0){
                     webSocketState.setType(array[0] & 15);
                 }else if(webSocketState.getType() == 999){
-                    logger.error("警告,类型解释失败.关闭连接");
+                    LOGGER.error("警告,类型解释失败.关闭连接");
                     socketChannel.close();
                 }else{
-                    logger.info("这是一个延续帧.保持上一次的数据类型不变");
+                    LOGGER.info("这是一个延续帧.保持上一次的数据类型不变");
                 }
                 if (array[1] < 0) {
                     //设置数据长度
                     webSocketState.setDateLength(array,remaining);
                     webSocketState.setMaskingKey(array);
                 } else{
-                    logger.info("协议mask标记位不正确关闭连接:");
+                    LOGGER.info("协议mask标记位不正确关闭连接:");
                     socketChannel.close();
                 }
             }
@@ -80,7 +80,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
     @Override
     public LinkedList<WebSocketState> handler(SocketChannel socketChannel, ByteBuffer buffer) throws Exception {
         if(socketChannel.isOpen()){
-            WebSocketState webSocketState = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).getLast();
+            WebSocketState webSocketState = WEB_SOCKET_STATE_TREEMAP.get(socketChannel.hashCode()).getLast();
             int currentPos = webSocketState.getCurrentPos();
             int remaining = buffer.remaining();
             long remainingTotal = webSocketState.getDateLength()-webSocketState.getReadLength();
@@ -116,7 +116,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 webSocketState.setCurrentPos(0);
             }
             buffer.compact();
-            return WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode());
+            return WEB_SOCKET_STATE_TREEMAP.get(socketChannel.hashCode());
         }
         return null;
     }
@@ -124,7 +124,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
     @Override
     public void after(SocketChannel socketChannel, ByteBuffer buffer) throws Exception {
         if(socketChannel.isOpen()){
-            WebSocketState webSocketState = WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).getLast();
+            WebSocketState webSocketState = WEB_SOCKET_STATE_TREEMAP.get(socketChannel.hashCode()).getLast();
             if(webSocketState.isFinish() && webSocketState.getReadLength()==webSocketState.getDateLength()){
                 webSocketState.setDone(true);
             }
@@ -132,13 +132,13 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 webSocketState.setStringData(socketChannel);
             }else if(webSocketState.getType()==2){
                 webSocketState.setByteData(socketChannel.hashCode(),
-                        WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()),socketChannel);
+                        WEB_SOCKET_STATE_TREEMAP.get(socketChannel.hashCode()),socketChannel);
             }else if(webSocketState.getType() == 8){
-                logger.info("break:");
+                LOGGER.info("break:");
             }
             if(webSocketState.isDone()){
                 if(webSocketState.getType() != 8){
-                    WEBSOCKETSTATETREEMAP.get(socketChannel.hashCode()).add(reuserWebSocketState(buffer.capacity()));
+                    WEB_SOCKET_STATE_TREEMAP.get(socketChannel.hashCode()).add(reuserWebSocketState(buffer.capacity()));
                     loopData(socketChannel,buffer);
                 }
             }
@@ -160,7 +160,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
     @Override
     public ByteBuffer exception(Exception e, SocketChannel socketChannel, Object in) throws Exception {
         socketChannel.close();
-        logger.error(e.getLocalizedMessage());
+        LOGGER.error(e.getLocalizedMessage());
         return null;
     }
 
@@ -171,12 +171,12 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
 
     @Override
     public void clearBuffers(SocketChannel socketChannel) {
-        WEBSOCKETSTATETREEMAP.remove(socketChannel.hashCode());
-        WEBSOCKETSTATEBYTES.remove(socketChannel.hashCode());
+        WEB_SOCKET_STATE_TREEMAP.remove(socketChannel.hashCode());
+        WEB_SOCKET_STATE_BYTES.remove(socketChannel.hashCode());
     }
 
     public WebSocketState reuserWebSocketState(int capacity){
-        WebSocketState webSocketState = REUSER_WEBSTATE.poll();
+        WebSocketState webSocketState = REUSE_WEB_STATE.poll();
         if(webSocketState != null){
             return webSocketState;
         }
@@ -370,7 +370,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                 ReceiveObj receiveObj = MAP_JSON.readValue(stringBuilder.toString(),ReceiveObj.class);
                 stringBuilder = null;
                 if(receiveObj == null){
-                    logger.error("字符内容解释出错:关闭连接");
+                    LOGGER.error("字符内容解释出错:关闭连接");
                     socketChannel.close();
                     return;
                 }else{
@@ -381,7 +381,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                     this.uuid=receiveObj.getUuid();
                 }
                 if(this.src.isEmpty() || this.tar.isEmpty() || this.charts == null || this.url.isEmpty() || this.uuid.isEmpty()){
-                    logger.error("字符内容解释出错:关闭连接");
+                    LOGGER.error("字符内容解释出错:关闭连接");
                     socketChannel.close();
                 }
             }
@@ -430,25 +430,25 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         //二进制数据时做的数据处理. 由于是分二次发送所以第一次的二进制数据是 相关的源信息
         public void setByteData(int hashcode,LinkedList<WebSocketState> list,SocketChannel socketChannel) throws IOException {
             if(done){
-                if(WEBSOCKETSTATEBYTES.get(hashcode) == null){
+                if(WEB_SOCKET_STATE_BYTES.get(hashcode) == null){
                     byteBuffer.flip();
                     int remaining = byteBuffer.remaining();
-                    WEBSOCKETSTATEBYTES.put(hashcode,new String(byteBuffer.array(),0,remaining, StandardCharsets.UTF_8));
+                    WEB_SOCKET_STATE_BYTES.put(hashcode,new String(byteBuffer.array(),0,remaining, StandardCharsets.UTF_8));
                     list.removeLast();
                     byteBuffer.clear();
                 }else{
                     //第二次 二进制 进来一次就接收到了所有的数据的情况
                     if(!isConvert){
-                        String sbu = WEBSOCKETSTATEBYTES.get(hashcode);
+                        String sbu = WEB_SOCKET_STATE_BYTES.get(hashcode);
                         String[] split = sbu.split(";");
                         setDataBase(split,hashcode,socketChannel);
                     }
-                    WEBSOCKETSTATEBYTES.remove(hashcode);
+                    WEB_SOCKET_STATE_BYTES.remove(hashcode);
                 }
             }else{
-                String sbu = WEBSOCKETSTATEBYTES.get(hashcode);
+                String sbu = WEB_SOCKET_STATE_BYTES.get(hashcode);
                 if(sbu==null && !byteBuffer.hasRemaining()){
-                    logger.error("二进制数据解释失败.关闭连接");
+                    LOGGER.error("二进制数据解释失败.关闭连接");
                     socketChannel.close();
                     return;
                 }
@@ -489,11 +489,11 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
                     isConvert=true;
                 } catch (Exception e) {
                     e.printStackTrace();
-                    logger.error("文件创建出错:关闭连接");
+                    LOGGER.error("文件创建出错:关闭连接");
                     socketChannel.close();
                 }
             }else{
-                logger.error("文件内容解释出错:关闭连接");
+                LOGGER.error("文件内容解释出错:关闭连接");
                 socketChannel.close();
             }
         }

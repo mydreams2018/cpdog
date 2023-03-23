@@ -19,12 +19,12 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class NioWorkServerSocketImpl implements NioWorkServerSocket {
-    private static final Logger logger = LoggerFactory.getLogger(NioWorkServerSocketImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NioWorkServerSocketImpl.class);
     private NioWorkServerSocketImpl(){}
-    private final static ThreadGroup threadGroup = new WorkThreadGroup("workServer");
-    private final static AtomicInteger atomicInteger = new AtomicInteger(0);
-    private static final List<ChannelInHandler<?,?>> channelInHandlers = new ArrayList<>();
-    private static final List<ChannelOutHandler<?,?>> channelOutHandlers = new ArrayList<>();
+    private final static ThreadGroup WORK_THREAD_GROUP = new WorkThreadGroup("workServer");
+    private final static AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
+    private static final List<ChannelInHandler<?,?>> CHANNEL_IN_HANDLERS = new ArrayList<>();
+    private static final List<ChannelOutHandler<?,?>> CHANNEL_OUT_HANDLERS = new ArrayList<>();
     private static ChannelProtocolHandler channelProtocolHandler ;
     public final LinkedList<SelectionKey> tlsInitKey = new InitLinkedList();
     private final ByteBuffer outBuf = ByteBuffer.allocate(8192);
@@ -40,16 +40,16 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     }
 
     private static String getThreadName() {
-        int i = atomicInteger.addAndGet(1);
+        int i = ATOMIC_INTEGER.addAndGet(1);
         return "work-thread-" + i;
     }
 
     public static void addChannelInHandlers(ChannelInHandler<?,?> channelInHandler){
-        channelInHandlers.add(channelInHandler);
+        CHANNEL_IN_HANDLERS.add(channelInHandler);
     }
 
     public static void addChannelOutHandlers(ChannelOutHandler<?,?> channelOutHandler){
-        channelOutHandlers.add(channelOutHandler);
+        CHANNEL_OUT_HANDLERS.add(channelOutHandler);
     }
 
     public static void addChannelProtocolHandler(ChannelProtocolHandler protocolHandler) {
@@ -76,7 +76,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
 
     @Override
     public NioWorkServerSocket buildThread() {
-        this.workThreads = new Thread(NioWorkServerSocketImpl.threadGroup, new NioWorkServerSocketImpl.WorkRunable(), getThreadName());
+        this.workThreads = new Thread(NioWorkServerSocketImpl.WORK_THREAD_GROUP, new NioWorkServerSocketImpl.WorkRunable(), getThreadName());
         return this;
     }
 
@@ -206,13 +206,13 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             if(next.isValid() && next.isReadable()){
                 InitHandler(next);
             }else{
-                logger.error("客户端监听类型异常:");
+                LOGGER.error("客户端监听类型异常:");
             }
         }
 
         private Object runInHandlers(final SocketChannel clientChannel,final ByteBuffer byteBuffer) {
             Object linkIn = byteBuffer;
-            for(ChannelInHandler<?, ?> channelInHandler: channelInHandlers){
+            for(ChannelInHandler<?, ?> channelInHandler: CHANNEL_IN_HANDLERS){
                 if(clientChannel.isOpen()){
                     try {
                         if(this.exception==null){
@@ -238,7 +238,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         e.printStackTrace();
                     }
                 }else{
-                    logger.error("channel-close");
+                    LOGGER.error("channel-close");
                     break;
                 }
             }
@@ -249,7 +249,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             ByteBuffer outBuf = getOutBuf();
             outBuf.clear();
             Object linkIn = in;
-            for (ChannelOutHandler<?, ?> channelOutHandler : channelOutHandlers) {
+            for (ChannelOutHandler<?, ?> channelOutHandler : CHANNEL_OUT_HANDLERS) {
                 if (clientChannel.isOpen()) {
                     try {
                         if (this.exception == null) {
@@ -274,7 +274,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         e.printStackTrace();
                     }
                 } else {
-                    logger.error("channel-close");
+                    LOGGER.error("channel-close");
                     break;
                 }
             }
@@ -282,7 +282,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             if(this.exception != null){
                 this.exception=null;
                 clientChannel.close();
-                logger.error("走完链路.还存在异常时 关闭连接");
+                LOGGER.error("走完链路.还存在异常时 关闭连接");
             }
             return linkIn;
         }
@@ -296,10 +296,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
 //管道关闭时清理后续 链路. 链路需要自已实现清理方法 注意可能出现的异常情况
         private void clearHandlerLink(final SocketChannel socketChannel){
             try {
-                channelInHandlers.forEach(e-> e.clearBuffers(socketChannel));
-                channelOutHandlers.forEach(e-> e.clearBuffers(socketChannel));
+                CHANNEL_IN_HANDLERS.forEach(e-> e.clearBuffers(socketChannel));
+                CHANNEL_OUT_HANDLERS.forEach(e-> e.clearBuffers(socketChannel));
             }catch (Exception e){
-                logger.error("clearHandlerLink-error{}",e.getMessage());
+                LOGGER.error("clearHandlerLink-error{}",e.getMessage());
             }
         }
     }

@@ -20,12 +20,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class NioBossServerSocketImpl implements NioBossServerSocket {
     private ServerSocketChannel serverSocketChannel;
     private Selector selector;
-    private static final ThreadGroup threadGroup = new BossThreadGroup("bossServer");
+    private static final ThreadGroup BOSS_THREAD_GROUP = new BossThreadGroup("bossServer");
     private Thread bossThreads;
-    private final static AtomicInteger atomicInteger = new AtomicInteger(0);
+    private final static AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
     private NioWorkServerSocket[] workServerSockets;
     private ChooseWorkServer chooseWorkServer;
-    private static final Logger logger = LoggerFactory.getLogger(NioBossServerSocketImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NioBossServerSocketImpl.class);
     private NioBossServerSocketImpl() {
     }
 
@@ -39,7 +39,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
     }
 
     private static String getThreadName() {
-        int i = atomicInteger.addAndGet(1);
+        int i = ATOMIC_INTEGER.addAndGet(1);
         return "boss-thread-" + i;
     }
 
@@ -70,7 +70,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
 
     @Override
     public NioBossServerSocketImpl buildThread() {
-        this.bossThreads = new Thread(threadGroup, new BossRunable(), getThreadName());
+        this.bossThreads = new Thread(BOSS_THREAD_GROUP, new BossRunable(), getThreadName());
         this.bossThreads.setPriority(Thread.MAX_PRIORITY);
         return this;
     }
@@ -107,25 +107,25 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                     choose.setOption(accept);
                     accept.register(choose.getSelector(),SelectionKey.OP_READ);
                     choose.getSelector().wakeup();
-                    NioBossServerSocketImpl.logger.info("连接成功{}",accept.getRemoteAddress());
+                    NioBossServerSocketImpl.LOGGER.info("连接成功{}",accept.getRemoteAddress());
                     Thread.State state = choose.getWorkThreads().getState();
                     if(state.equals(Thread.State.NEW)){
                         choose.getWorkThreads().start();
-                        NioBossServerSocketImpl.logger.info("启动{}",choose.getWorkThreads().getName());
+                        NioBossServerSocketImpl.LOGGER.info("启动{}",choose.getWorkThreads().getName());
                     }
                 }else if(accept != null){
                     accept.close();
-                    NioBossServerSocketImpl.logger.info("连接失败{}",accept.getRemoteAddress());
+                    NioBossServerSocketImpl.LOGGER.info("连接失败{}",accept.getRemoteAddress());
                 }
             }catch (Exception e){
                 e.printStackTrace();
-                NioBossServerSocketImpl.logger.error("连接失败{}",e.getLocalizedMessage());
+                NioBossServerSocketImpl.LOGGER.error("连接失败{}",e.getLocalizedMessage());
                 if(accept != null){
                     try {
                         accept.close();
                     } catch (IOException ioException) {
                         ioException.printStackTrace();
-                        NioBossServerSocketImpl.logger.error("close失败{}",ioException.getLocalizedMessage());
+                        NioBossServerSocketImpl.LOGGER.error("close失败{}",ioException.getLocalizedMessage());
                     }
                 }
             }
@@ -133,7 +133,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
 
         @Override
         public void run() {
-            NioBossServerSocketImpl.logger.info("boss服务启动");
+            NioBossServerSocketImpl.LOGGER.info("boss服务启动");
             try {
                 while(NioBossServerSocketImpl.this.selector.select() >= 0){
                     Set<SelectionKey> selectionKeys = NioBossServerSocketImpl.this.selector.selectedKeys();
@@ -147,14 +147,14 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
 //                            accept(serChannel);
                             addTask(serChannel);
                         }else{
-                            NioBossServerSocketImpl.logger.info("Boss事件类型错误");
+                            NioBossServerSocketImpl.LOGGER.info("Boss事件类型错误");
                         }
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                NioBossServerSocketImpl.logger.error("Boss线程挂掉");
-                NioBossServerSocketImpl.logger.error(e.getLocalizedMessage());
+                NioBossServerSocketImpl.LOGGER.error("Boss线程挂掉");
+                NioBossServerSocketImpl.LOGGER.error(e.getLocalizedMessage());
             }
             run();
         }
@@ -191,26 +191,26 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                             //说明有多的数据需要处理.添加到work的初始化队列中去.
                             choose.getTlsInitKey().add(selectionKey);
                         }
-                        NioBossServerSocketImpl.logger.info("连接成功{}",this.tlsSocketChannel.getRemoteAddress());
+                        NioBossServerSocketImpl.LOGGER.info("连接成功{}",this.tlsSocketChannel.getRemoteAddress());
                         Thread.State state = choose.getWorkThreads().getState();
                         if(state.equals(Thread.State.NEW)){
                             choose.getWorkThreads().start();
-                            NioBossServerSocketImpl.logger.info("启动{}",choose.getWorkThreads().getName());
+                            NioBossServerSocketImpl.LOGGER.info("启动{}",choose.getWorkThreads().getName());
                         }
                         choose.getSelector().wakeup();
                     }
                 }else{
                     this.tlsSocketChannel.close();
-                    NioBossServerSocketImpl.logger.info("连接失败{}",this.tlsSocketChannel.getRemoteAddress());
+                    NioBossServerSocketImpl.LOGGER.info("连接失败{}",this.tlsSocketChannel.getRemoteAddress());
                 }
             }catch (Exception e){
                 e.printStackTrace();
-                NioBossServerSocketImpl.logger.error("连接失败{}",e.getLocalizedMessage());
+                NioBossServerSocketImpl.LOGGER.error("连接失败{}",e.getLocalizedMessage());
                     try {
                         this.tlsSocketChannel.close();
                     } catch (IOException ioException) {
                         ioException.printStackTrace();
-                        NioBossServerSocketImpl.logger.error("close失败{}",ioException.getLocalizedMessage());
+                        NioBossServerSocketImpl.LOGGER.error("close失败{}",ioException.getLocalizedMessage());
                     }
             }
         }

@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 
 public class WorkThreadGroup extends ThreadGroup{
 
-    private static final Logger logger = LoggerFactory.getLogger(WorkThreadGroup.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WorkThreadGroup.class);
 
     public WorkThreadGroup(String name) {
         super(name);
@@ -13,6 +13,6 @@ public class WorkThreadGroup extends ThreadGroup{
 
     @Override
     public void uncaughtException(Thread t, Throwable e) {
-        logger.error(t.getName(),e);
+        LOGGER.error(t.getName(),e);
     }
 }
