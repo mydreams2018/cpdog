@@ -165,26 +165,26 @@ public class CpDogSSLContext {
         return true;
     }
 
-    private static void changeInStates(SSLEngine engine, SSLEngineResult sslEngineResult,ByteBuffer insrc,ByteBuffer insrcDecode) throws SSLException {
+    private static void changeInStates(SSLEngine engine, SSLEngineResult sslEngineResult,ByteBuffer inSrc,ByteBuffer inSrcDecode) throws SSLException {
         switch (sslEngineResult.getStatus()) {
             case BUFFER_OVERFLOW:
-                LOGGER.info("扩容入站解密数据:{}",insrcDecode.capacity());
+                LOGGER.info("扩容入站解密数据:{}",inSrcDecode.capacity());
                 int applicationBufferSize = engine.getSession().getApplicationBufferSize();
-                ByteBuffer b = ByteBuffer.allocate(applicationBufferSize + insrcDecode.position());
-                insrcDecode.flip();
-                b.put(insrcDecode);
+                ByteBuffer b = ByteBuffer.allocate(applicationBufferSize + inSrcDecode.position());
+                inSrcDecode.flip();
+                b.put(inSrcDecode);
                 ShakeHands.CpdogThread currentThreadIn = (ShakeHands.CpdogThread) Thread.currentThread();
                 currentThreadIn.setInsrcDecode(b);
                 break;
             case BUFFER_UNDERFLOW:
                 int netSize = engine.getSession().getPacketBufferSize();
-                if (netSize > insrcDecode.capacity() && netSize > insrc.capacity()) {
-                    LOGGER.info("扩容入站src数据:{}",insrc.capacity());
-                    ByteBuffer srcg = ByteBuffer.allocate(netSize);
-                    insrc.flip();
-                    srcg.put(insrc);
+                if (netSize > inSrc.capacity()) {
+                    LOGGER.info("扩容入站src数据:{}",inSrc.capacity());
+                    ByteBuffer srcGrow = ByteBuffer.allocate(netSize);
+                    inSrc.flip();
+                    srcGrow.put(inSrc);
                     ShakeHands.CpdogThread currentThreadInSrc = (ShakeHands.CpdogThread) Thread.currentThread();
-                    currentThreadInSrc.setInsrc(srcg);
+                    currentThreadInSrc.setInsrc(srcGrow);
                 }
                 break;
             case OK:
