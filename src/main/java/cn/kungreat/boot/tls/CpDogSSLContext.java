@@ -245,7 +245,7 @@ public class CpDogSSLContext {
                 return inDecode(socketLink,b,spin);//扩容后尝试再次转换
             case BUFFER_UNDERFLOW:
                 int netSize = engine.getSession().getPacketBufferSize();
-                if (netSize > decode.capacity() && netSize > inSrc.capacity()) {
+                if (netSize > inSrc.capacity()) {
                     LOGGER.info("read-扩容入站src数据:{}",inSrc.capacity());
                     ByteBuffer srcGrow = ByteBuffer.allocate(netSize);
                     srcGrow.put(inSrc);
