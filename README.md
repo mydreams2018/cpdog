@@ -34,6 +34,7 @@ const queryCurrentFriends ={
    <img src="https://www.kungreat.cn/images/images_md/jeb2.PNG" alt="package" style="zoom:50%;" />
 
 #### 版本说明
+2022年
 05-01日: 更新了后端通知机制的设计.基于注解方式实现方法的调用.
 
 05-12日: 加入TLS加密协议、使用原生SSLEngine实现.
@@ -49,6 +50,10 @@ const queryCurrentFriends ={
 05-31日: 完成 WebSocketState 对象整体的复用机制
 
 06-02: 流程/清理 
+
+2023年
+
+3月 优化了一些字段的名称,修复了一个入站扩容buffer的bug
 
 #### 未来计划
 
