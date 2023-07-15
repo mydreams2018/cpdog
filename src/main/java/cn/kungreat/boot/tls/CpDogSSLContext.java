@@ -55,7 +55,7 @@ public class CpDogSSLContext {
         return trustManagerFactory.getTrustManagers();
     }
 
-    public static void reuserTLSSocketLink(int channelHash){
+    public static void reuseTLSSocketLink(int channelHash){
         TLSSocketLink remove = CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
         if(remove != null){
             remove.clear();
@@ -83,8 +83,8 @@ public class CpDogSSLContext {
                 TLS_SOCKET_LINK.put(socketChannel.hashCode(),poll);
                 return poll;
             }
-            ByteBuffer Insrc = ByteBuffer.allocate(32768).put(changeInsrc);
-            TLSSocketLink tlsSocketLink = new TLSSocketLink(engine,Insrc,ByteBuffer.allocate(32768));
+            ByteBuffer inSrc = ByteBuffer.allocate(32768).put(changeInsrc);
+            TLSSocketLink tlsSocketLink = new TLSSocketLink(engine,inSrc,ByteBuffer.allocate(32768));
             TLS_SOCKET_LINK.put(socketChannel.hashCode(),tlsSocketLink);
             return tlsSocketLink;
         } else{

@@ -31,10 +31,10 @@ public class CpdogMain {
     public static final ThreadLocal<ByteBuffer> THREAD_LOCAL = new ThreadLocal<>();
 
     static {
-        InputStream cpdog = ClassLoader.getSystemResourceAsStream("cpdog.properties");
+        InputStream cpDogFile = ClassLoader.getSystemResourceAsStream("cpdog.properties");
         Properties props = new Properties();
         try {
-            props.load(cpdog);
+            props.load(cpDogFile);
             String scanPack = props.getProperty("scan.packages");
             setControllers(scanPack);
         } catch (Exception e) {

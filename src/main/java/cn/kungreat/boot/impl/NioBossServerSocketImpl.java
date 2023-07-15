@@ -70,7 +70,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
 
     @Override
     public NioBossServerSocketImpl buildThread() {
-        this.bossThreads = new Thread(BOSS_THREAD_GROUP, new BossRunable(), getThreadName());
+        this.bossThreads = new Thread(BOSS_THREAD_GROUP, new BossRunnable(), getThreadName());
         this.bossThreads.setPriority(Thread.MAX_PRIORITY);
         return this;
     }
@@ -95,7 +95,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
         return this;
     }
 
-    private final class BossRunable implements Runnable{
+    private final class BossRunnable implements Runnable{
 
         private void accept(ServerSocketChannel serChannel){
             SocketChannel accept = null;

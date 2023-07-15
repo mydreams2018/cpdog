@@ -127,30 +127,28 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
         for (int i=0; i < CpdogMain.CONTROLLERS.size(); i++){
             Class<?> aClass = CpdogMain.CONTROLLERS.get(i);
             Method[] declaredMethods = aClass.getMethods();
-            if(declaredMethods.length>0){
-                for (Method methods : declaredMethods) {
-                    String name = methods.getName();
-                    if (name.equals(baseUrl)) {
-                        if (Modifier.isStatic(methods.getModifiers())) {
-                            String rts = (String) methods.invoke(null, first);
-                            if (rts.length() > 0) {
-                                byte[] bytes = rts.getBytes(StandardCharsets.UTF_8);
-                                int readLength = 0;
-                                byteBuffer.put(WebSocketResponse.getBytes(bytes));
-                                //下边是一次完整的数据写出.可能EVENT事什通知造成并发.所以加锁
-                                synchronized (socketChannel) {
-                                    do {
-                                        int min = Math.min(bytes.length - readLength, byteBuffer.remaining());
-                                        byteBuffer.put(bytes, readLength, min);
-                                        readLength = readLength + min;
-                                        byteBuffer.flip();
+            for (Method methods : declaredMethods) {
+                String name = methods.getName();
+                if (name.equals(baseUrl)) {
+                    if (Modifier.isStatic(methods.getModifiers())) {
+                        String rts = (String) methods.invoke(null, first);
+                        if (rts.length() > 0) {
+                            byte[] bytes = rts.getBytes(StandardCharsets.UTF_8);
+                            int readLength = 0;
+                            byteBuffer.put(WebSocketResponse.getBytes(bytes));
+                            //下边是一次完整的数据写出.可能EVENT事什通知造成并发.所以加锁
+                            synchronized (socketChannel) {
+                                do {
+                                    int min = Math.min(bytes.length - readLength, byteBuffer.remaining());
+                                    byteBuffer.put(bytes, readLength, min);
+                                    readLength = readLength + min;
+                                    byteBuffer.flip();
 //                                        socketChannel.write(byteBuffer);
-                                        CpDogSSLContext.outEncode(socketChannel, byteBuffer);
-                                        byteBuffer.clear();
-                                    } while (readLength < bytes.length);
-                                }
-                                return;
+                                    CpDogSSLContext.outEncode(socketChannel, byteBuffer);
+                                    byteBuffer.clear();
+                                } while (readLength < bytes.length);
                             }
+                            return;
                         }
                     }
                 }

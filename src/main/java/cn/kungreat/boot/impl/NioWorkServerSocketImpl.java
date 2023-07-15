@@ -198,7 +198,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
 
         private void baseClear(final SocketChannel clientChannel){
             int channelHash = clientChannel.hashCode();
-            CpDogSSLContext.reuserTLSSocketLink(channelHash);
+            CpDogSSLContext.reuseTLSSocketLink(channelHash);
             clearHandlerLink(clientChannel);
         }
 

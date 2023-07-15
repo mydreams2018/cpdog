@@ -13,17 +13,17 @@ public class Paging {
 	private Integer topPage =1;		//第一页
 	private Integer endPage;			//最后一页
 									//下面是计算显示页面的结果
-	public void setData(Integer totalrow,Integer pagesize,Integer currentpage) {
-		this.totalRow = totalrow;		
-		this.pageSize = pagesize;
-		if (totalrow <= pagesize) {
+	public void setData(Integer totalRow,Integer pageSize,Integer currentPage) {
+		this.totalRow = totalRow;
+		this.pageSize = pageSize;
+		if (totalRow <= pageSize) {
 			this.totalPage=1;
 			this.endPage =1;
 			this.currentPage =1;
 		}else {
-			this.totalPage= totalrow % pagesize == 0? totalrow / pagesize:totalrow / pagesize + 1;
+			this.totalPage= totalRow % pageSize == 0? totalRow / pageSize:totalRow / pageSize + 1;
 			this.endPage = this.totalPage;
-			this.currentPage = currentpage > this.endPage?this.endPage:currentpage;
+			this.currentPage = currentPage > this.endPage?this.endPage:currentPage;
 		}
 		this.lastPage = (this.currentPage-1) > 0 ? this.currentPage-1 : this.currentPage;
 		this.nextPage = this.currentPage < this.totalPage ? this.currentPage + 1 : this.currentPage;
