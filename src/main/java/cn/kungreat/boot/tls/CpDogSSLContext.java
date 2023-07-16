@@ -147,10 +147,10 @@ public class CpDogSSLContext {
                     break;
                 case NEED_UNWRAP_AGAIN:
                     insrc.flip();
-                    SSLEngineResult unwrapAgaing = engine.unwrap(insrc,insrcDecode);
+                    SSLEngineResult unwrapAgain = engine.unwrap(insrc,insrcDecode);
                     insrc.compact();
-                    changeInStates(engine,unwrapAgaing,insrc,insrcDecode);
-                    handshakeStatus = unwrapAgaing.getHandshakeStatus();
+                    changeInStates(engine,unwrapAgain,insrc,insrcDecode);
+                    handshakeStatus = unwrapAgain.getHandshakeStatus();
                     break;
                 case NOT_HANDSHAKING:
                     return false;
@@ -197,34 +197,34 @@ public class CpDogSSLContext {
 
     }
 
-    private static void changeOutStates(SSLEngine engine,SSLEngineResult sslEngineResult, ByteBuffer outsrcDecode
+    private static void changeOutStates(SSLEngine engine,SSLEngineResult sslEngineResult, ByteBuffer outSrcDecode
                                          ,SocketChannel socketChannel) throws Exception {
         switch (sslEngineResult.getStatus()) {
             case BUFFER_OVERFLOW:
-                LOGGER.info("扩容出站加密数据:{}",outsrcDecode.capacity());
-                ByteBuffer buf = ByteBuffer.allocate(outsrcDecode.capacity() * 2);
-                outsrcDecode.flip();
-                buf.put(outsrcDecode);
+                LOGGER.info("扩容出站加密数据:{}",outSrcDecode.capacity());
+                ByteBuffer buf = ByteBuffer.allocate(outSrcDecode.capacity() * 2);
+                outSrcDecode.flip();
+                buf.put(outSrcDecode);
                 ShakeHands.CpdogThread currentThreadOut = (ShakeHands.CpdogThread) Thread.currentThread();
                 currentThreadOut.setOutsrcEncode(buf);
                 break;
             case BUFFER_UNDERFLOW:
-                LOGGER.error("outssl-我不认为我们应该到这里");
+                LOGGER.error("outTLS-我不认为我们应该到这里");
                 break;
             case OK:
-                outsrcDecode.flip();
-                if(outsrcDecode.hasRemaining()){
-                    socketChannel.write(outsrcDecode);
+                outSrcDecode.flip();
+                if(outSrcDecode.hasRemaining()){
+                    socketChannel.write(outSrcDecode);
                 }
-                outsrcDecode.clear();
+                outSrcDecode.clear();
                 break;
             case CLOSED:
                 if(!engine.isOutboundDone()){
-                    outsrcDecode.flip();
-                    if(outsrcDecode.hasRemaining()){
-                        socketChannel.write(outsrcDecode);
+                    outSrcDecode.flip();
+                    if(outSrcDecode.hasRemaining()){
+                        socketChannel.write(outSrcDecode);
                     }
-                    outsrcDecode.clear();
+                    outSrcDecode.clear();
                     engine.closeOutbound();
                 }
         }

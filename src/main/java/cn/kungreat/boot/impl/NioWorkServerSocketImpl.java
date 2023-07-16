@@ -76,7 +76,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
 
     @Override
     public NioWorkServerSocket buildThread() {
-        this.workThreads = new Thread(NioWorkServerSocketImpl.WORK_THREAD_GROUP, new NioWorkServerSocketImpl.WorkRunable(), getThreadName());
+        this.workThreads = new Thread(NioWorkServerSocketImpl.WORK_THREAD_GROUP, new WorkRunnable(), getThreadName());
         return this;
     }
 
@@ -104,7 +104,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
         return outBuf;
     }
 
-    private final class WorkRunable implements Runnable{
+    private final class WorkRunnable implements Runnable{
 
         private Exception exception = null;
 

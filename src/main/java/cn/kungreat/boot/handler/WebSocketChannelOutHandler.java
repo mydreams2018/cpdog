@@ -38,12 +38,12 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
                 if(nikeName != null){
                     GlobalEventListener.CONCURRENT_EVENT_MAP.put(nikeName,socketChannel);
                 }
-                reuserAddWebSocketState(in.removeFirst());
+                reuseAddWebSocketState(in.removeFirst());
             }
         }
     }
 
-    private void reuserAddWebSocketState(WebSocketChannelInHandler.WebSocketState webSocketState){
+    private void reuseAddWebSocketState(WebSocketChannelInHandler.WebSocketState webSocketState){
         if(webSocketState != null){
             webSocketState.clear();
             WebSocketChannelInHandler.REUSE_WEB_STATE.offer(webSocketState);
@@ -57,13 +57,13 @@ public class WebSocketChannelOutHandler implements ChannelOutHandler<LinkedList<
             while (first != null) {
                 if(first.getType() == 1 && first.isDone()){
                     answer(first,byteBuffer,socketChannel);
-                    reuserAddWebSocketState(in.removeFirst());
+                    reuseAddWebSocketState(in.removeFirst());
                     first = in.peekFirst();
                 }else if(first.getType() == 2 && first.isDone()){
                     LOGGER.info("文件写出完毕:{}",first.getFileName());
                     writeFiles(first);
                     answer(first,byteBuffer,socketChannel);
-                    reuserAddWebSocketState(in.removeFirst());
+                    reuseAddWebSocketState(in.removeFirst());
                     first = in.peekFirst();
                 }else if(first.getType() == 2 && first.isConvert()){
                     writeFiles(first);
