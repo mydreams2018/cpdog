@@ -169,7 +169,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
 
     private final class TLSRunnable implements Runnable{
 
-        private SocketChannel tlsSocketChannel;
+        private final SocketChannel tlsSocketChannel;
 
         private TLSRunnable(SocketChannel channel){
             this.tlsSocketChannel=channel;
