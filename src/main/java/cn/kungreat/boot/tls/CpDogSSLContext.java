@@ -71,19 +71,19 @@ public class CpDogSSLContext {
         if (doHandshake(socketChannel, engine)) {
             LOGGER.info("tls握手完成:");
             ShakeHands.CpdogThread currentThread = (ShakeHands.CpdogThread) Thread.currentThread();
-            ByteBuffer changeInsrc = currentThread.getInsrc();
-            changeInsrc.flip();
+            ByteBuffer changeInSrc = currentThread.getInsrc();
+            changeInSrc.flip();
             // 可能有读取多的没有用完的数据、需要转换到channel所绑定的TLSSocketLink中去
             // [很少发生. 在极端的情况下数据读完了、后续不会触发work对象注册的-read事件、会造成websocket握手没有触发.数据是在的]
             TLSSocketLink poll = REUSE_TLS_SOCKET_LINK.poll();
             if(poll != null){
                 //复用 TLSSocketLink  减少 创建/GC
-                poll.getInSrc().put(changeInsrc);
+                poll.getInSrc().put(changeInSrc);
                 poll.setEngine(engine);
                 TLS_SOCKET_LINK.put(socketChannel.hashCode(),poll);
                 return poll;
             }
-            ByteBuffer inSrc = ByteBuffer.allocate(32768).put(changeInsrc);
+            ByteBuffer inSrc = ByteBuffer.allocate(32768).put(changeInSrc);
             TLSSocketLink tlsSocketLink = new TLSSocketLink(engine,inSrc,ByteBuffer.allocate(32768));
             TLS_SOCKET_LINK.put(socketChannel.hashCode(),tlsSocketLink);
             return tlsSocketLink;
@@ -111,6 +111,7 @@ public class CpDogSSLContext {
                 case NEED_UNWRAP:
                     int read = socketChannel.read(insrc);
                     if(read == 0){
+                        /*  结构可以优化... */
                         if(!insrc.hasRemaining()){
                             LOGGER.info("原始数据扩容:{}",insrc.capacity()*2);
                             ByteBuffer temsrc = ByteBuffer.allocate(insrc.capacity()*2);
@@ -261,7 +262,7 @@ public class CpDogSSLContext {
                 }
         }
         if(inSrc.hasRemaining() && spin > 0){
-            /* 由于解密的特殊性、必需自旋一定的数量.因为可能收到数据全、但是它解密认为数据不全.也有可能真的不全..  */
+            /* 需要优化...自旋  */
             return inDecode(socketLink,decode,spin);
         }
         return decode;
