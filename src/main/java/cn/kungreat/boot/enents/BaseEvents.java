@@ -7,25 +7,25 @@ import cn.kungreat.boot.jb.EventBean;
 @CpdogEvent(index = 5)
 public class BaseEvents {
 
-    public static String enentAddFriends(EventBean receiveObj) throws Exception{
+    public static String eventAddFriends(EventBean receiveObj) throws Exception{
         String rt = "";
         rt= WebSocketChannelInHandler.MAP_JSON.writeValueAsString(receiveObj);
         return rt;
     }
 
-    public static String enentDeleteCurFriend(EventBean receiveObj) throws Exception{
+    public static String eventDeleteCurFriend(EventBean receiveObj) throws Exception{
         String rt = "";
         rt= WebSocketChannelInHandler.MAP_JSON.writeValueAsString(receiveObj);
         return rt;
     }
 
-    public static String enentChartSendMsg(EventBean receiveObj) throws Exception{
+    public static String eventChartSendMsg(EventBean receiveObj) throws Exception{
         String rt = "";
         rt= WebSocketChannelInHandler.MAP_JSON.writeValueAsString(receiveObj);
         return rt;
     }
 
-    public static String enentApplyFriend(EventBean receiveObj) throws Exception{
+    public static String eventApplyFriend(EventBean receiveObj) throws Exception{
         String rt = "";
         rt= WebSocketChannelInHandler.MAP_JSON.writeValueAsString(receiveObj);
         return rt;

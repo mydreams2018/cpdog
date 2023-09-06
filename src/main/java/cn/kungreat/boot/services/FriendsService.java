@@ -74,16 +74,16 @@ public class FriendsService {
 
     public static String applyFriends(WebSocketChannelInHandler.WebSocketState first) {
         String rt = "";
-        List<String> nikeNamels = first.getCharts().getNikeNamels();
+        List<String> nikeNames = first.getCharts().getNikeNames();
         String tokenSession = first.getCharts().getTokenSession();
-        if(nikeNamels != null && nikeNamels.size()>0 && tokenSession != null){
+        if(nikeNames != null && nikeNames.size()>0 && tokenSession != null){
             final BaseResponse baseResponse = new BaseResponse();
             String nikeNm = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
             if(nikeNm != null){
                 String message = first.getCharts().getMessage();
                 StringBuilder nks = new StringBuilder();
-                for (int x=0;x< nikeNamels.size();x++) {
-                    if(x==nikeNamels.size()-1){
+                for (int x=0;x< nikeNames.size();x++) {
+                    if(x==nikeNames.size()-1){
                         nks.append("?");
                         nks.append(")");
                     }else{
@@ -94,14 +94,14 @@ public class FriendsService {
                 try(Connection connection = JdbcUtils.getConnection();
                     PreparedStatement statement = connection.prepareStatement("insert into apply_history (src_user_id, tar_user_id,apply_msg,apply_time) values (?,?,?,CURDATE())");
                     PreparedStatement preparedStatement = connection.prepareStatement("select tar_user_id from friends_history where src_user_id = ? and cur_state = 1 and tar_user_id in ("+nks)){
-                    clearApplyFriends(nikeNm,nikeNamels,preparedStatement);
-                    for(int x=0;x<nikeNamels.size();x++){
+                    clearApplyFriends(nikeNm,nikeNames,preparedStatement);
+                    for(int x=0;x<nikeNames.size();x++){
                         statement.setString(1,nikeNm);
-                        statement.setString(2,nikeNamels.get(x));
+                        statement.setString(2,nikeNames.get(x));
                         statement.setString(3,message);
                         statement.addBatch();
                     }
-                    if(nikeNamels.size()>0){
+                    if(nikeNames.size()>0){
                         int[] ints = statement.executeBatch();
                         statement.clearBatch();
                         baseResponse.setCode("200");
@@ -111,11 +111,11 @@ public class FriendsService {
                         connection.commit();
                         //申请好友添加到通知队列中
                         String srcImgPath = first.getCharts().getImgPath();
-                        for (int i=0; i<nikeNamels.size();i++) {
+                        for (int i=0; i<nikeNames.size();i++) {
                             EventBean eventAdd = new EventBean();
                             eventAdd.setSrc(nikeNm);
-                            eventAdd.setTar(nikeNamels.get(i));
-                            eventAdd.setUrl("enentAddFriends");
+                            eventAdd.setTar(nikeNames.get(i));
+                            eventAdd.setUrl("eventAddFriends");
                             eventAdd.setDescribes(message);
                             eventAdd.setImgPath(srcImgPath);
                             GlobalEventListener.EVENT_BLOCKING_QUEUE.offer(eventAdd);
@@ -286,7 +286,7 @@ public class FriendsService {
             EventBean eventAdd = new EventBean();
             eventAdd.setSrc(tokenNikeName);
             eventAdd.setTar(nikeName);
-            eventAdd.setUrl("enentApplyFriend");
+            eventAdd.setUrl("eventApplyFriend");
             eventAdd.setImgPath(job.getCharts().getImgPath());
             eventAdd.setDescribes(job.getCharts().getDescribes());
             eventAdd.setType(message);
@@ -477,7 +477,7 @@ public class FriendsService {
                 EventBean eventAdd = new EventBean();
                 eventAdd.setSrc(src);
                 eventAdd.setTar(tar);
-                eventAdd.setUrl("enentDeleteCurFriend");
+                eventAdd.setUrl("eventDeleteCurFriend");
                 GlobalEventListener.EVENT_BLOCKING_QUEUE.offer(eventAdd);
                 //通知对方删除事件 end
             }else{

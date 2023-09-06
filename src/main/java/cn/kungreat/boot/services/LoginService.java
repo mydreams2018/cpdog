@@ -82,9 +82,9 @@ public class LoginService {
                     baseResponse.setCode("200");
                     baseResponse.setDescribes(resultSet.getString("describes"));
                     baseResponse.setUser(resultSet.getString("nike_name"));
-                    baseResponse.setSktoken(UUID.randomUUID().toString());
+                    baseResponse.setSkToken(UUID.randomUUID().toString());
                     baseResponse.setImgPath(resultSet.getString("img_path"));
-                    WebSocketChannelOutHandler.USER_UUIDS.put(baseResponse.getSktoken(),resultSet.getString("nike_name"));
+                    WebSocketChannelOutHandler.USER_UUIDS.put(baseResponse.getSkToken(),resultSet.getString("nike_name"));
                     rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
                 }else{
                     //验证失败

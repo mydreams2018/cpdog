@@ -52,9 +52,9 @@ public class ShakeHands {
             super(group, target, name, stackSize);
         }
 
-        private ByteBuffer insrc = ByteBuffer.allocate(8192);
-        private ByteBuffer insrcDecode = ByteBuffer.allocate(8192);
-        private ByteBuffer outsrcEncode = ByteBuffer.allocate(32768);
+        private ByteBuffer inSrc = ByteBuffer.allocate(8192);
+        private ByteBuffer inSrcDecode = ByteBuffer.allocate(8192);
+        private ByteBuffer outSrcEncode = ByteBuffer.allocate(32768);
 
     }
 

@@ -66,7 +66,7 @@ public class CpdogMain {
     public static void loopFile(File fl,String pks) throws Exception {
         if(fl.exists()){
             File[] list = fl.listFiles();
-            if(list != null && list.length > 0){
+            if(list != null){
                 for (File temp : list) {
                     String s = temp.toString().replace(File.separator, ".");
                     if (s.endsWith(".class")) {

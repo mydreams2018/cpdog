@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 public class BaseResponse {
     private String uuid;
-    private String sktoken;
+    private String skToken;
     private String user;
     private String url;
     private String code="100";

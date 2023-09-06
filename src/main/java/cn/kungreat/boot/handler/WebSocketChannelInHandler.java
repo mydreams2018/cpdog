@@ -224,7 +224,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         /**
          * maskingKey  websocket 客户端掩码
          */
-        private byte[] maskingKey = new byte[4];
+        private final byte[] maskingKey = new byte[4];
         /**
          * maskingIndex  websocket 客户端掩码索引
          */
@@ -252,8 +252,8 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
          * isConvert 传送文件时使用 表示数据是否已经转换
          */
         private boolean isConvert;
-        private CharsetDecoder charsetDecoder = StandardCharsets.UTF_8.newDecoder();
-        private CharBuffer charBuffer = CharBuffer.allocate(1024);
+        private final CharsetDecoder charsetDecoder = StandardCharsets.UTF_8.newDecoder();
+        private final CharBuffer charBuffer = CharBuffer.allocate(1024);
         public boolean isFinish() {
             return finish;
         }
@@ -574,7 +574,7 @@ public class WebSocketChannelInHandler implements ChannelInHandler<ByteBuffer, L
         private Integer totalPage;
         private String currentActiveId;
         private String message;
-        private List<String> nikeNamels;
+        private List<String> nikeNames;
         private String srcTarUUID;
         private String imgPath;
         private String describes;

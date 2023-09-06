@@ -71,7 +71,7 @@ public class CpDogSSLContext {
         if (doHandshake(socketChannel, engine)) {
             LOGGER.info("tls握手完成:");
             ShakeHands.CpdogThread currentThread = (ShakeHands.CpdogThread) Thread.currentThread();
-            ByteBuffer changeInSrc = currentThread.getInsrc();
+            ByteBuffer changeInSrc = currentThread.getInSrc();
             changeInSrc.flip();
             // 可能有读取多的没有用完的数据、需要转换到channel所绑定的TLSSocketLink中去
             // [很少发生. 在极端的情况下数据读完了、后续不会触发work对象注册的-read事件、会造成websocket握手没有触发.数据是在的]
@@ -98,33 +98,33 @@ public class CpDogSSLContext {
     private static boolean doHandshake(SocketChannel socketChannel, SSLEngine engine) throws Exception {
         LOGGER.info("TLS开始握手...");
         ShakeHands.CpdogThread currentThread = (ShakeHands.CpdogThread) Thread.currentThread();
-        ByteBuffer insrc = currentThread.getInsrc();
-        ByteBuffer insrcDecode = currentThread.getInsrcDecode();
-        ByteBuffer outsrcEncode = currentThread.getOutsrcEncode();
-        insrc.clear();
-        insrcDecode.clear();
-        outsrcEncode.clear();
+        ByteBuffer inSrc = currentThread.getInSrc();
+        ByteBuffer inSrcDecode = currentThread.getInSrcDecode();
+        ByteBuffer outSrcEncode = currentThread.getOutSrcEncode();
+        inSrc.clear();
+        inSrcDecode.clear();
+        outSrcEncode.clear();
 
         SSLEngineResult.HandshakeStatus handshakeStatus = engine.getHandshakeStatus();
         while (handshakeStatus != SSLEngineResult.HandshakeStatus.FINISHED) {
             switch (handshakeStatus) {
                 case NEED_UNWRAP:
-                    int read = socketChannel.read(insrc);
+                    int read = socketChannel.read(inSrc);
                     if(read == 0){
                         /*  结构可以优化... */
-                        if(!insrc.hasRemaining()){
-                            LOGGER.info("原始数据扩容:{}",insrc.capacity()*2);
-                            ByteBuffer temsrc = ByteBuffer.allocate(insrc.capacity()*2);
-                            insrc.flip();
-                            temsrc.put(insrc);
-                            currentThread.setInsrc(temsrc);
-                            insrc = temsrc;
+                        if(!inSrc.hasRemaining()){
+                            LOGGER.info("原始数据扩容:{}",inSrc.capacity()*2);
+                            ByteBuffer temsrc = ByteBuffer.allocate(inSrc.capacity()*2);
+                            inSrc.flip();
+                            temsrc.put(inSrc);
+                            currentThread.setInSrc(temsrc);
+                            inSrc = temsrc;
                         }
                     }
-                    insrc.flip();
-                    SSLEngineResult unwrap = engine.unwrap(insrc,insrcDecode);
-                    insrc.compact();
-                    changeInStates(engine,unwrap,insrc,insrcDecode);
+                    inSrc.flip();
+                    SSLEngineResult unwrap = engine.unwrap(inSrc,inSrcDecode);
+                    inSrc.compact();
+                    changeInStates(engine,unwrap,inSrc,inSrcDecode);
                     handshakeStatus = unwrap.getHandshakeStatus();
                     if(read == -1){
                         LOGGER.info("握手关闭了、流==-1 调用closeInbound");
@@ -133,10 +133,10 @@ public class CpDogSSLContext {
                     }
                     break;
                 case NEED_WRAP:
-                    insrcDecode.flip();
-                    SSLEngineResult wrap = engine.wrap(insrcDecode, outsrcEncode);
-                    insrcDecode.compact();
-                    changeOutStates(engine,wrap,outsrcEncode,socketChannel);
+                    inSrcDecode.flip();
+                    SSLEngineResult wrap = engine.wrap(inSrcDecode, outSrcEncode);
+                    inSrcDecode.compact();
+                    changeOutStates(engine,wrap,outSrcEncode,socketChannel);
                     handshakeStatus = wrap.getHandshakeStatus();
                     break;
                 case NEED_TASK:
@@ -147,10 +147,10 @@ public class CpDogSSLContext {
                     handshakeStatus = engine.getHandshakeStatus();
                     break;
                 case NEED_UNWRAP_AGAIN:
-                    insrc.flip();
-                    SSLEngineResult unwrapAgain = engine.unwrap(insrc,insrcDecode);
-                    insrc.compact();
-                    changeInStates(engine,unwrapAgain,insrc,insrcDecode);
+                    inSrc.flip();
+                    SSLEngineResult unwrapAgain = engine.unwrap(inSrc,inSrcDecode);
+                    inSrc.compact();
+                    changeInStates(engine,unwrapAgain,inSrc,inSrcDecode);
                     handshakeStatus = unwrapAgain.getHandshakeStatus();
                     break;
                 case NOT_HANDSHAKING:
@@ -159,9 +159,9 @@ public class CpDogSSLContext {
             if(engine.isOutboundDone()){
                 return false;
             }
-            insrcDecode = currentThread.getInsrcDecode();
-            insrc = currentThread.getInsrc();
-            outsrcEncode = currentThread.getOutsrcEncode();
+            inSrcDecode = currentThread.getInSrcDecode();
+            inSrc = currentThread.getInSrc();
+            outSrcEncode = currentThread.getOutSrcEncode();
         }
         return true;
     }
@@ -175,7 +175,7 @@ public class CpDogSSLContext {
                 inSrcDecode.flip();
                 b.put(inSrcDecode);
                 ShakeHands.CpdogThread currentThreadIn = (ShakeHands.CpdogThread) Thread.currentThread();
-                currentThreadIn.setInsrcDecode(b);
+                currentThreadIn.setInSrcDecode(b);
                 break;
             case BUFFER_UNDERFLOW:
                 int netSize = engine.getSession().getPacketBufferSize();
@@ -185,7 +185,7 @@ public class CpDogSSLContext {
                     inSrc.flip();
                     srcGrow.put(inSrc);
                     ShakeHands.CpdogThread currentThreadInSrc = (ShakeHands.CpdogThread) Thread.currentThread();
-                    currentThreadInSrc.setInsrc(srcGrow);
+                    currentThreadInSrc.setInSrc(srcGrow);
                 }
                 break;
             case OK:
@@ -207,7 +207,7 @@ public class CpDogSSLContext {
                 outSrcDecode.flip();
                 buf.put(outSrcDecode);
                 ShakeHands.CpdogThread currentThreadOut = (ShakeHands.CpdogThread) Thread.currentThread();
-                currentThreadOut.setOutsrcEncode(buf);
+                currentThreadOut.setOutSrcEncode(buf);
                 break;
             case BUFFER_UNDERFLOW:
                 LOGGER.error("outTLS-我不认为我们应该到这里");

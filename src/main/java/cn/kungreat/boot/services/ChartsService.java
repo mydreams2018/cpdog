@@ -294,7 +294,7 @@ public class ChartsService {
                             EventBean eventAdd = new EventBean();
                             eventAdd.setSrc(tokenNikeName);
                             eventAdd.setTar(nikeName);
-                            eventAdd.setUrl("enentChartSendMsg");
+                            eventAdd.setUrl("eventChartSendMsg");
                             eventAdd.setSrcTarUUID(srcTarUUID);
                             eventAdd.setId(tarMsgViewId);
                             eventAdd.setImgPath(job.getCharts().getImgPath());
