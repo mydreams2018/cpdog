@@ -89,7 +89,12 @@ public class CpDogSSLContext {
             return tlsSocketLink;
         } else{
             LOGGER.error("tls握手失败:");
-            engine.closeOutbound();
+            if(!engine.isInboundDone()){
+                engine.closeInbound();
+            }
+            if(!engine.isOutboundDone()){
+                engine.closeOutbound();
+            }
             socketChannel.close();
         }
         return null;
@@ -110,17 +115,6 @@ public class CpDogSSLContext {
             switch (handshakeStatus) {
                 case NEED_UNWRAP:
                     int read = socketChannel.read(inSrc);
-                    if(read == 0){
-                        /*  结构可以优化... */
-                        if(!inSrc.hasRemaining()){
-                            LOGGER.info("原始数据扩容:{}",inSrc.capacity()*2);
-                            ByteBuffer temsrc = ByteBuffer.allocate(inSrc.capacity()*2);
-                            inSrc.flip();
-                            temsrc.put(inSrc);
-                            currentThread.setInSrc(temsrc);
-                            inSrc = temsrc;
-                        }
-                    }
                     inSrc.flip();
                     SSLEngineResult unwrap = engine.unwrap(inSrc,inSrcDecode);
                     inSrc.compact();
@@ -210,7 +204,7 @@ public class CpDogSSLContext {
                 currentThreadOut.setOutSrcEncode(buf);
                 break;
             case BUFFER_UNDERFLOW:
-                LOGGER.error("outTLS-我不认为我们应该到这里");
+                LOGGER.error("outTLS握手-不认为它应该到这里");
                 break;
             case OK:
                 outSrcDecode.flip();
