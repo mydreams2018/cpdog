@@ -22,8 +22,8 @@ public class CpDogSSLContext {
         try {
             // System.setProperty("javax.net.debug", "all"); 显示网络通信的详情信息
             context = SSLContext.getInstance("TLSv1.2");
-            context.init(keyManagerFactory("7740639_www.kungreat.cn.jks", "2Hxvob35", "2Hxvob35"),
-                    trustManagerFactory("7740639_www.kungreat.cn.jks", "2Hxvob35"),
+            context.init(keyManagerFactory("www.kungreat.cn.jks", "7smuo47p", "7smuo47p"),
+                    trustManagerFactory("www.kungreat.cn.jks", "7smuo47p"),
                     SecureRandom.getInstance("SHA1PRNG"));
         } catch (Exception e) {
             e.printStackTrace();

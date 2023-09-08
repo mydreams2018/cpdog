@@ -151,6 +151,7 @@ public class CpdogMain {
         NioBossServerSocket nioBossServerSocket = NioBossServerSocketImpl.create();
         nioBossServerSocket.buildChannel();
         nioBossServerSocket.buildThread();
+        nioBossServerSocket.setOption(StandardSocketOptions.SO_REUSEADDR,true);
         ChooseWorkServerImpl chooseWorkServer = new ChooseWorkServerImpl();
         NioWorkServerSocketImpl.addChannelInHandlers(new WebSocketChannelInHandler());
         NioWorkServerSocketImpl.addChannelOutHandlers(new WebSocketChannelOutHandler());
@@ -163,7 +164,7 @@ public class CpdogMain {
             workServerSocket.setOption(StandardSocketOptions.SO_KEEPALIVE,true);
             workServerSockets[x]=workServerSocket;
         }
-        nioBossServerSocket.start(new InetSocketAddress(InetAddress.getLocalHost(),9999),workServerSockets,chooseWorkServer);
+        nioBossServerSocket.start(new InetSocketAddress(InetAddress.getLoopbackAddress(),9999),workServerSockets,chooseWorkServer);
         //主线程监听事件处理
         GlobalEventListener.loopEvent();
     }

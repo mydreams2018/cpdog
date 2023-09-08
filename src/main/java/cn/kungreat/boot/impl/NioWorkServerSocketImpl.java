@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.NetworkInterface;
 import java.net.SocketOption;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -60,17 +61,37 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
         return this.tlsInitKey;
     }
     @Override
-    public <T> NioWorkServerSocket setOption(SocketOption<T> name, T value) throws IOException {
+    public <T> NioWorkServerSocket setOption(SocketOption<T> name, T value) {
         optionMap.put(name,value);
         return this;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void setOption(SocketChannel channel) throws IOException {
         Set<Map.Entry<SocketOption<?>, Object>> entries = optionMap.entrySet();
         for(Map.Entry<SocketOption<?>, Object> entry: entries){
-            SocketOption name = entry.getKey();
-            channel.setOption(name,entry.getValue());
+            SocketOption<?> name = entry.getKey();
+            Set<SocketOption<?>> supportedOptions = channel.supportedOptions();
+            if (supportedOptions.contains(name)) {
+                if(name.type() == Integer.class){
+                    SocketOption<Integer> socketKey = (SocketOption<Integer>) name;
+                    Integer socketValue = (Integer) entry.getValue();
+                    channel.setOption(socketKey,socketValue);
+                } else if (name.type() == Boolean.class) {
+                    SocketOption<Boolean> socketKey = (SocketOption<Boolean>) name;
+                    Boolean socketValue = (Boolean) entry.getValue();
+                    channel.setOption(socketKey,socketValue);
+                } else if (name.type() == NetworkInterface.class) {
+                    SocketOption<NetworkInterface> socketKey = (SocketOption<NetworkInterface>) name;
+                    NetworkInterface socketValue = (NetworkInterface) entry.getValue();
+                    channel.setOption(socketKey,socketValue);
+                }else {
+                    LOGGER.error("没有配置的SocketOption类型{}",name);
+                }
+            }else{
+                LOGGER.error("不支持的SocketOption类型{}",name);
+            }
         }
     }
 
