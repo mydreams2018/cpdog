@@ -101,7 +101,6 @@ public class WebSocketProtocolHandler implements ChannelProtocolHandler {
         in.clear();
         in.put(stringBuilder.toString().getBytes(StandardCharsets.UTF_8));
         in.flip();
-//        socketChannel.write(in);
         CpDogSSLContext.outEncode(socketChannel,in);
     }
 }

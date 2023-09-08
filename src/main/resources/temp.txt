@@ -1,0 +1,33 @@
+  private void accept(ServerSocketChannel serChannel){
+            SocketChannel accept = null;
+            try{
+                accept = serChannel.accept();
+                if(accept != null && accept.finishConnect()){
+                    NioWorkServerSocket choose = NioBossServerSocketImpl.this.chooseWorkServer.choose(NioBossServerSocketImpl.this.workServerSockets);
+                    accept.configureBlocking(false);
+                    choose.setOption(accept);
+                    accept.register(choose.getSelector(),SelectionKey.OP_READ);
+                    choose.getSelector().wakeup();
+                    NioBossServerSocketImpl.LOGGER.info("连接成功{}",accept.getRemoteAddress());
+                    Thread.State state = choose.getWorkThreads().getState();
+                    if(state.equals(Thread.State.NEW)){
+                        choose.getWorkThreads().start();
+                        NioBossServerSocketImpl.LOGGER.info("启动{}",choose.getWorkThreads().getName());
+                    }
+                }else if(accept != null){
+                    accept.close();
+                    NioBossServerSocketImpl.LOGGER.info("连接失败{}",accept.getRemoteAddress());
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+                NioBossServerSocketImpl.LOGGER.error("连接失败{}",e.getLocalizedMessage());
+                if(accept != null){
+                    try {
+                        accept.close();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                        NioBossServerSocketImpl.LOGGER.error("close失败{}",ioException.getLocalizedMessage());
+                    }
+                }
+            }
+        }
