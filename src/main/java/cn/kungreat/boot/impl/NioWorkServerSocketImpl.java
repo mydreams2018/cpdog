@@ -27,6 +27,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private static final List<ChannelInHandler<?,?>> CHANNEL_IN_HANDLERS = new ArrayList<>();
     private static final List<ChannelOutHandler<?,?>> CHANNEL_OUT_HANDLERS = new ArrayList<>();
     private static ChannelProtocolHandler channelProtocolHandler ;
+/*
+   TLS握手完后有多的数据,多的数据可能就是一条完整的信息了,
+   如果没有下次信息的触发,会倒置此次信息不会触发,所以这里有数据时会在流程中自动触发一次
+*/
     public final LinkedList<SelectionKey> tlsInitKey = new InitLinkedList();
     private final ByteBuffer outBuf = ByteBuffer.allocate(8192);
     private final HashMap<SocketOption<?>,Object> optionMap = new HashMap<>();
@@ -69,10 +73,10 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     @Override
     @SuppressWarnings("unchecked")
     public void setOption(SocketChannel channel) throws IOException {
+        Set<SocketOption<?>> supportedOptions = channel.supportedOptions();
         Set<Map.Entry<SocketOption<?>, Object>> entries = optionMap.entrySet();
         for(Map.Entry<SocketOption<?>, Object> entry: entries){
             SocketOption<?> name = entry.getKey();
-            Set<SocketOption<?>> supportedOptions = channel.supportedOptions();
             if (supportedOptions.contains(name)) {
                 if(name.type() == Integer.class){
                     SocketOption<Integer> socketKey = (SocketOption<Integer>) name;
@@ -136,6 +140,8 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }
             try{
                 while(NioWorkServerSocketImpl.this.selector.select()>=0){
+                    runTlsInit();
+                    clearBuffer();
                     Set<SelectionKey> selectionKeys = NioWorkServerSocketImpl.this.selector.selectedKeys();
                     Iterator<SelectionKey> iterator = selectionKeys.iterator();
                     while(iterator.hasNext()){
@@ -143,11 +149,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         iterator.remove();
                         handler(next);
                     }
-                    runTlsInit();
-                    clearBuffer();
                 }
             }catch (Exception e){
-                e.printStackTrace();
+                NioWorkServerSocketImpl.LOGGER.error(e.getMessage());
             }
             run();
         }
@@ -172,41 +176,37 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                 if(clientChannel!=null){
                     try {
                         clientChannel.close();
+                        baseClear(clientChannel);
                     } catch(IOException ioException) {
-                        ioException.printStackTrace();
+                        NioWorkServerSocketImpl.LOGGER.error(ioException.getMessage());
                     }
-                    baseClear(clientChannel);
-                }else{
-                    next.cancel();
                 }
-                e.printStackTrace();
+                next.cancel();
+                NioWorkServerSocketImpl.LOGGER.error(e.getMessage());
             }
         }
 
         private void baseHandler(SelectionKey next, SocketChannel clientChannel) throws Exception {
             TLSSocketLink attachment = (TLSSocketLink)next.attachment();
-            ByteBuffer byteBuffer = attachment.getInSrcDecode();
+            ByteBuffer inSrcDecode = attachment.getInSrcDecode();
             ByteBuffer inSrc = attachment.getInSrc();
             int read = clientChannel.read(inSrc);
-            while(read > 0){
-                read = clientChannel.read(inSrc);
-            }
             inSrc.flip();
-            ByteBuffer inDecode = CpDogSSLContext.inDecode(attachment, byteBuffer,6);
+            ByteBuffer inDecode = CpDogSSLContext.inDecode(attachment, inSrcDecode,6);
             attachment.getInSrc().compact();
-            if(byteBuffer != inDecode){
-                //说明扩容了 byteBuffer
-                byteBuffer = inDecode;
-                attachment.setInSrcDecode(byteBuffer);
+            if(inSrcDecode != inDecode){
+                //说明扩容了
+                inSrcDecode = inDecode;
+                attachment.setInSrcDecode(inSrcDecode);
             }
             if(channelProtocolHandler != null && attachment.getProtocolState() == null
                     || attachment.getProtocolState() != ProtocolState.FINISH){
                 //协议处理
-                if(channelProtocolHandler.handlers(clientChannel, byteBuffer)){
+                if(channelProtocolHandler.handlers(clientChannel, inSrcDecode)){
                     attachment.setProtocolState(ProtocolState.FINISH);
                 }
             }else{
-                Object inEnd = runInHandlers(clientChannel, byteBuffer);
+                Object inEnd = runInHandlers(clientChannel, inSrcDecode);
                 runOutHandlers(clientChannel,inEnd);
             }
             if(!clientChannel.isOpen()){

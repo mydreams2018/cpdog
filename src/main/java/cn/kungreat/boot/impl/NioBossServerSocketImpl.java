@@ -153,7 +153,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                     if(sslEngine != null){
                         SelectionKey selectionKey = this.tlsSocketChannel.register(choose.getSelector(), SelectionKey.OP_READ, sslEngine);
                         if(sslEngine.getInSrc().position() >0){
-                            //说明有多的数据需要处理.添加到work的初始化队列中去.
+                            //说明有多的数据需要处理.添加到work的初始化队列中去
                             choose.getTlsInitKey().add(selectionKey);
                         }
                         NioBossServerSocketImpl.LOGGER.info("连接成功{}",this.tlsSocketChannel.getRemoteAddress());

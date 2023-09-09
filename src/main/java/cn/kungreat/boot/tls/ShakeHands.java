@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ShakeHands {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ShakeHands.class);
-
+/*  线程池负责tls握手  */
     public static final ThreadPoolExecutor THREAD_POOL_EXECUTOR = new ThreadPoolExecutor(2,5,3600,
             TimeUnit.SECONDS,new ArrayBlockingQueue<>(99,false),new CpdogThreadFactory(),new DiscardPolicy());
 

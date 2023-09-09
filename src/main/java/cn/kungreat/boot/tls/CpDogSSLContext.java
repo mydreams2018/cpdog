@@ -14,6 +14,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class CpDogSSLContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpDogSSLContext.class);
+
+   /*
+    * 用来存放 SocketChannel.hashCode  TLSSocketLink 唯一映射
+   *  在有些情况下可以通过 SocketChannel.hashCode 获得通道所绑定的数据信息
+   * */
     public static final ConcurrentHashMap<Integer, TLSSocketLink> TLS_SOCKET_LINK = new ConcurrentHashMap<>(1024);
     public static SSLContext context = null;
     //用来存放复用的 TLSSocketLink
@@ -54,7 +59,7 @@ public class CpDogSSLContext {
         trustManagerFactory.init(keyStore);
         return trustManagerFactory.getTrustManagers();
     }
-
+    //复用 TLSSocketLink  减少创建GC
     public static void reuseTLSSocketLink(int channelHash){
         TLSSocketLink remove = CpDogSSLContext.TLS_SOCKET_LINK.remove(channelHash);
         if(remove != null){
@@ -62,7 +67,7 @@ public class CpDogSSLContext {
             REUSE_TLS_SOCKET_LINK.offer(remove);
         }
     }
-
+    //TLS握手
     public static TLSSocketLink getSSLEngine(SocketChannel socketChannel) throws Exception {
         SSLEngine engine = context.createSSLEngine();
         engine.setUseClientMode(false);
@@ -73,11 +78,10 @@ public class CpDogSSLContext {
             ShakeHands.CpdogThread currentThread = (ShakeHands.CpdogThread) Thread.currentThread();
             ByteBuffer changeInSrc = currentThread.getInSrc();
             changeInSrc.flip();
-            // 可能有读取多的没有用完的数据、需要转换到channel所绑定的TLSSocketLink中去
-            // [很少发生. 在极端的情况下数据读完了、后续不会触发work对象注册的-read事件、会造成websocket握手没有触发.数据是在的]
+            // 握手完成后可能有多的数据信息、需要转换到channel所绑定的TLSSocketLink中去
             TLSSocketLink poll = REUSE_TLS_SOCKET_LINK.poll();
             if(poll != null){
-                //复用 TLSSocketLink  减少 创建/GC
+                //复用 TLSSocketLink  减少创建GC
                 poll.getInSrc().put(changeInSrc);
                 poll.setEngine(engine);
                 TLS_SOCKET_LINK.put(socketChannel.hashCode(),poll);
@@ -99,7 +103,7 @@ public class CpDogSSLContext {
         }
         return null;
     }
-
+    //TLS握手 由线程池来主导握手,握手完成后的数据将转存,所以每次握手时清空下数据字节
     private static boolean doHandshake(SocketChannel socketChannel, SSLEngine engine) throws Exception {
         LOGGER.info("TLS开始握手...");
         ShakeHands.CpdogThread currentThread = (ShakeHands.CpdogThread) Thread.currentThread();
