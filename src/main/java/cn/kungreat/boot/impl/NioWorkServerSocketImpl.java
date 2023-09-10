@@ -194,7 +194,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             CpDogSSLContext.inDecode(attachment,6);
             attachment.getInSrc().compact();
             ByteBuffer inSrcDecode = attachment.getInSrcDecode();
-            if(attachment.getProtocolState() == null || attachment.getProtocolState() != ProtocolState.FINISH){
+            if(channelProtocolHandler != null && ProtocolState.FINISH != attachment.getProtocolState()){
                 //websocket协议处理
                 if(channelProtocolHandler.handlers(clientChannel, inSrcDecode)){
                     attachment.setProtocolState(ProtocolState.FINISH);
