@@ -229,19 +229,21 @@ public class CpDogSSLContext {
         }
     }
 
-    public static ByteBuffer inDecode(TLSSocketLink socketLink, ByteBuffer decode, int spin) throws SSLException {
+    public static void inDecode(final TLSSocketLink socketLink, int spin) throws SSLException {
         spin--;
         ByteBuffer inSrc = socketLink.getInSrc();
+        ByteBuffer inSrcDecode = socketLink.getInSrcDecode();
         SSLEngine engine = socketLink.getEngine();
-        SSLEngineResult unwrap = engine.unwrap(inSrc, decode);
+        SSLEngineResult unwrap = engine.unwrap(inSrc, inSrcDecode);
         switch (unwrap.getStatus()) {
             case BUFFER_OVERFLOW:
-                LOGGER.info("read-扩容入站解密数据:{}",decode.capacity());
+                LOGGER.info("read-扩容入站解密数据:{}",inSrcDecode.capacity());
                 int applicationBufferSize = engine.getSession().getApplicationBufferSize();
-                ByteBuffer b = ByteBuffer.allocate(applicationBufferSize + decode.position());
-                decode.flip();
-                b.put(decode);
-                return inDecode(socketLink,b,spin);//扩容后尝试再次转换
+                ByteBuffer inSrcDecodeGrow = ByteBuffer.allocate(applicationBufferSize + inSrcDecode.position());
+                inSrcDecode.flip();
+                inSrcDecodeGrow.put(inSrcDecode);
+                socketLink.setInSrcDecode(inSrcDecodeGrow);
+                inDecode(socketLink,spin);//扩容后尝试再次转换
             case BUFFER_UNDERFLOW:
                 int netSize = engine.getSession().getPacketBufferSize();
                 if (netSize > inSrc.capacity()) {
@@ -260,10 +262,9 @@ public class CpDogSSLContext {
                 }
         }
         if(inSrc.hasRemaining() && spin > 0){
-            /* 需要优化...自旋  */
-            return inDecode(socketLink,decode,spin);
+            /* 还有多的入站数据,自旋一定的次数.可能还需要读取网络数据.不能一直自旋  */
+            inDecode(socketLink,spin);
         }
-        return decode;
     }
 
     public static void outEncode(SocketChannel socketChannel,ByteBuffer outSrc) throws Exception {
@@ -279,7 +280,6 @@ public class CpDogSSLContext {
                 buf.put(outEnc);
                 CpdogMain.THREAD_LOCAL.set(buf);
                 outEncode(socketChannel,outSrc);
-                return;
             case BUFFER_UNDERFLOW:
                 LOGGER.error("out-我不认为我们应该到这里");
                 break;

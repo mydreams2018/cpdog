@@ -188,20 +188,14 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
 
         private void baseHandler(SelectionKey next, SocketChannel clientChannel) throws Exception {
             TLSSocketLink attachment = (TLSSocketLink)next.attachment();
-            ByteBuffer inSrcDecode = attachment.getInSrcDecode();
             ByteBuffer inSrc = attachment.getInSrc();
             int read = clientChannel.read(inSrc);
             inSrc.flip();
-            ByteBuffer inDecode = CpDogSSLContext.inDecode(attachment, inSrcDecode,6);
+            CpDogSSLContext.inDecode(attachment,6);
             attachment.getInSrc().compact();
-            if(inSrcDecode != inDecode){
-                //说明扩容了
-                inSrcDecode = inDecode;
-                attachment.setInSrcDecode(inSrcDecode);
-            }
-            if(channelProtocolHandler != null && attachment.getProtocolState() == null
-                    || attachment.getProtocolState() != ProtocolState.FINISH){
-                //协议处理
+            ByteBuffer inSrcDecode = attachment.getInSrcDecode();
+            if(attachment.getProtocolState() == null || attachment.getProtocolState() != ProtocolState.FINISH){
+                //websocket协议处理
                 if(channelProtocolHandler.handlers(clientChannel, inSrcDecode)){
                     attachment.setProtocolState(ProtocolState.FINISH);
                 }
@@ -211,9 +205,11 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }
             if(!clientChannel.isOpen()){
                 baseClear(clientChannel);
+                next.cancel();
             } else if(read == -1){
-                clientChannel.close();
                 baseClear(clientChannel);
+                clientChannel.close();
+                next.cancel();
             }
         }
 

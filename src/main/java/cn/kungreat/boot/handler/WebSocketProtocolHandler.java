@@ -13,7 +13,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-
+/*  websocket 协议处理 */
 public class WebSocketProtocolHandler implements ChannelProtocolHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketProtocolHandler.class);
@@ -24,19 +24,7 @@ public class WebSocketProtocolHandler implements ChannelProtocolHandler {
     public boolean handlers(SocketChannel socketChannel, ByteBuffer in) throws Exception {
         boolean rt = false;
         if (in.position()>0){
-            List<String> lis = new ArrayList<>(32);
-            byte[] bytes = in.array();
-            int beforeIndex = 0;
-            int afterIndex ;
-            for(int x=0;x<in.position();x++){
-                if(bytes[x]==10 || bytes[x]== 13){
-                    afterIndex = x;
-                    if(afterIndex-beforeIndex > 0){
-                        lis.add(new String(bytes,beforeIndex,(afterIndex-beforeIndex)));
-                    }
-                    beforeIndex= x+1;
-                }
-            }
+            List<String> lis = getStringList(in);
             WebSocketBean webSocketBean = getWebSocketBean(lis);
             if(webSocketBean.getSecWebSocketKey()!=null && !webSocketBean.getSecWebSocketKey().isEmpty()){
                 String secWebSocketKey = getSecWebSocketKey(webSocketBean.getSecWebSocketKey());
@@ -52,6 +40,23 @@ public class WebSocketProtocolHandler implements ChannelProtocolHandler {
             LOGGER.error("WebSocketProtocolHandler:没有可读取字节");
         }
         return rt;
+    }
+
+    private static List<String> getStringList(ByteBuffer in) {
+        List<String> lis = new ArrayList<>(32);
+        byte[] bytes = in.array();
+        int beforeIndex = 0;
+        int afterIndex ;
+        for(int x = 0; x< in.position(); x++){
+            if(bytes[x]==10 || bytes[x]== 13){
+                afterIndex = x;
+                if(afterIndex-beforeIndex > 0){
+                    lis.add(new String(bytes,beforeIndex,(afterIndex-beforeIndex)));
+                }
+                beforeIndex= x+1;
+            }
+        }
+        return lis;
     }
 
     private WebSocketBean getWebSocketBean(List<String> lis){
