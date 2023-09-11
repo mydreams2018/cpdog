@@ -19,7 +19,7 @@ public interface ChannelInHandler<I,O> {
      *@Date 2022/3/18
      *@Time 11:09
      */
-    O handler(SocketChannel socketChannel, I in) throws Exception;;
+    O handler(SocketChannel socketChannel, I in) throws Exception;
 
     /*
      *@Description 正常链路情况下会后调此方法、出现异常时不调用此方法
