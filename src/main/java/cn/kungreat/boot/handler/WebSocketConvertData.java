@@ -45,13 +45,13 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
             //初始最少需要6个字节才能解释协议
             if (remaining > 6) {
                 byte[] array = byteBuffer.array();
-                if ((array[0] & 15) != 0) {
-                    socketData.setFinish(array[0] < 0);
-                    if (array[1] < 0) {
-                        socketData.setDateLength(array, remaining);
-                        if (socketData.getDateLength() > 0 && socketData.getCurrentPos() + 4 < array.length) {
-                            socketData.setMaskingKey(array);//设置掩码覆盖,转换后续数据
-                            socketData.setType(array[0] & 15);
+                if ((array[byteBuffer.position()] & 15) != 0) {
+                    socketData.setFinish(array[byteBuffer.position()] < 0);
+                    if (array[byteBuffer.position() + 1] < 0) {
+                        socketData.setDateLength(array, remaining,byteBuffer);
+                        if (socketData.getDateLength() > 0 && socketData.getCurrentPos() + 4 < array.length - byteBuffer.position()) {
+                            socketData.setMaskingKey(array,byteBuffer);//设置掩码覆盖,转换后续数据
+                            socketData.setType(array[byteBuffer.position()] & 15);
                             socketData.setByteBuffer(ByteBuffer.allocate(16384));
                             byteBuffer.position(byteBuffer.position() + socketData.getCurrentPos());
                             remaining = byteBuffer.remaining();
@@ -98,18 +98,17 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
                 remaining = byteBuffer.remaining();
                 if (remaining > 6) {
                     byte[] array = byteBuffer.array();
-                    socketData.setFinish(array[0] < 0);
-                    if (array[1] < 0) {
-                        socketData.setDateLength(array, remaining);
-                        if (socketData.getDateLength() > 0 && socketData.getCurrentPos() + 4 < array.length) {
-                            socketData.setMaskingKey(array);//设置掩码覆盖,转换后续数据
+                    socketData.setFinish(array[byteBuffer.position()] < 0);
+                    if (array[byteBuffer.position() + 1] < 0) {
+                        socketData.setDateLength(array, remaining,byteBuffer);
+                        if (socketData.getDateLength() > 0 && socketData.getCurrentPos() + 4 < array.length - byteBuffer.position()) {
+                            socketData.setMaskingKey(array,byteBuffer);//设置掩码覆盖,转换后续数据
                             socketData.setByteBuffer(ByteBuffer.allocate(16384));
                             byteBuffer.position(byteBuffer.position() + socketData.getCurrentPos());
                             loopConvertData(socketChannel, byteBuffer);
                         } else {
                             //当前的数据长度不够初始化协议的基本数据
                             socketData.setCurrentPos(0);
-                            socketData.setDateLength(0);
                         }
                     } else {
                         LOGGER.error("协议mask标记位不正确 -> 关闭连接");
@@ -212,31 +211,34 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
         }
 
         /* 如果有延续帧 把数据长度相加保留总长度  */
-        public void setDateLength(byte[] byteArray, int remaining) {
-            int lens = byteArray[1] & 127;
+        public void setDateLength(byte[] byteArray, int remaining, ByteBuffer byteBuffer) {
+            int lens = byteArray[byteBuffer.position() +  1] & 127;
             if (lens < 126) {
                 this.dateLength += lens;
                 this.currentPos++;
             } else if (lens == 126) {
                 if (remaining > 8) {
-                    this.dateLength += CutoverBytes.readInt((byte) 0, (byte) 0, byteArray[2], byteArray[3]);
+                    this.dateLength += CutoverBytes.readInt((byte) 0, (byte) 0, byteArray[byteBuffer.position() + 2],
+                            byteArray[byteBuffer.position() + 3]);
                     this.currentPos = this.currentPos + 3;
                 }
             } else {
                 if (remaining > 14) {
-                    byte[] temp = {(byte) (byteArray[2] & 127), byteArray[3], byteArray[4], byteArray[5],
-                            byteArray[6], byteArray[7], byteArray[8], byteArray[9]};
+                    byte[] temp = {(byte) (byteArray[byteBuffer.position() + 2] & 127), byteArray[byteBuffer.position() + 3],
+                            byteArray[byteBuffer.position() + 4], byteArray[byteBuffer.position() + 5],
+                            byteArray[byteBuffer.position() + 6], byteArray[byteBuffer.position() + 7],
+                            byteArray[byteBuffer.position() + 8], byteArray[byteBuffer.position() + 9]};
                     this.dateLength += CutoverBytes.readLong(temp);
                     this.currentPos = this.currentPos + 9;
                 }
             }
         }
 
-        public void setMaskingKey(byte[] maskingKey) {
-            this.maskingKey[0] = maskingKey[this.currentPos++];
-            this.maskingKey[1] = maskingKey[this.currentPos++];
-            this.maskingKey[2] = maskingKey[this.currentPos++];
-            this.maskingKey[3] = maskingKey[this.currentPos++];
+        public void setMaskingKey(byte[] maskingKey ,ByteBuffer byteBuffer) {
+            this.maskingKey[0] = maskingKey[byteBuffer.position() + this.currentPos++];
+            this.maskingKey[1] = maskingKey[byteBuffer.position() + this.currentPos++];
+            this.maskingKey[2] = maskingKey[byteBuffer.position() + this.currentPos++];
+            this.maskingKey[3] = maskingKey[byteBuffer.position() + this.currentPos++];
         }
 
     }
