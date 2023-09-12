@@ -34,10 +34,10 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
             listSos.add(new WebSocketData(999));
             WEB_SOCKET_STATE_TREEMAP.put(socketChannel.hashCode(), listSos);
         }
-        loopConvertData(socketChannel,byteBuffer);
+        loopConvertData(socketChannel, byteBuffer);
     }
 
-    private void loopConvertData(final SocketChannel socketChannel,final ByteBuffer byteBuffer) throws Exception {
+    private void loopConvertData(final SocketChannel socketChannel, final ByteBuffer byteBuffer) throws Exception {
         LinkedList<WebSocketData> listSocket = WEB_SOCKET_STATE_TREEMAP.get(socketChannel.hashCode());
         WebSocketData socketData = listSocket.getLast();
         int remaining = byteBuffer.remaining();
@@ -52,12 +52,14 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
                         if (socketData.getDateLength() > 0 && socketData.getCurrentPos() + 4 < array.length) {
                             socketData.setMaskingKey(array);//设置掩码覆盖,转换后续数据
                             socketData.setType(array[0] & 15);
-                            socketData.setByteBuffer(ByteBuffer.allocate(8192));
+                            socketData.setByteBuffer(ByteBuffer.allocate(16384));
+                            byteBuffer.position(byteBuffer.position() + socketData.getCurrentPos());
+                            remaining = byteBuffer.remaining();
                         } else {
                             //当前的数据长度不够初始化协议的基本数据
                             socketData.setCurrentPos(0);
                             socketData.setDateLength(0);
-                            return ;
+                            return;
                         }
                     } else {
                         LOGGER.error("协议mask标记位不正确 -> 关闭连接");
@@ -68,23 +70,61 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
                     throw new WebSocketExceptional("警告类型解释失败 -> 关闭连接");
                 }
             } else {
-                return ;
+                return;
             }
         }
-
-        //TODO 按需要转换Socket数据 -> WebSocketData.
-
-        if(socketData.isFinish() && socketData.getReadLength() != socketData.getDateLength()){
-            throw new WebSocketExceptional("数据异常 -> 关闭连接");
-        } else if (!socketData.isFinish() && socketData.getReadLength() == socketData.getDateLength()) {
-            throw new WebSocketExceptional("数据异常 -> 关闭连接");
+        ByteBuffer targetBuffer = socketData.getByteBuffer();
+        //拿到最小可以转换的数据长度
+        long remainingTotal = Math.min(targetBuffer.remaining(), Math.min(remaining, socketData.getDateLength() - socketData.getReadLength()));
+        if (remainingTotal > 0) {
+            byte[] array = byteBuffer.array();
+            long readLength = socketData.getReadLength();
+            long maskingIndex = socketData.getMaskingIndex();
+            byte[] maskingKey = socketData.getMaskingKey();
+            for (int i = 0; i < remainingTotal; i++) {
+                byte tarByte = (byte) (array[byteBuffer.position() + i] ^ maskingKey[Math.floorMod(maskingIndex, 4)]);
+                targetBuffer.put(tarByte);
+                readLength++;
+                maskingIndex++;
+            }
+            socketData.setReadLength(readLength);
+            socketData.setMaskingIndex(maskingIndex);
+            byteBuffer.position((int) (byteBuffer.position() + remainingTotal));
+        }
+        if (!socketData.isFinish() && socketData.getReadLength() == socketData.getDateLength()) {
+            if ((byteBuffer.get(byteBuffer.position()) & 15) == 0) {
+                //这是一个延续帧
+                socketData.setCurrentPos(0);
+                remaining = byteBuffer.remaining();
+                if (remaining > 6) {
+                    byte[] array = byteBuffer.array();
+                    socketData.setFinish(array[0] < 0);
+                    if (array[1] < 0) {
+                        socketData.setDateLength(array, remaining);
+                        if (socketData.getDateLength() > 0 && socketData.getCurrentPos() + 4 < array.length) {
+                            socketData.setMaskingKey(array);//设置掩码覆盖,转换后续数据
+                            socketData.setByteBuffer(ByteBuffer.allocate(16384));
+                            byteBuffer.position(byteBuffer.position() + socketData.getCurrentPos());
+                            loopConvertData(socketChannel, byteBuffer);
+                        } else {
+                            //当前的数据长度不够初始化协议的基本数据
+                            socketData.setCurrentPos(0);
+                            socketData.setDateLength(0);
+                        }
+                    } else {
+                        LOGGER.error("协议mask标记位不正确 -> 关闭连接");
+                        throw new WebSocketExceptional("协议mask标记位不正确 -> 关闭连接");
+                    }
+                }
+            } else {
+                throw new WebSocketExceptional("数据异常 -> 关闭连接");
+            }
         } else if (socketData.isFinish()) {
             socketData.setDone(true);
             WebSocketData webSocketData = new WebSocketData(999);
             listSocket.add(webSocketData);
-            loopConvertData(socketChannel,byteBuffer);
+            loopConvertData(socketChannel, byteBuffer);
         }
-
     }
 
     @Override
@@ -93,8 +133,8 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
     }
 
     @Override
-    public void after(SocketChannel socketChannel) throws Exception {
-
+    public void after(SocketChannel socketChannel, ByteBuffer byteBuffer) throws Exception {
+        byteBuffer.compact();
     }
 
     @Override

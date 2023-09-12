@@ -29,7 +29,7 @@ public interface ConvertDataInHandler<E> {
      *@Date 2022/3/18
      *@Time 11:09
      */
-    void after(SocketChannel socketChannel) throws Exception;
+    void after(SocketChannel socketChannel, ByteBuffer byteBuffer) throws Exception;
 
     /*
      *@Description 出现异常需要处理
