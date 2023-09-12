@@ -48,9 +48,9 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
                 if ((array[byteBuffer.position()] & 15) != 0) {
                     socketData.setFinish(array[byteBuffer.position()] < 0);
                     if (array[byteBuffer.position() + 1] < 0) {
-                        socketData.setDateLength(array, remaining,byteBuffer);
-                        if (socketData.getDateLength() > 0 && socketData.getCurrentPos() + 4 < array.length - byteBuffer.position()) {
-                            socketData.setMaskingKey(array,byteBuffer);//设置掩码覆盖,转换后续数据
+                        socketData.setDateLength(array, remaining, byteBuffer);
+                        if (socketData.getDateLength() > 0 && socketData.getCurrentPos() + 4 < remaining) {
+                            socketData.setMaskingKey(array, byteBuffer);//设置掩码覆盖,转换后续数据
                             socketData.setType(array[byteBuffer.position()] & 15);
                             socketData.setByteBuffer(ByteBuffer.allocate(16384));
                             byteBuffer.position(byteBuffer.position() + socketData.getCurrentPos());
@@ -95,14 +95,16 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
             if ((byteBuffer.get(byteBuffer.position()) & 15) == 0) {
                 //这是一个延续帧
                 socketData.setCurrentPos(0);
+                socketData.setMaskingIndex(0);
                 remaining = byteBuffer.remaining();
                 if (remaining > 6) {
                     byte[] array = byteBuffer.array();
                     socketData.setFinish(array[byteBuffer.position()] < 0);
                     if (array[byteBuffer.position() + 1] < 0) {
-                        socketData.setDateLength(array, remaining,byteBuffer);
-                        if (socketData.getDateLength() > 0 && socketData.getCurrentPos() + 4 < array.length - byteBuffer.position()) {
-                            socketData.setMaskingKey(array,byteBuffer);//设置掩码覆盖,转换后续数据
+                        long tempLength = socketData.getDateLength();
+                        socketData.setDateLength(array, remaining, byteBuffer);
+                        if (socketData.getDateLength() > tempLength && socketData.getCurrentPos() + 4 < remaining) {
+                            socketData.setMaskingKey(array, byteBuffer);//设置掩码覆盖,转换后续数据
                             socketData.setByteBuffer(ByteBuffer.allocate(16384));
                             byteBuffer.position(byteBuffer.position() + socketData.getCurrentPos());
                             loopConvertData(socketChannel, byteBuffer);
@@ -212,7 +214,7 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
 
         /* 如果有延续帧 把数据长度相加保留总长度  */
         public void setDateLength(byte[] byteArray, int remaining, ByteBuffer byteBuffer) {
-            int lens = byteArray[byteBuffer.position() +  1] & 127;
+            int lens = byteArray[byteBuffer.position() + 1] & 127;
             if (lens < 126) {
                 this.dateLength += lens;
                 this.currentPos++;
@@ -234,7 +236,7 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
             }
         }
 
-        public void setMaskingKey(byte[] maskingKey ,ByteBuffer byteBuffer) {
+        public void setMaskingKey(byte[] maskingKey, ByteBuffer byteBuffer) {
             this.maskingKey[0] = maskingKey[byteBuffer.position() + this.currentPos++];
             this.maskingKey[1] = maskingKey[byteBuffer.position() + this.currentPos++];
             this.maskingKey[2] = maskingKey[byteBuffer.position() + this.currentPos++];
