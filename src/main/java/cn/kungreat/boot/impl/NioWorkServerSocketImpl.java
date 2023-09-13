@@ -2,6 +2,7 @@ package cn.kungreat.boot.impl;
 
 import cn.kungreat.boot.*;
 import cn.kungreat.boot.em.ProtocolState;
+import cn.kungreat.boot.handler.WebSocketConvertData;
 import cn.kungreat.boot.tls.CpDogSSLContext;
 import cn.kungreat.boot.tls.InitLinkedList;
 import cn.kungreat.boot.tls.TLSSocketLink;
@@ -34,6 +35,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     public final LinkedList<SelectionKey> tlsInitKey = new InitLinkedList();
     private final ByteBuffer outBuf = ByteBuffer.allocate(8192);
     private final HashMap<SocketOption<?>,Object> optionMap = new HashMap<>();
+    private final WebSocketConvertData webSocketConvertData = new WebSocketConvertData();
     private Thread workThreads;
     private Selector selector;
     //清理缓冲区 不存在的channel对象 172800000  48小时清理一次
@@ -225,6 +227,18 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }else{
                 LOGGER.error("客户端监听类型异常:");
             }
+        }
+
+        private List<WebSocketConvertData.WebSocketData> websocketConvert(final SocketChannel socketChannel,final ByteBuffer byteBuffer){
+            try {
+                NioWorkServerSocketImpl.this.webSocketConvertData.before(socketChannel,byteBuffer);
+                List<WebSocketConvertData.WebSocketData> handler = NioWorkServerSocketImpl.this.webSocketConvertData.handler(socketChannel);
+                NioWorkServerSocketImpl.this.webSocketConvertData.after(socketChannel,byteBuffer);
+                return handler;
+            } catch (Exception e) {
+                NioWorkServerSocketImpl.this.webSocketConvertData.exception(e,socketChannel);
+            }
+            return null;
         }
 
         private Object runInHandlers(final SocketChannel clientChannel,final ByteBuffer byteBuffer) {

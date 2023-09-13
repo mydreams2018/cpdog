@@ -3,27 +3,32 @@ package cn.kungreat.boot.handler;
 import cn.kungreat.boot.ConvertDataInHandler;
 import cn.kungreat.boot.exp.WebSocketExceptional;
 import cn.kungreat.boot.utils.CutoverBytes;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocketConvertData.WebSocketData>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketConvertData.class);
 
     /*
-     * 存放此SocketChannel 关联的任务列表
+     * 一个WORK对象绑定一个减少并发, 存放此SocketChannel 关联的任务列表
      * */
-    public static final Map<Integer, LinkedList<WebSocketData>> WEB_SOCKET_STATE_TREEMAP = new ConcurrentHashMap<>(1024);
-
+    private final Map<Integer, LinkedList<WebSocketData>> WEB_SOCKET_STATE_TREEMAP = new HashMap<>(1024);
+    public static final ObjectMapper MAP_JSON = new ObjectMapper();
 
     @Override
     public void before(SocketChannel socketChannel, ByteBuffer byteBuffer) throws Exception {
@@ -111,6 +116,7 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
                         } else {
                             //当前的数据长度不够初始化协议的基本数据
                             socketData.setCurrentPos(0);
+                            socketData.setDateLength(tempLength);
                         }
                     } else {
                         LOGGER.error("协议mask标记位不正确 -> 关闭连接");
@@ -120,7 +126,7 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
             } else {
                 throw new WebSocketExceptional("数据异常 -> 关闭连接");
             }
-        } else if (socketData.isFinish()) {
+        } else if (socketData.isFinish() && socketData.getReadLength() == socketData.getDateLength()) {
             socketData.setDone(true);
             WebSocketData webSocketData = new WebSocketData(999);
             listSocket.add(webSocketData);
@@ -130,7 +136,17 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
 
     @Override
     public List<WebSocketData> handler(SocketChannel socketChannel) throws Exception {
-        return null;
+        LinkedList<WebSocketData> listSocket = WEB_SOCKET_STATE_TREEMAP.get(socketChannel.hashCode());
+        for (WebSocketData socketData : listSocket) {
+            if (socketData.getType() == 1 && socketData.getReceiveObj() == null) {
+                socketData.setStringData();
+            }
+
+            if (socketData.getType() == 8) {
+                LOGGER.info("退出信号");
+            }
+        }
+        return listSocket;
     }
 
     @Override
@@ -139,8 +155,14 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
     }
 
     @Override
-    public void exception(Exception e, SocketChannel socketChannel) throws Exception {
-
+    public void exception(Exception e, SocketChannel socketChannel) {
+        LOGGER.error(e.getMessage());
+        try {
+            socketChannel.close();
+            WEB_SOCKET_STATE_TREEMAP.remove(socketChannel.hashCode());
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage());
+        }
     }
 
     @Setter
@@ -191,7 +213,14 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
          * 存放websocket字节数据
          * */
         private ByteBuffer byteBuffer;
+        /**
+         * StringBuilder  缓存
+         */
+        private StringBuilder stringBuilder = new StringBuilder();
+        private final CharBuffer charBuffer = CharBuffer.allocate(1024);
+        private static final CharsetDecoder CHARSET_DECODER = StandardCharsets.UTF_8.newDecoder();
 
+        private WebSocketConvertData.ReceiveObj receiveObj;
         /**
          * isConvert 传送文件时使用 表示数据是否已经转换
          */
@@ -243,5 +272,68 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
             this.maskingKey[3] = maskingKey[byteBuffer.position() + this.currentPos++];
         }
 
+        /*
+         *   编码转换成字符串 默认用UTF-8 CHARSET_DECODER  charBuffer
+         */
+        public void setStringData() throws Exception {
+            byteBuffer.flip();
+            if (!done) {
+                CoderResult coderResult;
+                do {
+                    coderResult = CHARSET_DECODER.decode(byteBuffer, charBuffer, false);
+                    charBuffer.flip();
+                    stringBuilder.append(charBuffer);
+                    charBuffer.clear();
+                } while (coderResult.isOverflow());
+                if (coderResult.isError()) {
+                    throw new WebSocketExceptional("!!!解码错误-111!!!");
+                }
+                byteBuffer.compact();
+            } else {
+                int remaining = byteBuffer.remaining();
+                stringBuilder.append(new String(byteBuffer.array(), 0, remaining, StandardCharsets.UTF_8));
+                //接收字符串本次完成了解释成对象
+                WebSocketConvertData.ReceiveObj receiveObj = MAP_JSON.readValue(stringBuilder.toString(), WebSocketConvertData.ReceiveObj.class);
+                if (receiveObj == null) {
+                    LOGGER.error("字符内容解释出错:关闭连接");
+                    throw new WebSocketExceptional("字符内容解释出错 -> 关闭连接");
+                }
+                this.receiveObj = receiveObj;
+
+                LOGGER.info(this.receiveObj.charts.getNikeName());
+
+                this.byteBuffer.clear();
+                this.stringBuilder = null;
+            }
+        }
+
+    }
+
+    @Setter
+    @Getter
+    public static final class ReceiveObj {
+        private String uuid;
+        private String src;
+        private String tar;
+        private String url;
+        private WebSocketChannelInHandler.ChartsContent charts;
+    }
+
+    @Setter
+    @Getter
+    public static final class ChartsContent {
+        private String nikeName;
+        private String phone;
+        private String password;
+        private String firstLetter;
+        private String tokenSession;
+        private Integer currentPage;
+        private Integer totalPage;
+        private String currentActiveId;
+        private String message;
+        private List<String> nikeNames;
+        private String srcTarUUID;
+        private String imgPath;
+        private String describes;
     }
 }

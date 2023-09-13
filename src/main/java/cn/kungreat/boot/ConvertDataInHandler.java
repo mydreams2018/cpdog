@@ -37,6 +37,6 @@ public interface ConvertDataInHandler<E> {
      *@Date 2022/3/18
      *@Time 11:09
      */
-    void exception(Exception e,SocketChannel socketChannel) throws Exception;
+    void exception(Exception e,SocketChannel socketChannel);
 
 }
