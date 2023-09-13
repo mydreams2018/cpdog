@@ -80,7 +80,17 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
         }
         ByteBuffer targetBuffer = socketData.getByteBuffer();
         //拿到最小可以转换的数据长度
-        long remainingTotal = Math.min(targetBuffer.remaining(), Math.min(remaining, socketData.getDateLength() - socketData.getReadLength()));
+        long remainingTotal = Math.min(remaining, socketData.getDateLength() - socketData.getReadLength());
+        if (targetBuffer.remaining() < remainingTotal) {
+            //在此种情况下必需要扩容
+            int needGrow = (int) (remainingTotal - targetBuffer.remaining());
+            LOGGER.info("targetBuffer扩容{}", needGrow);
+            ByteBuffer allocateGrow = ByteBuffer.allocate(targetBuffer.capacity() + needGrow);
+            targetBuffer.flip();
+            allocateGrow.put(targetBuffer);
+            socketData.setByteBuffer(allocateGrow);
+            targetBuffer = allocateGrow;
+        }
         if (remainingTotal > 0) {
             byte[] array = byteBuffer.array();
             long readLength = socketData.getReadLength();
