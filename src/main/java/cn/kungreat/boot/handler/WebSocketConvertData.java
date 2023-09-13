@@ -316,7 +316,7 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
         private String src;
         private String tar;
         private String url;
-        private WebSocketChannelInHandler.ChartsContent charts;
+        private ChartsContent charts;
     }
 
     @Setter
