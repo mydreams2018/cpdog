@@ -247,7 +247,8 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
         private int currentPos;
 
         /*
-         * 接收的数据转换成Map
+         * 用来存放过滤链路上的数据转换成Map
+         * 不存在多线程并发性,除非自已创建新的线程来操作此对象
          * */
         private Map<String, Object> convertData;
 
