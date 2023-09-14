@@ -15,10 +15,7 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocketConvertData.WebSocketData>> {
 
@@ -28,6 +25,11 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
      * 一个WORK对象绑定一个减少并发, 存放此SocketChannel 关联的任务列表
      * */
     private final Map<Integer, LinkedList<WebSocketData>> WEB_SOCKET_STATE_TREEMAP = new HashMap<>(1024);
+    /*
+     * 一个WORK对象绑定一个减少并发, 二进制数据用来做的缓存
+     * */
+    private final Map<Integer, String> WEB_SOCKET_STATE_BYTES = new HashMap<>(1024);
+
     public static final ObjectMapper MAP_JSON = new ObjectMapper();
 
     @Override
@@ -147,13 +149,15 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
     @Override
     public List<WebSocketData> handler(SocketChannel socketChannel) throws Exception {
         LinkedList<WebSocketData> listSocket = WEB_SOCKET_STATE_TREEMAP.get(socketChannel.hashCode());
-        for (WebSocketData socketData : listSocket) {
+        Iterator<WebSocketData> dataIterator = listSocket.iterator();
+        while (dataIterator.hasNext()) {
+            WebSocketData socketData = dataIterator.next();
             if (socketData.getType() == 1 && socketData.getReceiveObj() == null) {
                 socketData.setStringData();
-            }
-
-            if (socketData.getType() == 8) {
-                LOGGER.info("退出信号");
+            } else if (socketData.getType() == 2) {
+                socketData.setByteData(dataIterator, WEB_SOCKET_STATE_BYTES, socketChannel);
+            } else if (socketData.getType() == 8) {
+                LOGGER.info("退出信号{}", socketChannel.getRemoteAddress());
             }
         }
         return listSocket;
@@ -170,6 +174,7 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
         try {
             socketChannel.close();
             WEB_SOCKET_STATE_TREEMAP.remove(socketChannel.hashCode());
+            WEB_SOCKET_STATE_BYTES.remove(socketChannel.hashCode());
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());
         }
@@ -309,12 +314,75 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
                     throw new WebSocketExceptional("字符内容解释出错 -> 关闭连接");
                 }
                 this.receiveObj = receiveObj;
-
-                LOGGER.info(this.receiveObj.charts.getNikeName());
-
                 this.byteBuffer.clear();
                 this.stringBuilder = null;
+
+                LOGGER.info(this.receiveObj.charts.getNikeName());
             }
+        }
+
+        //二进制数据时做的数据处理 由于是分二次发送所以第一次的二进制数据是 相关的源信息
+        public void setByteData(Iterator<WebSocketData> dataIterator, Map<Integer, String> webSocketStateBytes, SocketChannel socketChannel) throws Exception {
+            final int hashcode = socketChannel.hashCode();
+            if (this.done) {
+                if (webSocketStateBytes.get(hashcode) == null) {
+                    this.byteBuffer.flip();
+                    int remaining = this.byteBuffer.remaining();
+                    webSocketStateBytes.put(hashcode, new String(this.byteBuffer.array(), 0, remaining, StandardCharsets.UTF_8));
+                    dataIterator.remove();
+                    this.byteBuffer.clear();
+                } else {
+                    //第二次进来一次就接收到了所有的数据的情况
+                    if (!this.isConvert) {
+                        String srcMessage = webSocketStateBytes.get(hashcode);
+                        String[] split = srcMessage.split(";");
+                        setDataBase(split);
+                    }
+                    webSocketStateBytes.remove(hashcode);
+                }
+            } else {
+                /*
+                 * 1.如果srcMessage为空说明这是第一次的二进制信息,不做任何处理等待接收完整数据再处理
+                 * 2.如果srcMessage不为空说明这是第二次的二进制信息,要转换第一次的二进制信息到此数据中
+                 * */
+                String srcMessage = webSocketStateBytes.get(hashcode);
+                if (srcMessage == null && this.byteBuffer.position() > 4096) {
+                    LOGGER.error("第一次的二进制数据超过长度 -> 关闭连接");
+                    throw new WebSocketExceptional("第一次的二进制数据超过长度 -> 关闭连接");
+                }
+                if (srcMessage != null && !this.isConvert) {
+                    String[] split = srcMessage.split(";");
+                    setDataBase(split);
+                }
+            }
+        }
+
+        private void setDataBase(String[] split) throws Exception {
+            this.receiveObj = new ReceiveObj();
+            for (String s : split) {
+                String[] temp = s.split("=");
+                if (temp[0].equals("src") && temp.length > 1) {
+                    this.receiveObj.setSrc(temp[1]);
+                }
+                if (temp[0].equals("tar") && temp.length > 1) {
+                    this.receiveObj.setTar(temp[1]);
+                }
+                if (temp[0].equals("fileName") && temp.length > 1) {
+                    this.receiveObj.setFileName(temp[1]);
+                }
+                if (temp[0].equals("url") && temp.length > 1) {
+                    this.receiveObj.setUrl(temp[1]);
+                }
+                if (temp[0].equals("uuid") && temp.length > 1) {
+                    this.receiveObj.setUuid(temp[1]);
+                }
+            }
+            if (this.receiveObj.getSrc().isEmpty() || this.receiveObj.getTar().isEmpty() ||
+                    this.receiveObj.getFileName().isEmpty() || this.receiveObj.getUrl().isEmpty()) {
+                LOGGER.error("文件内容解释出错:关闭连接");
+                throw new WebSocketExceptional("文件内容解释出错 -> 关闭连接");
+            }
+            this.isConvert = true;
         }
 
     }
@@ -326,6 +394,7 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
         private String src;
         private String tar;
         private String url;
+        private String fileName;
         private ChartsContent charts;
     }
 
