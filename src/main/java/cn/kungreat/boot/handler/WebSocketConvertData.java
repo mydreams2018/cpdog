@@ -252,6 +252,14 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
          * */
         private Map<String, Object> convertData;
 
+        /*
+         * 用来存放返回给前端的数据,比如在执行链路上出错时可以初始化此数据.
+         * 如果此数据不为空的话,将把此数据作为此次请求将响应的数据.
+         * 正常链路时不要设置此值
+         * 不存在多线程并发性,除非自已创建新的线程来操作此对象
+         * */
+        private Map<String, Object> sendBackMessage;
+
         public void setFinish(boolean finish) {
             this.finish = finish;
             this.currentPos++;
@@ -317,8 +325,6 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
                 this.receiveObj = receiveObj;
                 this.byteBuffer.clear();
                 this.stringBuilder = null;
-
-                LOGGER.info(this.receiveObj.charts.getNikeName());
             }
         }
 

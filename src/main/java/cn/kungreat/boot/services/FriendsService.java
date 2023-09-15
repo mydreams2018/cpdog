@@ -2,8 +2,8 @@ package cn.kungreat.boot.services;
 
 import cn.kungreat.boot.GlobalEventListener;
 import cn.kungreat.boot.an.CpdogController;
-import cn.kungreat.boot.handler.WebSocketChannelInHandler;
-import cn.kungreat.boot.handler.WebSocketChannelOutHandler;
+import cn.kungreat.boot.handler.WebSocketConvertData;
+import cn.kungreat.boot.handler.WebSocketConvertDataOut;
 import cn.kungreat.boot.jb.BaseResponse;
 import cn.kungreat.boot.jb.EventBean;
 import cn.kungreat.boot.jb.QueryResult;
@@ -22,13 +22,13 @@ import java.util.UUID;
 
 @CpdogController(index = 5)
 public class FriendsService {
-    public static String queryUsers(WebSocketChannelInHandler.WebSocketState job){
+    public static String queryUsers(WebSocketConvertData.ReceiveObj job){
         String rt = "";
         try(Connection connection = JdbcUtils.getConnection();
             PreparedStatement preparedCount = connection.prepareStatement("select count(id) from user_details where nike_name LIKE ?");
             PreparedStatement preparedStatement = connection.prepareStatement("select register_time,describes,nike_name,img_path,sort_first from user_details " +
                     "where nike_name LIKE ? order by sort_first limit ?,? ")){
-            WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
+            WebSocketConvertData.ChartsContent jobCharts = job.getCharts();
             String nikName = jobCharts.getNikeName();
             if(nikName != null && !nikName.isBlank()){
                 preparedCount.setString(1, "%"+nikName+"%");
@@ -64,7 +64,7 @@ public class FriendsService {
                 result.setDatas(list);
                 result.setPage(paging);
                 result.setCurrentActiveId(jobCharts.getCurrentActiveId());
-                rt = WebSocketChannelInHandler.MAP_JSON.writeValueAsString(result);
+                rt = WebSocketConvertData.MAP_JSON.writeValueAsString(result);
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -72,13 +72,13 @@ public class FriendsService {
         return rt;
     }
 
-    public static String applyFriends(WebSocketChannelInHandler.WebSocketState first) {
+    public static String applyFriends(WebSocketConvertData.ReceiveObj first) {
         String rt = "";
         List<String> nikeNames = first.getCharts().getNikeNames();
         String tokenSession = first.getCharts().getTokenSession();
         if(nikeNames != null && nikeNames.size()>0 && tokenSession != null){
             final BaseResponse baseResponse = new BaseResponse();
-            String nikeNm = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+            String nikeNm = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
             if(nikeNm != null){
                 String message = first.getCharts().getMessage();
                 StringBuilder nks = new StringBuilder();
@@ -107,7 +107,7 @@ public class FriendsService {
                         baseResponse.setCode("200");
                         baseResponse.setMsg("申请添加好友成功.共"+ints.length+"个人");
                         baseResponse.setUrl("applyFriends");
-                        rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                        rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
                         connection.commit();
                         //申请好友添加到通知队列中
                         String srcImgPath = first.getCharts().getImgPath();
@@ -151,16 +151,16 @@ public class FriendsService {
     }
 
 
-    public static String queryUsersFriends(WebSocketChannelInHandler.WebSocketState job) {
+    public static String queryUsersFriends(WebSocketConvertData.ReceiveObj job) {
         String rt="";
         String tokenSession = job.getCharts().getTokenSession();
-        String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+        String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
         if(tokenSession!=null && !tokenSession.isBlank() && tokenNikeName !=null){
             try(Connection connection = JdbcUtils.getConnection();
                 PreparedStatement preparedCount = connection.prepareStatement("select count(src_user_id) from friends_history where src_user_id= ? and tar_user_id LIKE ? and cur_state=1");
                 PreparedStatement preparedStatement = connection.prepareStatement("select nike_name,register_time,describes,img_path,sort_first from user_details where nike_name in "+
                         "(select tar_user_id from friends_history where src_user_id= ? and tar_user_id LIKE ? and cur_state=1) order by sort_first limit ?,?")){
-                WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
+                WebSocketConvertData.ChartsContent jobCharts = job.getCharts();
                 String nikName = jobCharts.getNikeName();
                 if(nikName != null && !nikName.isBlank()){
                     preparedCount.setString(1, tokenNikeName);
@@ -200,7 +200,7 @@ public class FriendsService {
                     result.setDatas(list);
                     result.setPage(paging);
                     result.setCurrentActiveId(jobCharts.getCurrentActiveId());
-                    rt = WebSocketChannelInHandler.MAP_JSON.writeValueAsString(result);
+                    rt = WebSocketConvertData.MAP_JSON.writeValueAsString(result);
                 }
             }catch (Exception e){
                 e.printStackTrace();
@@ -209,17 +209,17 @@ public class FriendsService {
         return rt;
     }
 
-    public static String queryAnswerFriends(WebSocketChannelInHandler.WebSocketState job) {
+    public static String queryAnswerFriends(WebSocketConvertData.ReceiveObj job) {
         String rt="";
         String tokenSession = job.getCharts().getTokenSession();
-        String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+        String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
         if(tokenSession!=null && !tokenSession.isBlank() && tokenNikeName != null){
             try(Connection connection = JdbcUtils.getConnection();
                 PreparedStatement preparedCount = connection.prepareStatement("select count(src_user_id) from apply_history where tar_user_id =? and src_user_id like ? and apply_state=0");
                 PreparedStatement preparedStatement = connection.prepareStatement("select histy.src_user_id, histy.apply_time,histy.apply_msg, usdet.img_path from " +
                         " (select src_user_id,apply_time,apply_msg from apply_history where tar_user_id =? and src_user_id like ? and apply_state=0) histy " +
                         " join user_details usdet on histy.src_user_id = usdet.nike_name order by histy.apply_time desc limit ?,?")){
-                WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
+                WebSocketConvertData.ChartsContent jobCharts = job.getCharts();
                 String srcNikName = jobCharts.getNikeName();
                 if(srcNikName!=null && !srcNikName.isBlank()){
                     preparedCount.setString(1,tokenNikeName);
@@ -258,7 +258,7 @@ public class FriendsService {
                     result.setDatas(list);
                     result.setPage(paging);
                     result.setCurrentActiveId(jobCharts.getCurrentActiveId());
-                    rt = WebSocketChannelInHandler.MAP_JSON.writeValueAsString(result);
+                    rt = WebSocketConvertData.MAP_JSON.writeValueAsString(result);
                 }
             }catch (Exception e){
                 e.printStackTrace();
@@ -267,12 +267,12 @@ public class FriendsService {
         return rt;
     }
 
-    public static String handlerApplyFriend(WebSocketChannelInHandler.WebSocketState job) {
+    public static String handlerApplyFriend(WebSocketConvertData.ReceiveObj job) {
         String rt="";
         String tokenSession = job.getCharts().getTokenSession();
         String message = job.getCharts().getMessage();
         String nikeName = job.getCharts().getNikeName();
-        String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+        String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
         if(tokenSession!=null && !tokenSession.isBlank() && message!=null && !message.isBlank()
                 && nikeName!= null && !nikeName.isBlank() && tokenNikeName != null){
             if(message.equals("delete")){
@@ -318,12 +318,12 @@ public class FriendsService {
                 baseResponse.setMsg("接受申请成功:"+src);
                 baseResponse.setUser(src);
                 baseResponse.setUrl("handlerApplyFriend");
-                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
                 connection.commit();
             }else{
                 baseResponse.setMsg("接受申请失败:"+src);
                 baseResponse.setUrl("handlerApplyFriend");
-                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
                 connection.rollback();
             }
         }catch (Exception e){
@@ -345,11 +345,11 @@ public class FriendsService {
                 baseResponse.setMsg("删除申请成功:"+src);
                 baseResponse.setUser(src);
                 baseResponse.setUrl("handlerApplyFriend");
-                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
             }else{
                 baseResponse.setMsg("删除失败:"+src);
                 baseResponse.setUrl("handlerApplyFriend");
-                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
             }
             connection.commit();
         }catch (Exception e){
@@ -371,11 +371,11 @@ public class FriendsService {
                 baseResponse.setMsg("拒绝申请成功:"+src);
                 baseResponse.setUser(src);
                 baseResponse.setUrl("handlerApplyFriend");
-                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
             }else{
                 baseResponse.setMsg("拒绝申请失败:"+src);
                 baseResponse.setUrl("handlerApplyFriend");
-                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
             }
             connection.commit();
         }catch (Exception e){
@@ -384,14 +384,14 @@ public class FriendsService {
         return rt;
     }
     //现有好友处理
-    public static String handlerCurrentFriend(WebSocketChannelInHandler.WebSocketState job) {
+    public static String handlerCurrentFriend(WebSocketConvertData.ReceiveObj job) {
         String rt="";
         String tokenSession = job.getCharts().getTokenSession();
         String message = job.getCharts().getMessage();
         String nikeName = job.getCharts().getNikeName();
         if(tokenSession!=null && !tokenSession.isBlank() && message!=null && !message.isBlank()
                 && nikeName!= null && !nikeName.isBlank()){
-            String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+            String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
             if(tokenNikeName!=null){
                 if(message.equals("add group")){
 
@@ -445,7 +445,7 @@ public class FriendsService {
             baseResponse.setCode("200");
             baseResponse.setUrl("handlerCurrentFriend");
             baseResponse.setMsg("添加聊天视图成功:"+tar);
-            rt = WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+            rt = WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -471,7 +471,7 @@ public class FriendsService {
                 baseResponse.setMsg("删除好友成功:"+tar);
                 baseResponse.setUser(tar);
                 baseResponse.setUrl("handlerCurrentFriend");
-                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
                 connection.commit();
                 //通知对方删除事件 start
                 EventBean eventAdd = new EventBean();
@@ -483,7 +483,7 @@ public class FriendsService {
             }else{
                 baseResponse.setMsg("删除好友失败:"+tar);
                 baseResponse.setUrl("handlerCurrentFriend");
-                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
                 connection.rollback();
             }
         }catch (Exception e){

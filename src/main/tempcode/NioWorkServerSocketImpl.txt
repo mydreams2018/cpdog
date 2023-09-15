@@ -1,0 +1,90 @@
+
+    private static final List<ChannelInHandler<?,?>> CHANNEL_IN_HANDLERS = new ArrayList<>();
+    private static final List<ChannelOutHandler<?,?>> CHANNEL_OUT_HANDLERS = new ArrayList<>();
+
+       private Object runInHandlers(final SocketChannel clientChannel,final ByteBuffer byteBuffer) {
+            Object linkIn = byteBuffer;
+            for(ChannelInHandler<?, ?> channelInHandler: CHANNEL_IN_HANDLERS){
+                if(clientChannel.isOpen()){
+                    try {
+                        if(this.exception==null){
+
+                            Class<?> channelInHandlerClass = channelInHandler.getClass();
+                            Method before = channelInHandlerClass.getMethod("before", SocketChannel.class, channelInHandler.getInClass());
+                            before.invoke(channelInHandler,clientChannel,linkIn);
+                            Method handler = channelInHandlerClass.getMethod("handler", SocketChannel.class, channelInHandler.getInClass());
+                            Object invoke = handler.invoke(channelInHandler, clientChannel, linkIn);
+                            Method after = channelInHandlerClass.getMethod("after", SocketChannel.class, channelInHandler.getInClass());
+                            after.invoke(channelInHandler,clientChannel,linkIn);
+                            linkIn = invoke;
+                        }else{
+
+                            Object handlerIn = channelInHandler.exception(this.exception, clientChannel, linkIn);
+                            Class<?> channelInHandlerClass = channelInHandler.getClass();
+                            Method handler = channelInHandlerClass.getMethod("handler", SocketChannel.class, channelInHandler.getInClass());
+                            linkIn = handler.invoke(channelInHandler,clientChannel,handlerIn);
+                            this.exception = null;
+                        }
+                    }catch(Exception e){
+                        this.exception = e;
+                        e.printStackTrace();
+                    }
+                }else{
+                    LOGGER.error("channel-close");
+                    break;
+                }
+            }
+            return linkIn;
+        }
+
+        private Object runOutHandlers(final SocketChannel clientChannel,final Object in) throws IOException {
+            ByteBuffer outBuf = getOutBuf();
+            outBuf.clear();
+            Object linkIn = in;
+            for (ChannelOutHandler<?, ?> channelOutHandler : CHANNEL_OUT_HANDLERS) {
+                if (clientChannel.isOpen()) {
+                    try {
+                        if (this.exception == null) {
+                            Class<?> channelOutHandlerClass = channelOutHandler.getClass();
+                            Method before = channelOutHandlerClass.getMethod("before", SocketChannel.class, channelOutHandler.getInClass());
+                            before.invoke(channelOutHandler, clientChannel, linkIn);
+                            Method handler = channelOutHandlerClass.getMethod("handler", ByteBuffer.class, SocketChannel.class, channelOutHandler.getInClass());
+                            Object invoke = handler.invoke(channelOutHandler, outBuf, clientChannel, linkIn);
+                            Method after = channelOutHandlerClass.getMethod("after", SocketChannel.class, channelOutHandler.getInClass());
+                            after.invoke(channelOutHandler, clientChannel, linkIn);
+                            linkIn = invoke;
+                        } else {
+
+                            Object handlerIn = channelOutHandler.exception(this.exception, clientChannel, linkIn);
+                            Class<?> channelOutHandlerClass = channelOutHandler.getClass();
+                            Method handler = channelOutHandlerClass.getMethod("handler", ByteBuffer.class, SocketChannel.class, channelOutHandler.getInClass());
+                            linkIn = handler.invoke(channelOutHandler, outBuf, clientChannel, handlerIn);
+                            this.exception = null;
+                        }
+                    } catch (Exception e) {
+                        this.exception = e;
+                        e.printStackTrace();
+                    }
+                } else {
+                    LOGGER.error("channel-close");
+                    break;
+                }
+            }
+//            走完链路还存在异常时 关闭连接
+            if(this.exception != null){
+                this.exception=null;
+                clientChannel.close();
+                LOGGER.error("走完链路.还存在异常时 关闭连接");
+            }
+            return linkIn;
+        }
+
+        //管道关闭时清理后续 链路. 链路需要自已实现清理方法 注意可能出现的异常情况
+                private void clearHandlerLink(final SocketChannel socketChannel){
+                    try {
+                        CHANNEL_IN_HANDLERS.forEach(e-> e.clearBuffers(socketChannel));
+                        CHANNEL_OUT_HANDLERS.forEach(e-> e.clearBuffers(socketChannel));
+                    }catch (Exception e){
+                        LOGGER.error("clearHandlerLink-error{}",e.getMessage());
+                    }
+                }

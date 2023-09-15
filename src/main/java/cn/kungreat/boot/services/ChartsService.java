@@ -2,8 +2,8 @@ package cn.kungreat.boot.services;
 
 import cn.kungreat.boot.GlobalEventListener;
 import cn.kungreat.boot.an.CpdogController;
-import cn.kungreat.boot.handler.WebSocketChannelInHandler;
-import cn.kungreat.boot.handler.WebSocketChannelOutHandler;
+import cn.kungreat.boot.handler.WebSocketConvertData;
+import cn.kungreat.boot.handler.WebSocketConvertDataOut;
 import cn.kungreat.boot.jb.*;
 import cn.kungreat.boot.utils.JdbcUtils;
 import cn.kungreat.boot.utils.Paging;
@@ -18,9 +18,9 @@ import java.util.List;
 
 @CpdogController(index = 3)
 public class ChartsService {
-    public static String uploadUserImg(WebSocketChannelInHandler.WebSocketState job) {
+    public static String uploadUserImg(WebSocketConvertData.ReceiveObj job) {
         String rt="";
-        String nikeName = WebSocketChannelOutHandler.USER_UUIDS.get(job.getSrc());
+        String nikeName = WebSocketConvertDataOut.USER_UUIDS.get(job.getSrc());
         final BaseResponse baseResponse = new BaseResponse();
         try(Connection connection = JdbcUtils.getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement("update user_details set img_path=? where nike_name=?")){
@@ -32,11 +32,11 @@ public class ChartsService {
                 baseResponse.setMsg("图片上传成功");
                 baseResponse.setUrl("uploadUserImg");
                 baseResponse.setImgPath("/images/user/"+job.getFileName());
-                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
             }else{
                 baseResponse.setMsg("图片上传失败");
                 baseResponse.setUrl("uploadUserImg");
-                rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
             }
             connection.commit();
         }catch (Exception e){
@@ -45,17 +45,17 @@ public class ChartsService {
         return rt;
     }
     //查询聊天视图
-    public static String queryChartsViews(WebSocketChannelInHandler.WebSocketState job) {
+    public static String queryChartsViews(WebSocketConvertData.ReceiveObj job) {
         String rt="";
         String tokenSession = job.getCharts().getTokenSession();
-        String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+        String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
         if(tokenSession!=null && !tokenSession.isBlank() && tokenNikeName != null){
             try(Connection connection = JdbcUtils.getConnection();
                 PreparedStatement preparedCount = connection.prepareStatement("select count(id) from msg_view where user_src =? and show_state=1 and user_tar like ?");
                 PreparedStatement preparedStatement = connection.prepareStatement("select msgview.user_tar,msgview.id,msgview.src_tar_uuid,msgview.last_msg_time,msgview.last_msg,usdet.img_path from " +
                         " (select user_tar,id,src_tar_uuid,last_msg_time,last_msg from msg_view where user_src =? and show_state=1 and user_tar like ?) msgview " +
                         " join user_details usdet on msgview.user_tar = usdet.nike_name order by msgview.last_msg_time DESC limit ?,?")){
-                WebSocketChannelInHandler.ChartsContent jobCharts = job.getCharts();
+                WebSocketConvertData.ChartsContent jobCharts = job.getCharts();
                 String srcNikName = jobCharts.getNikeName();
                 if(srcNikName!=null && !srcNikName.isBlank()){
                     preparedCount.setString(1,tokenNikeName);
@@ -96,7 +96,7 @@ public class ChartsService {
                     result.setDatas(list);
                     result.setPage(paging);
                     result.setCurrentActiveId(jobCharts.getCurrentActiveId());
-                    rt = WebSocketChannelInHandler.MAP_JSON.writeValueAsString(result);
+                    rt = WebSocketConvertData.MAP_JSON.writeValueAsString(result);
                 }
             }catch (Exception e){
                 e.printStackTrace();
@@ -105,14 +105,14 @@ public class ChartsService {
         return rt;
     }
     //聊天视图处理
-    public static String handlerChartsViews(WebSocketChannelInHandler.WebSocketState job) {
+    public static String handlerChartsViews(WebSocketConvertData.ReceiveObj job) {
         String rt="";
         String tokenSession = job.getCharts().getTokenSession();
         String message = job.getCharts().getMessage();
         String nikeName = job.getCharts().getNikeName();
         if(tokenSession!=null && !tokenSession.isBlank() && message!=null && !message.isBlank()
                 && nikeName!= null && !nikeName.isBlank()){
-            String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+            String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
             if(tokenNikeName!=null){
                 if(message.equals("hide")){
                     rt=hideChartsViews(nikeName,tokenNikeName);
@@ -124,7 +124,7 @@ public class ChartsService {
         return rt;
     }
 
-    private static String showChartsDetails(String primaryId, String tokenNikeName,WebSocketChannelInHandler.WebSocketState job) {
+    private static String showChartsDetails(String primaryId, String tokenNikeName,WebSocketConvertData.ReceiveObj job) {
         String rt="";
         try(Connection connection = JdbcUtils.getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement("select id from msg_view where src_tar_uuid=? and user_src=?");
@@ -170,7 +170,7 @@ public class ChartsService {
                     result.setPage(paging);
                     result.setCurrentActiveId(job.getCharts().getCurrentActiveId());
                     result.setDataId(primaryId);
-                    rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(result);
+                    rt=WebSocketConvertData.MAP_JSON.writeValueAsString(result);
                 }else{
                     Paging paging = new Paging();
                     paging.setData(0,paging.getPageSize(),paging.getCurrentPage());
@@ -179,7 +179,7 @@ public class ChartsService {
                     result.setPage(paging);
                     result.setCurrentActiveId(job.getCharts().getCurrentActiveId());
                     result.setDataId(primaryId);
-                    rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(result);
+                    rt=WebSocketConvertData.MAP_JSON.writeValueAsString(result);
                 }
             }
         }catch (Exception e){
@@ -202,14 +202,14 @@ public class ChartsService {
             baseResponse.setUrl("handlerChartsViews");
             baseResponse.setMsg("hide");
             baseResponse.setUuid(primaryId);
-            rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+            rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
         }catch (Exception e){
             e.printStackTrace();
         }
         return rt;
     }
     //给指定的用户发送聊天信息
-    public static String handlerChartsSend(WebSocketChannelInHandler.WebSocketState job) {
+    public static String handlerChartsSend(WebSocketConvertData.ReceiveObj job) {
         String rt="";
         String tokenSession = job.getCharts().getTokenSession();
         String message = job.getCharts().getMessage();
@@ -217,14 +217,14 @@ public class ChartsService {
         String srcTarUUID = job.getCharts().getSrcTarUUID();
         if(tokenSession!=null && !tokenSession.isBlank() && message!=null && !message.isBlank()
                 && nikeName!= null && !nikeName.isBlank() && srcTarUUID!=null && !srcTarUUID.isBlank()){
-            String tokenNikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+            String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
             if(tokenNikeName!=null){
                 final BaseResponse baseResponse = new BaseResponse();
                 if(!isHasFriend(tokenNikeName,nikeName)){
                     baseResponse.setUrl("handlerChartsSend");
                     baseResponse.setMsg("发送失败已经不是好友关系了:"+nikeName);
                     try {
-                        rt = WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                        rt = WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
                     } catch (JsonProcessingException e) {
                         e.printStackTrace();
                     }
@@ -288,7 +288,7 @@ public class ChartsService {
                             baseResponse.setMsg(message);
                             baseResponse.setUuid(job.getUuid());
                             baseResponse.setSrcTarUUID(srcTarUUID);
-                            rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                            rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
                             connection.commit();
                             //通知对方 发送信息事件 start
                             EventBean eventAdd = new EventBean();
@@ -306,7 +306,7 @@ public class ChartsService {
                             baseResponse.setMsg("发送聊天信息失败");
                             baseResponse.setUuid(job.getUuid());
                             baseResponse.setSrcTarUUID(srcTarUUID);
-                            rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                            rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
                             connection.rollback();
                         }
                     }
@@ -334,10 +334,10 @@ public class ChartsService {
         return is;
     }
     //修改用户的描述
-    public static String handlerDesUpdate(WebSocketChannelInHandler.WebSocketState job) {
+    public static String handlerDesUpdate(WebSocketConvertData.ReceiveObj job) {
         String rt="";
         String tokenSession = job.getCharts().getTokenSession();
-        String nikeName = WebSocketChannelOutHandler.USER_UUIDS.get(tokenSession);
+        String nikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
         String message = job.getCharts().getMessage();
         if(nikeName !=null && !nikeName.isBlank() && message!=null && !message.isBlank()){
             final BaseResponse baseResponse = new BaseResponse();
@@ -352,11 +352,11 @@ public class ChartsService {
                     baseResponse.setUrl("handlerDesUpdate");
                     baseResponse.setDescribes(message);
                     connection.commit();
-                    rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                    rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
                 }else{
                     baseResponse.setMsg("修改备注失败");
                     baseResponse.setUrl("handlerDesUpdate");
-                    rt=WebSocketChannelInHandler.MAP_JSON.writeValueAsString(baseResponse);
+                    rt=WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
                 }
             }catch (Exception e){
                 e.printStackTrace();

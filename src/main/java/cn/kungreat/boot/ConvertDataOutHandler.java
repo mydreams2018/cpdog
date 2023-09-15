@@ -14,7 +14,7 @@ public interface ConvertDataOutHandler<T> {
      *@Return 无
      *@Date 2023/09/15
      */
-    void before(T t, ByteBuffer byteBuffer) throws Exception;
+    void before(T t, SocketChannel socketChannel) throws Exception;
 
     /*
      *@Description 根据入参对象 通过反射去调用指定的方法 再把方法返回值写出到客户端去
