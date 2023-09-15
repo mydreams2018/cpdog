@@ -81,8 +81,10 @@ public class WebSocketConvertDataOut implements ConvertDataOutHandler<WebSocketC
     }
 
     @Override
-    public void after(SocketChannel socketChannel, ByteBuffer byteBuffer) throws Exception {
-
+    public void after(WebSocketConvertData.WebSocketData webSocketData, SocketChannel socketChannel, ByteBuffer byteBuffer) throws Exception {
+        if (webSocketData.getType() == 8) {
+            socketChannel.close();
+        }
     }
 
     @Override

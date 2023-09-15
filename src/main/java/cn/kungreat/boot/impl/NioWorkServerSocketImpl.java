@@ -210,12 +210,13 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     Iterator<WebSocketConvertData.WebSocketData> webSocketDataIterator = socketDataList.iterator();
                     while (webSocketDataIterator.hasNext()) {
                         WebSocketConvertData.WebSocketData webSocketDataNext = webSocketDataIterator.next();
-                        if (webSocketDataNext.getType() == 1 && webSocketDataNext.isDone()) {
+                        if ((webSocketDataNext.getType() == 1 && webSocketDataNext.isDone())
+                                || (webSocketDataNext.getType() == 2 && webSocketDataNext.isConvert())
+                                || webSocketDataNext.getType() == 8
+                        ) {
                             runFilterChain(webSocketDataNext);
                             runConvertDataOut(webSocketDataNext, clientChannel);
                             webSocketDataIterator.remove();
-                        } else if (webSocketDataNext.getType() == 2) {
-                            //todo
                         }
                     }
                 }
@@ -277,7 +278,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             try {
                 WEB_SOCKET_CONVERT_DATA_OUT.before(webSocketData, socketChannel);
                 WEB_SOCKET_CONVERT_DATA_OUT.handler(webSocketData, outBuf, socketChannel);
-                WEB_SOCKET_CONVERT_DATA_OUT.after(socketChannel, outBuf);
+                WEB_SOCKET_CONVERT_DATA_OUT.after(webSocketData, socketChannel, outBuf);
             } catch (Exception e) {
                 WEB_SOCKET_CONVERT_DATA_OUT.exception(e, socketChannel);
             }

@@ -1,5 +1,7 @@
 package cn.kungreat.boot;
 
+import cn.kungreat.boot.handler.WebSocketConvertData;
+
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
@@ -29,7 +31,7 @@ public interface ConvertDataOutHandler<T> {
      *@Param SocketChannel 客户端流 ByteBuffer 输出流
      *@Date 2023/09/15
      */
-    void after(SocketChannel socketChannel, ByteBuffer byteBuffer) throws Exception;
+    void after(WebSocketConvertData.WebSocketData webSocketData, SocketChannel socketChannel, ByteBuffer byteBuffer) throws Exception;
 
     /*
      *@Description 出现异常需要处理
