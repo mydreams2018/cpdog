@@ -121,7 +121,6 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                 NioBossServerSocketImpl.LOGGER.error("Boss线程挂掉");
                 NioBossServerSocketImpl.LOGGER.error(e.getLocalizedMessage());
             }
-            run();
         }
 
         private void addTask(ServerSocketChannel serverChannel) throws IOException {
