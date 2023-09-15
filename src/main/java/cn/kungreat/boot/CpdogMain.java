@@ -30,7 +30,8 @@ public class CpdogMain {
     public static final ThreadLocal<ByteBuffer> THREAD_LOCAL = new ThreadLocal<>();
     //图片存放地址
     public static final String FILE_PATH;
-
+    //刷新token的url前后端配合使用
+    public static final String REFRESH_TOKEN_URL;
     static {
         InputStream cpDogFile = ClassLoader.getSystemResourceAsStream("cpdog.properties");
         Properties props = new Properties();
@@ -42,6 +43,7 @@ public class CpdogMain {
             e.printStackTrace();
         }
         FILE_PATH = props.getProperty("user.imgPath");
+        REFRESH_TOKEN_URL = props.getProperty("refresh.token.url");
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(props.getProperty("jdbc.url"));
         config.setUsername(props.getProperty("user.name"));

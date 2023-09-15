@@ -27,8 +27,8 @@ public class WebSocketConvertDataOut implements ConvertDataOutHandler<WebSocketC
 
     @Override
     public void before(WebSocketConvertData.WebSocketData webSocketData, SocketChannel socketChannel) throws Exception {
-        //页面刷新就会重建连接,用此来记录用户的channel信息,需要前端配合处理,在登录完成时返回token让前端保存
-        if (webSocketData.getReceiveObj().getUrl().equals("initSaveConnection")) {
+        //页面刷新就会重建socket连接,用此来记录用户的channel信息,需要前端配合处理,在登录完成时返回token让前端保存
+        if (webSocketData.getReceiveObj().getUrl().equals(CpdogMain.REFRESH_TOKEN_URL)) {
             String nikeName = USER_UUIDS.get(webSocketData.getReceiveObj().getCharts().getTokenSession());
             if (nikeName != null) {
                 GlobalEventListener.CONCURRENT_EVENT_MAP.put(nikeName, socketChannel);
