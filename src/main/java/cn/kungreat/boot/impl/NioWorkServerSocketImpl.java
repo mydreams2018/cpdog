@@ -157,7 +157,6 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             } catch (Exception e) {
                 NioWorkServerSocketImpl.LOGGER.error(e.getMessage());
             }
-            run();
         }
 
         /* TLS握手完后 可能有读取多的没有用完的数据、 需要在此触发一次*/
@@ -240,6 +239,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             if (next.isValid() && next.isReadable()) {
                 InitHandler(next);
             } else {
+                next.cancel();
                 LOGGER.error("客户端监听类型异常:");
             }
         }

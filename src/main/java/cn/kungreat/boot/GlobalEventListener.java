@@ -13,8 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /*
-* 全局的事件监听、负责事件传递
-*/
+ * 全局的事件监听、负责事件传递
+ */
 public class GlobalEventListener {
 
     private static final ByteBuffer EVENT_BUFFER = ByteBuffer.allocate(8192);
@@ -30,61 +30,56 @@ public class GlobalEventListener {
     /*
      * 迭代监听 EVENT_BLOCKING_QUEUE 事件 传递给指定的回调方法
      */
-    public static void loopEvent(){
-        if(CpdogMain.THREAD_LOCAL.get() == null){
+    public static void loopEvent() {
+        if (CpdogMain.THREAD_LOCAL.get() == null) {
             CpdogMain.THREAD_LOCAL.set(ByteBuffer.allocate(8192));
         }
-        EventBean receiveObj ;
-        String receiveObjUrl ;
-        SocketChannel socketChannel ;
+        EventBean receiveObj;
+        String receiveObjUrl;
+        SocketChannel socketChannel;
         try {
-            while (true){
+            while (true) {
                 receiveObj = EVENT_BLOCKING_QUEUE.take();
                 receiveObjUrl = receiveObj.getUrl();
                 socketChannel = CONCURRENT_EVENT_MAP.get(receiveObj.getTar());
-                if(socketChannel != null && socketChannel.isOpen()){
-                    outer:for(int i=0;i<CpdogMain.EVENTS.size();i++){
+                if (socketChannel != null && socketChannel.isOpen()) {
+                    outer:
+                    for (int i = 0; i < CpdogMain.EVENTS.size(); i++) {
                         Class<?> aClass = CpdogMain.EVENTS.get(i);
                         Method[] declaredMethods = aClass.getMethods();
-                        if(declaredMethods.length>0){
-                            for (Method methods : declaredMethods) {
-                                String name = methods.getName();
-                                if (name.equals(receiveObjUrl)) {
-                                    if (Modifier.isStatic(methods.getModifiers())) {
-                                        EVENT_BUFFER.clear();
-                                        String rts = (String) methods.invoke(null, receiveObj);
-                                        if (rts.length() > 0) {
-                                            byte[] bytes = rts.getBytes(StandardCharsets.UTF_8);
-                                            int readLength = 0;
-                                            EVENT_BUFFER.put(WebSocketResponse.getBytes(bytes));
-                                            //必须处理并发.数据一次完整的写出.
-                                            synchronized (socketChannel) {
-                                                do {
-                                                    int min = Math.min(bytes.length - readLength, EVENT_BUFFER.remaining());
-                                                    EVENT_BUFFER.put(bytes, readLength, min);
-                                                    readLength = readLength + min;
-                                                    EVENT_BUFFER.flip();
-//                                                    socketChannel.write(EVENT_BUFFER);
-                                                    CpDogSSLContext.outEncode(socketChannel, EVENT_BUFFER);
-                                                    EVENT_BUFFER.clear();
-                                                } while (readLength < bytes.length);
-                                            }
-                                            break outer;
+                        for (Method methods : declaredMethods) {
+                            String name = methods.getName();
+                            if (name.equals(receiveObjUrl)) {
+                                if (Modifier.isStatic(methods.getModifiers())) {
+                                    EVENT_BUFFER.clear();
+                                    String rts = (String) methods.invoke(null, receiveObj);
+                                    if (!rts.isEmpty()) {
+                                        byte[] bytes = rts.getBytes(StandardCharsets.UTF_8);
+                                        int readLength = 0;
+                                        EVENT_BUFFER.put(WebSocketResponse.getBytes(bytes));
+                                        synchronized (socketChannel) {
+                                            do {
+                                                int min = Math.min(bytes.length - readLength, EVENT_BUFFER.remaining());
+                                                EVENT_BUFFER.put(bytes, readLength, min);
+                                                readLength = readLength + min;
+                                                EVENT_BUFFER.flip();
+                                                CpDogSSLContext.outEncode(socketChannel, EVENT_BUFFER);
+                                                EVENT_BUFFER.clear();
+                                            } while (readLength < bytes.length);
                                         }
+                                        break outer;
                                     }
                                 }
                             }
                         }
                     }
-                }
-                else if(socketChannel != null && !socketChannel.isOpen()){
+                } else if (socketChannel != null && !socketChannel.isOpen()) {
                     CONCURRENT_EVENT_MAP.remove(receiveObj.getTar());
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         CpdogMain.THREAD_LOCAL.get().clear();
-        loopEvent();
     }
 }
