@@ -26,6 +26,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
     private NioWorkServerSocket[] workServerSockets;
     private ChooseWorkServer chooseWorkServer;
     private static final Logger LOGGER = LoggerFactory.getLogger(NioBossServerSocketImpl.class);
+
     private NioBossServerSocketImpl() {
     }
 
@@ -77,8 +78,8 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
 
     @Override
     public NioBossServerSocketImpl start(SocketAddress local, int backlog, NioWorkServerSocket[] workServerSockets, ChooseWorkServer chooseWorkServer) throws IOException {
-        this.workServerSockets=workServerSockets;
-        this.chooseWorkServer=chooseWorkServer;
+        this.workServerSockets = workServerSockets;
+        this.chooseWorkServer = chooseWorkServer;
         this.serverSocketChannel.bind(local, backlog);
         this.serverSocketChannel.register(this.selector, SelectionKey.OP_ACCEPT);
         this.bossThreads.start();
@@ -87,31 +88,31 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
 
     @Override
     public NioBossServerSocketImpl start(SocketAddress local, NioWorkServerSocket[] workServerSockets, ChooseWorkServer chooseWorkServer) throws IOException {
-        this.workServerSockets=workServerSockets;
-        this.chooseWorkServer=chooseWorkServer;
+        this.workServerSockets = workServerSockets;
+        this.chooseWorkServer = chooseWorkServer;
         this.serverSocketChannel.bind(local);
         this.serverSocketChannel.register(this.selector, SelectionKey.OP_ACCEPT);
         this.bossThreads.start();
         return this;
     }
 
-    private final class BossRunnable implements Runnable{
+    private final class BossRunnable implements Runnable {
 
         @Override
         public void run() {
             NioBossServerSocketImpl.LOGGER.info("boss服务启动");
             try {
-                while(NioBossServerSocketImpl.this.selector.select() >= 0){
+                while (NioBossServerSocketImpl.this.selector.select() >= 0) {
                     Set<SelectionKey> selectionKeys = NioBossServerSocketImpl.this.selector.selectedKeys();
                     Iterator<SelectionKey> iterator = selectionKeys.iterator();
-                    while(iterator.hasNext()){
+                    while (iterator.hasNext()) {
                         SelectionKey next = iterator.next();
                         iterator.remove();
                         SelectableChannel channel = next.channel();
-                        if(next.isValid() && next.isAcceptable()){
+                        if (next.isValid() && next.isAcceptable()) {
                             ServerSocketChannel serChannel = (ServerSocketChannel) channel;
                             addTask(serChannel);
-                        }else{
+                        } else {
                             NioBossServerSocketImpl.LOGGER.info("Boss事件类型错误");
                         }
                     }
@@ -125,57 +126,57 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
 
         private void addTask(ServerSocketChannel serverChannel) throws IOException {
             SocketChannel accept = serverChannel.accept();
-            if(accept != null){
+            if (accept != null) {
                 ShakeHands.THREAD_POOL_EXECUTOR.execute(new TLSRunnable(accept));
             }
         }
     }
 
-    private final class TLSRunnable implements Runnable{
+    private final class TLSRunnable implements Runnable {
 
         private final SocketChannel tlsSocketChannel;
 
-        private TLSRunnable(SocketChannel channel){
-            this.tlsSocketChannel=channel;
+        private TLSRunnable(SocketChannel channel) {
+            this.tlsSocketChannel = channel;
         }
 
         @Override
         public void run() {
             TLSSocketLink sslEngine;
-            try{
-                if(this.tlsSocketChannel.finishConnect()){
+            try {
+                if (this.tlsSocketChannel.finishConnect()) {
                     NioWorkServerSocket choose = NioBossServerSocketImpl.this.chooseWorkServer.choose(NioBossServerSocketImpl.this.workServerSockets);
                     this.tlsSocketChannel.configureBlocking(false);
                     choose.setOption(this.tlsSocketChannel);
                     //TLS握手
                     sslEngine = CpDogSSLContext.getSSLEngine(this.tlsSocketChannel);
-                    if(sslEngine != null){
+                    if (sslEngine != null) {
                         SelectionKey selectionKey = this.tlsSocketChannel.register(choose.getSelector(), SelectionKey.OP_READ, sslEngine);
-                        if(sslEngine.getInSrc().position() >0){
+                        if (sslEngine.getInSrc().position() > 0) {
                             //说明有多的数据需要处理.添加到work的初始化队列中去
                             choose.getTlsInitKey().add(selectionKey);
                         }
-                        NioBossServerSocketImpl.LOGGER.info("连接成功{}",this.tlsSocketChannel.getRemoteAddress());
+                        NioBossServerSocketImpl.LOGGER.info("连接成功{}", this.tlsSocketChannel.getRemoteAddress());
                         Thread.State state = choose.getWorkThreads().getState();
-                        if(state.equals(Thread.State.NEW)){
+                        if (state.equals(Thread.State.NEW)) {
                             choose.getWorkThreads().start();
-                            NioBossServerSocketImpl.LOGGER.info("启动{}",choose.getWorkThreads().getName());
+                            NioBossServerSocketImpl.LOGGER.info("启动{}", choose.getWorkThreads().getName());
                         }
                         choose.getSelector().wakeup();
                     }
-                }else{
+                } else {
                     this.tlsSocketChannel.close();
-                    NioBossServerSocketImpl.LOGGER.info("连接失败{}",this.tlsSocketChannel.getRemoteAddress());
+                    NioBossServerSocketImpl.LOGGER.info("连接失败{}", this.tlsSocketChannel.getRemoteAddress());
                 }
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
-                NioBossServerSocketImpl.LOGGER.error("连接失败{}",e.getLocalizedMessage());
-                    try {
-                        this.tlsSocketChannel.close();
-                    } catch (IOException ioException) {
-                        ioException.printStackTrace();
-                        NioBossServerSocketImpl.LOGGER.error("close失败{}",ioException.getLocalizedMessage());
-                    }
+                NioBossServerSocketImpl.LOGGER.error("连接失败{}", e.getLocalizedMessage());
+                try {
+                    this.tlsSocketChannel.close();
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                    NioBossServerSocketImpl.LOGGER.error("close失败{}", ioException.getLocalizedMessage());
+                }
             }
         }
     }
