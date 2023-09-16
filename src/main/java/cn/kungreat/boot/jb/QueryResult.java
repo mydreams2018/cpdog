@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 public class QueryResult {
     private Paging page;
-    private List dataList;
+    private List<?> dataList;
     private String currentActiveId;
     private String dataId;
 }
