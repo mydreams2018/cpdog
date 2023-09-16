@@ -18,33 +18,6 @@ import java.util.List;
 
 @CpdogController(index = 3)
 public class ChartsService {
-    public static String uploadUserImg(WebSocketConvertData.ReceiveObj job) {
-        String rt = "";
-        String nikeName = WebSocketConvertDataOut.USER_UUIDS.get(job.getSrc());
-        final BaseResponse baseResponse = new BaseResponse();
-        try (Connection connection = JdbcUtils.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement("update user_details set img_path=? where nike_name=?")) {
-            preparedStatement.setString(1, "/images/user/" + job.getFileName());
-            preparedStatement.setString(2, nikeName);
-            int i = preparedStatement.executeUpdate();
-            if (i > 0) {
-                baseResponse.setCode("200");
-                baseResponse.setMsg("图片上传成功");
-                baseResponse.setUrl("uploadUserImg");
-                baseResponse.setImgPath("/images/user/" + job.getFileName());
-                rt = WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
-            } else {
-                baseResponse.setMsg("图片上传失败");
-                baseResponse.setUrl("uploadUserImg");
-                rt = WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
-            }
-            connection.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return rt;
-    }
-
     //查询聊天视图
     public static String queryChartsViews(WebSocketConvertData.ReceiveObj job) {
         String rt = "";
