@@ -20,7 +20,9 @@ public class FileService {
         String rt = "";
         try {
             Path filePath = Path.of(CpdogMain.FILE_PATH, job.getFileName());
-            Files.createFile(filePath);
+            if (!Files.exists(filePath)) {
+                Files.createFile(filePath);
+            }
             ByteBuffer fileBuffer = job.getFileReceiveConvert();
             fileBuffer.flip();
             if (fileBuffer.hasRemaining()) {

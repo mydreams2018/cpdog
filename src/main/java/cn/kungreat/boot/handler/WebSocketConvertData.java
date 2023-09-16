@@ -58,8 +58,8 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
                         socketData.setDateLength(array, remaining, byteBuffer);
                         if (socketData.getDateLength() > 0 && socketData.getCurrentPos() + 4 < remaining) {
                             socketData.setMaskingKey(array, byteBuffer);//设置掩码覆盖,转换后续数据
-                            socketData.setType(array[byteBuffer.position()] & 15);
                             socketData.setByteBuffer(ByteBuffer.allocate(16384));
+                            socketData.setType(array[byteBuffer.position()] & 15);
                             byteBuffer.position(byteBuffer.position() + socketData.getCurrentPos());
                             remaining = byteBuffer.remaining();
                         } else {
@@ -108,7 +108,8 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
             socketData.setMaskingIndex(maskingIndex);
             byteBuffer.position((int) (byteBuffer.position() + remainingTotal));
         }
-        if (socketData.getType() != 999 && !socketData.isFinish() && socketData.getReadLength() == socketData.getDateLength()) {
+        if (socketData.getType() != 999 && !socketData.isFinish() && socketData.getReadLength() == socketData.getDateLength()
+                && byteBuffer.hasRemaining()) {
             if ((byteBuffer.get(byteBuffer.position()) & 15) == 0) {
                 //这是一个延续帧
                 socketData.setCurrentPos(0);
@@ -122,7 +123,6 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
                         socketData.setDateLength(array, remaining, byteBuffer);
                         if (socketData.getDateLength() > tempLength && socketData.getCurrentPos() + 4 < remaining) {
                             socketData.setMaskingKey(array, byteBuffer);//设置掩码覆盖,转换后续数据
-                            socketData.setByteBuffer(ByteBuffer.allocate(16384));
                             byteBuffer.position(byteBuffer.position() + socketData.getCurrentPos());
                             loopConvertData(socketChannel, byteBuffer);
                         } else {
@@ -170,13 +170,13 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
 
     @Override
     public void exception(Exception e, SocketChannel socketChannel) {
-        LOGGER.error(e.getMessage());
+        LOGGER.error(e.getLocalizedMessage());
         try {
             socketChannel.close();
             WEB_SOCKET_STATE_TREEMAP.remove(socketChannel.hashCode());
             WEB_SOCKET_STATE_BYTES.remove(socketChannel.hashCode());
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error(ex.getLocalizedMessage());
         }
     }
 
@@ -263,6 +263,14 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
         public void setFinish(boolean finish) {
             this.finish = finish;
             this.currentPos++;
+        }
+
+        public void setByteBuffer(ByteBuffer byteBuffer) {
+            this.byteBuffer = byteBuffer;
+            if (this.type == 2 && this.isConvert) {
+                //在扩容时 同步文件时需要此操作
+                this.receiveObj.setFileReceiveConvert(byteBuffer);
+            }
         }
 
         /* 如果有延续帧 把数据长度相加保留总长度  */
