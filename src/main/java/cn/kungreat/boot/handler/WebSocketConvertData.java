@@ -108,7 +108,7 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
             socketData.setMaskingIndex(maskingIndex);
             byteBuffer.position((int) (byteBuffer.position() + remainingTotal));
         }
-        if (!socketData.isFinish() && socketData.getReadLength() == socketData.getDateLength()) {
+        if (socketData.getType() != 999 && !socketData.isFinish() && socketData.getReadLength() == socketData.getDateLength()) {
             if ((byteBuffer.get(byteBuffer.position()) & 15) == 0) {
                 //这是一个延续帧
                 socketData.setCurrentPos(0);
@@ -346,6 +346,7 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
                         setDataBase(split);
                     }
                     webSocketStateBytes.remove(hashcode);
+                    this.receiveObj.setFileDone(this.done);
                 }
             } else {
                 /*
@@ -389,6 +390,7 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
                 LOGGER.error("文件内容解释出错:关闭连接");
                 throw new WebSocketExceptional("文件内容解释出错 -> 关闭连接");
             }
+            this.receiveObj.setFileReceiveConvert(this.byteBuffer);
             this.isConvert = true;
         }
 
@@ -402,6 +404,8 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
         private String tar;
         private String url;
         private String fileName;
+        private ByteBuffer fileReceiveConvert;
+        private boolean fileDone;
         private ChartsContent charts;
     }
 

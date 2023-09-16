@@ -211,12 +211,16 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                     while (webSocketDataIterator.hasNext()) {
                         WebSocketConvertData.WebSocketData webSocketDataNext = webSocketDataIterator.next();
                         if ((webSocketDataNext.getType() == 1 && webSocketDataNext.isDone())
-                                || (webSocketDataNext.getType() == 2 && webSocketDataNext.isConvert())
-                                || webSocketDataNext.getType() == 8
-                        ) {
+                                || webSocketDataNext.getType() == 8) {
                             runFilterChain(webSocketDataNext);
                             runConvertDataOut(webSocketDataNext, clientChannel);
                             webSocketDataIterator.remove();
+                        } else if (webSocketDataNext.getType() == 2 && webSocketDataNext.isConvert()) {
+                            runFilterChain(webSocketDataNext);
+                            runConvertDataOut(webSocketDataNext, clientChannel);
+                            if (webSocketDataNext.isDone()) {
+                                webSocketDataIterator.remove();
+                            }
                         }
                     }
                 }
