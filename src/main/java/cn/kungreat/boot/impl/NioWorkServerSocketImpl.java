@@ -30,10 +30,14 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private final static AtomicInteger ATOMIC_INTEGER = new AtomicInteger(0);
     private static ChannelProtocolHandler channelProtocolHandler;
     /*
+       可能和TLS握手的线程池并发
        TLS握手完后有多的数据,多的数据可能就是一条完整的信息了,
        如果没有下次信息的触发,会倒置此次信息不会触发,所以这里有数据时会在流程中自动触发一次
     */
     public final LinkedList<SelectionKey> tlsInitKey = new InitLinkedList();
+    /*
+     * 出站的源始数据
+     * */
     private final ByteBuffer outBuf = ByteBuffer.allocate(8192);
     private final HashMap<SocketOption<?>, Object> optionMap = new HashMap<>();
     //websocket入站解决方案
@@ -173,7 +177,6 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
 
         public void InitHandler(SelectionKey next) {
             SocketChannel clientChannel = null;
-            CpdogMain.THREAD_LOCAL.get().clear();
             try {
                 clientChannel = (SocketChannel) next.channel();
                 baseHandler(next, clientChannel);
@@ -200,6 +203,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             attachment.getInSrc().compact();
             ByteBuffer inSrcDecode = attachment.getInSrcDecode();
             if (channelProtocolHandler != null && ProtocolState.FINISH != attachment.getProtocolState()) {
+                CpdogMain.THREAD_LOCAL.get().clear();
                 //websocket协议处理
                 if (channelProtocolHandler.handlers(clientChannel, inSrcDecode)) {
                     attachment.setProtocolState(ProtocolState.FINISH);
@@ -279,6 +283,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
         private void runConvertDataOut(WebSocketConvertData.WebSocketData webSocketData, SocketChannel socketChannel) {
             ByteBuffer outBuf = getOutBuf();
             outBuf.clear();
+            CpdogMain.THREAD_LOCAL.get().clear();
             try {
                 WEB_SOCKET_CONVERT_DATA_OUT.before(webSocketData, socketChannel);
                 WEB_SOCKET_CONVERT_DATA_OUT.handler(webSocketData, outBuf, socketChannel);

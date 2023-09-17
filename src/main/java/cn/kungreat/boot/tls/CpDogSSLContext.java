@@ -285,6 +285,7 @@ public class CpDogSSLContext {
                 CpdogMain.THREAD_LOCAL.set(buf);
                 outEncode(socketChannel, outSrc);
             case BUFFER_UNDERFLOW:
+                LOGGER.error("outEncode-BUFFER_UNDERFLOW,输出出站数据{}", outEnc);
                 break;
             case OK:
                 outEnc.flip();
@@ -299,11 +300,11 @@ public class CpDogSSLContext {
                     if (outEnc.hasRemaining()) {
                         socketChannel.write(outEnc);
                     }
-                    outEnc.clear();
                     engine.closeOutbound();
                     socketChannel.close();
                     LOGGER.error("出站异常关闭 -> close");
                 }
+                outEnc.clear();
         }
         if (outSrc.hasRemaining()) {
             LOGGER.error("多次调用了outEncode--{},{},{}", engine.isOutboundDone(), engine.isInboundDone(), socketChannel.isOpen());

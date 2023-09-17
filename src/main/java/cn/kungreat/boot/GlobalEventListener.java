@@ -16,7 +16,9 @@ import java.util.concurrent.LinkedBlockingQueue;
  * 全局的事件监听、负责事件传递
  */
 public class GlobalEventListener {
-
+    /*
+    * 出站的源始数据
+    * */
     private static final ByteBuffer EVENT_BUFFER = ByteBuffer.allocate(8192);
     /*
      *所有的事件集合
@@ -52,6 +54,7 @@ public class GlobalEventListener {
                             if (name.equals(receiveObjUrl)) {
                                 if (Modifier.isStatic(methods.getModifiers())) {
                                     EVENT_BUFFER.clear();
+                                    CpdogMain.THREAD_LOCAL.get().clear();
                                     String rts = (String) methods.invoke(null, receiveObj);
                                     if (!rts.isEmpty()) {
                                         byte[] bytes = rts.getBytes(StandardCharsets.UTF_8);
@@ -80,6 +83,5 @@ public class GlobalEventListener {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        CpdogMain.THREAD_LOCAL.get().clear();
     }
 }
