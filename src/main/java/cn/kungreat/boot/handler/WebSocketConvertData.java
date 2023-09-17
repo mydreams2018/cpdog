@@ -17,6 +17,11 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+/*
+ * 此类把数据转换为WebSocketData对象
+ * 一次进来最可能多的转换成WebSocketData对象
+ * */
+
 public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocketConvertData.WebSocketData>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketConvertData.class);
