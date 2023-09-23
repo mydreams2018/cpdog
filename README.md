@@ -68,7 +68,8 @@ https://www.kungreat.cn/
 https://space.bilibili.com/384704339
 #### 界面图
 
-0. 简易流程图<img src="https://www.kungreat.cn/images/images_md/cpdog.jpg" style="zoom:50%;" />
+0. 简易流程图<img src="https://www.kungreat.cn/images/images_md/cpdog.jpg" />
+
 1. 注册界面<img src="https://www.kungreat.cn/images/images_md/register.PNG" style="zoom:50%;" />
 2. 登录 <img src="https://www.kungreat.cn/images/images_md/login.PNG" alt="login" style="zoom:50%;" />
 3. 用户查询 <img src="https://www.kungreat.cn/images/images_md/users.PNG" alt="login" style="zoom:50%;" />
