@@ -285,7 +285,7 @@ public class CpDogSSLContext {
                 CpdogMain.THREAD_LOCAL.set(buf);
                 outEncode(socketChannel, outSrc);
             case BUFFER_UNDERFLOW:
-                LOGGER.error("outEncode-BUFFER_UNDERFLOW,输出出站数据{}", outEnc);
+                LOGGER.error("outEncode-BUFFER_UNDERFLOW,输出出站数据{},{}", outSrc, outEnc);
                 break;
             case OK:
                 outEnc.flip();
