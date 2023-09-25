@@ -1,8 +1,8 @@
 package cn.kungreat.boot.services;
 
 import cn.kungreat.boot.an.CpdogController;
+import cn.kungreat.boot.filter.BaseWebSocketFilter;
 import cn.kungreat.boot.handler.WebSocketConvertData;
-import cn.kungreat.boot.handler.WebSocketConvertDataOut;
 import cn.kungreat.boot.jb.BaseResponse;
 import cn.kungreat.boot.utils.JdbcUtils;
 
@@ -84,7 +84,7 @@ public class LoginService {
                     baseResponse.setUser(resultSet.getString("nike_name"));
                     baseResponse.setSkToken(UUID.randomUUID().toString());
                     baseResponse.setImgPath(resultSet.getString("img_path"));
-                    WebSocketConvertDataOut.USER_UUIDS.put(baseResponse.getSkToken(), resultSet.getString("nike_name"));
+                    BaseWebSocketFilter.USER_UUIDS.put(baseResponse.getSkToken(), resultSet.getString("nike_name"));
                     rt = WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
                 } else {
                     //验证失败

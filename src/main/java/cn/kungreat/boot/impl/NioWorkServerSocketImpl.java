@@ -216,11 +216,11 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         WebSocketConvertData.WebSocketData webSocketDataNext = webSocketDataIterator.next();
                         if ((webSocketDataNext.getType() == 1 && webSocketDataNext.isDone())
                                 || webSocketDataNext.getType() == 8) {
-                            runFilterChain(webSocketDataNext);
+                            runFilterChain(webSocketDataNext, clientChannel);
                             runConvertDataOut(webSocketDataNext, clientChannel);
                             webSocketDataIterator.remove();
                         } else if (webSocketDataNext.getType() == 2 && webSocketDataNext.isConvert()) {
-                            runFilterChain(webSocketDataNext);
+                            runFilterChain(webSocketDataNext, clientChannel);
                             runConvertDataOut(webSocketDataNext, clientChannel);
                             if (webSocketDataNext.isDone()) {
                                 webSocketDataIterator.remove();
@@ -265,31 +265,33 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             return null;
         }
 
-        private void runFilterChain(WebSocketConvertData.WebSocketData webSocketData) {
+        private void runFilterChain(WebSocketConvertData.WebSocketData webSocketData, SocketChannel socketChannel) {
             for (FilterInHandler filterInChain : FILTER_IN_CHAINS) {
                 try {
-                    filterInChain.init(webSocketData);
-                    boolean filter = filterInChain.filter(webSocketData);
+                    filterInChain.init(webSocketData, socketChannel);
+                    boolean filter = filterInChain.filter(webSocketData, socketChannel);
                     if (!filter) {
                         break;
                     }
                 } catch (Exception e) {
-                    filterInChain.exception(e, webSocketData);
+                    filterInChain.exception(e, webSocketData, socketChannel);
                     break;
                 }
             }
         }
 
         private void runConvertDataOut(WebSocketConvertData.WebSocketData webSocketData, SocketChannel socketChannel) {
-            ByteBuffer outBuf = getOutBuf();
-            outBuf.clear();
-            CpdogMain.THREAD_LOCAL.get().clear();
-            try {
-                WEB_SOCKET_CONVERT_DATA_OUT.before(webSocketData, socketChannel);
-                WEB_SOCKET_CONVERT_DATA_OUT.handler(webSocketData, outBuf, socketChannel);
-                WEB_SOCKET_CONVERT_DATA_OUT.after(webSocketData, socketChannel, outBuf);
-            } catch (Exception e) {
-                WEB_SOCKET_CONVERT_DATA_OUT.exception(e, socketChannel);
+            if (socketChannel.isOpen()) {
+                ByteBuffer outBuf = getOutBuf();
+                outBuf.clear();
+                CpdogMain.THREAD_LOCAL.get().clear();
+                try {
+                    WEB_SOCKET_CONVERT_DATA_OUT.before(webSocketData, socketChannel);
+                    WEB_SOCKET_CONVERT_DATA_OUT.handler(webSocketData, outBuf, socketChannel);
+                    WEB_SOCKET_CONVERT_DATA_OUT.after(webSocketData, socketChannel, outBuf);
+                } catch (Exception e) {
+                    WEB_SOCKET_CONVERT_DATA_OUT.exception(e, socketChannel);
+                }
             }
         }
 

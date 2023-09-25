@@ -2,7 +2,6 @@ package cn.kungreat.boot.handler;
 
 import cn.kungreat.boot.ConvertDataOutHandler;
 import cn.kungreat.boot.CpdogMain;
-import cn.kungreat.boot.GlobalEventListener;
 import cn.kungreat.boot.tls.CpDogSSLContext;
 import cn.kungreat.boot.utils.WebSocketResponse;
 import org.slf4j.Logger;
@@ -13,27 +12,14 @@ import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class WebSocketConvertDataOut implements ConvertDataOutHandler<WebSocketConvertData.WebSocketData> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketConvertDataOut.class);
 
-    /*
-     *   存放用户登录随机生成的UUID 关联信息.UUID在前端是session级别的. [k=uuid v=userid]
-     */
-    public static final Map<String, String> USER_UUIDS = new ConcurrentHashMap<>(1024);
-
     @Override
     public void before(WebSocketConvertData.WebSocketData webSocketData, SocketChannel socketChannel) throws Exception {
-        //页面刷新就会重建socket连接,用此来记录用户的channel信息,需要前端配合处理,在登录完成时返回token让前端保存
-        if (webSocketData.getReceiveObj().getUrl().equals(CpdogMain.REFRESH_TOKEN_URL)) {
-            String nikeName = USER_UUIDS.get(webSocketData.getReceiveObj().getCharts().getTokenSession());
-            if (nikeName != null) {
-                GlobalEventListener.CONCURRENT_EVENT_MAP.put(nikeName, socketChannel);
-            }
-        }
+
     }
 
     @Override

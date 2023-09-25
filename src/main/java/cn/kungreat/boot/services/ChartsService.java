@@ -2,8 +2,8 @@ package cn.kungreat.boot.services;
 
 import cn.kungreat.boot.GlobalEventListener;
 import cn.kungreat.boot.an.CpdogController;
+import cn.kungreat.boot.filter.BaseWebSocketFilter;
 import cn.kungreat.boot.handler.WebSocketConvertData;
-import cn.kungreat.boot.handler.WebSocketConvertDataOut;
 import cn.kungreat.boot.jb.*;
 import cn.kungreat.boot.utils.JdbcUtils;
 import cn.kungreat.boot.utils.Paging;
@@ -22,7 +22,7 @@ public class ChartsService {
     public static String queryChartsViews(WebSocketConvertData.ReceiveObj job) {
         String rt = "";
         String tokenSession = job.getCharts().getTokenSession();
-        String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
+        String tokenNikeName = BaseWebSocketFilter.USER_UUIDS.get(tokenSession);
         if (tokenSession != null && !tokenSession.isBlank() && tokenNikeName != null) {
             try (Connection connection = JdbcUtils.getConnection();
                  PreparedStatement preparedCount = connection.prepareStatement("select count(id) from msg_view where user_src =? and show_state=1 and user_tar like ?");
@@ -87,7 +87,7 @@ public class ChartsService {
         String nikeName = job.getCharts().getNikeName();
         if (tokenSession != null && !tokenSession.isBlank() && message != null && !message.isBlank()
                 && nikeName != null && !nikeName.isBlank()) {
-            String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
+            String tokenNikeName = BaseWebSocketFilter.USER_UUIDS.get(tokenSession);
             if (tokenNikeName != null) {
                 if (message.equals("hide")) {
                     rt = hideChartsViews(nikeName, tokenNikeName);
@@ -193,7 +193,7 @@ public class ChartsService {
         String srcTarUUID = job.getCharts().getSrcTarUUID();
         if (tokenSession != null && !tokenSession.isBlank() && message != null && !message.isBlank()
                 && nikeName != null && !nikeName.isBlank() && srcTarUUID != null && !srcTarUUID.isBlank()) {
-            String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
+            String tokenNikeName = BaseWebSocketFilter.USER_UUIDS.get(tokenSession);
             if (tokenNikeName != null) {
                 final BaseResponse baseResponse = new BaseResponse();
                 if (!isHasFriend(tokenNikeName, nikeName)) {
@@ -315,7 +315,7 @@ public class ChartsService {
     public static String handlerDesUpdate(WebSocketConvertData.ReceiveObj job) {
         String rt = "";
         String tokenSession = job.getCharts().getTokenSession();
-        String nikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
+        String nikeName = BaseWebSocketFilter.USER_UUIDS.get(tokenSession);
         String message = job.getCharts().getMessage();
         if (nikeName != null && !nikeName.isBlank() && message != null && !message.isBlank()) {
             final BaseResponse baseResponse = new BaseResponse();

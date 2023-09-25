@@ -2,8 +2,8 @@ package cn.kungreat.boot.services;
 
 import cn.kungreat.boot.CpdogMain;
 import cn.kungreat.boot.an.CpdogController;
+import cn.kungreat.boot.filter.BaseWebSocketFilter;
 import cn.kungreat.boot.handler.WebSocketConvertData;
-import cn.kungreat.boot.handler.WebSocketConvertDataOut;
 import cn.kungreat.boot.jb.BaseResponse;
 import cn.kungreat.boot.utils.JdbcUtils;
 import org.slf4j.Logger;
@@ -50,7 +50,7 @@ public class FileService {
 
     public static String changeUserImg(WebSocketConvertData.ReceiveObj job) {
         String rt = "";
-        String nikeName = WebSocketConvertDataOut.USER_UUIDS.get(job.getSrc());
+        String nikeName = BaseWebSocketFilter.USER_UUIDS.get(job.getSrc());
         final BaseResponse baseResponse = new BaseResponse();
         try (Connection connection = JdbcUtils.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement("update user_details set img_path=? where nike_name=?")) {

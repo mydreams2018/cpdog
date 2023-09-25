@@ -2,8 +2,8 @@ package cn.kungreat.boot.services;
 
 import cn.kungreat.boot.GlobalEventListener;
 import cn.kungreat.boot.an.CpdogController;
+import cn.kungreat.boot.filter.BaseWebSocketFilter;
 import cn.kungreat.boot.handler.WebSocketConvertData;
-import cn.kungreat.boot.handler.WebSocketConvertDataOut;
 import cn.kungreat.boot.jb.BaseResponse;
 import cn.kungreat.boot.jb.EventBean;
 import cn.kungreat.boot.jb.QueryResult;
@@ -78,7 +78,7 @@ public class FriendsService {
         String tokenSession = first.getCharts().getTokenSession();
         if (nikeNames != null && nikeNames.size() > 0 && tokenSession != null) {
             final BaseResponse baseResponse = new BaseResponse();
-            String nikeNm = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
+            String nikeNm = BaseWebSocketFilter.USER_UUIDS.get(tokenSession);
             if (nikeNm != null) {
                 String message = first.getCharts().getMessage();
                 StringBuilder nks = new StringBuilder();
@@ -155,7 +155,7 @@ public class FriendsService {
     public static String queryUsersFriends(WebSocketConvertData.ReceiveObj job) {
         String rt = "";
         String tokenSession = job.getCharts().getTokenSession();
-        String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
+        String tokenNikeName = BaseWebSocketFilter.USER_UUIDS.get(tokenSession);
         if (tokenSession != null && !tokenSession.isBlank() && tokenNikeName != null) {
             try (Connection connection = JdbcUtils.getConnection();
                  PreparedStatement preparedCount = connection.prepareStatement("select count(src_user_id) from friends_history where src_user_id= ? and tar_user_id LIKE ? and cur_state=1");
@@ -213,7 +213,7 @@ public class FriendsService {
     public static String queryAnswerFriends(WebSocketConvertData.ReceiveObj job) {
         String rt = "";
         String tokenSession = job.getCharts().getTokenSession();
-        String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
+        String tokenNikeName = BaseWebSocketFilter.USER_UUIDS.get(tokenSession);
         if (tokenSession != null && !tokenSession.isBlank() && tokenNikeName != null) {
             try (Connection connection = JdbcUtils.getConnection();
                  PreparedStatement preparedCount = connection.prepareStatement("select count(src_user_id) from apply_history where tar_user_id =? and src_user_id like ? and apply_state=0");
@@ -273,7 +273,7 @@ public class FriendsService {
         String tokenSession = job.getCharts().getTokenSession();
         String message = job.getCharts().getMessage();
         String nikeName = job.getCharts().getNikeName();
-        String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
+        String tokenNikeName = BaseWebSocketFilter.USER_UUIDS.get(tokenSession);
         if (tokenSession != null && !tokenSession.isBlank() && message != null && !message.isBlank()
                 && nikeName != null && !nikeName.isBlank() && tokenNikeName != null) {
             if (message.equals("delete")) {
@@ -394,7 +394,7 @@ public class FriendsService {
         String nikeName = job.getCharts().getNikeName();
         if (tokenSession != null && !tokenSession.isBlank() && message != null && !message.isBlank()
                 && nikeName != null && !nikeName.isBlank()) {
-            String tokenNikeName = WebSocketConvertDataOut.USER_UUIDS.get(tokenSession);
+            String tokenNikeName = BaseWebSocketFilter.USER_UUIDS.get(tokenSession);
             if (tokenNikeName != null) {
                 if (message.equals("add group")) {
 
