@@ -1,8 +1,9 @@
 package cn.kungreat.boot.handler;
 
 import cn.kungreat.boot.ChannelProtocolHandler;
-import cn.kungreat.boot.jb.WebSocketBean;
 import cn.kungreat.boot.tls.CpDogSSLContext;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,4 +110,18 @@ public class WebSocketProtocolHandler implements ChannelProtocolHandler {
         in.flip();
         CpDogSSLContext.outEncode(socketChannel, in);
     }
+
+    @Setter
+    @Getter
+    private static final class WebSocketBean {
+        private String title;
+        private String host;
+        private String upgrade;
+        private String connection;
+        private String secWebSocketKey;
+        private String secWebSocketVersion;
+        private String secWebSocketProtocol;
+        private String userAgent;
+    }
+
 }

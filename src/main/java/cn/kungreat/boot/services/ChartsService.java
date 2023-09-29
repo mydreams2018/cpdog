@@ -267,7 +267,7 @@ public class ChartsService {
                             rt = WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
                             connection.commit();
                             //通知对方 发送信息事件 start
-                            EventBean eventAdd = new EventBean();
+                            GlobalEventListener.EventBean eventAdd = new GlobalEventListener.EventBean();
                             eventAdd.setSrc(tokenNikeName);
                             eventAdd.setTar(nikeName);
                             eventAdd.setUrl("eventChartSendMsg");

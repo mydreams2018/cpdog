@@ -5,7 +5,6 @@ import cn.kungreat.boot.an.CpdogController;
 import cn.kungreat.boot.filter.BaseWebSocketFilter;
 import cn.kungreat.boot.handler.WebSocketConvertData;
 import cn.kungreat.boot.jb.BaseResponse;
-import cn.kungreat.boot.jb.EventBean;
 import cn.kungreat.boot.jb.QueryResult;
 import cn.kungreat.boot.jb.UserDetails;
 import cn.kungreat.boot.utils.JdbcUtils;
@@ -112,7 +111,7 @@ public class FriendsService {
                         //申请好友添加到通知队列中
                         String srcImgPath = first.getCharts().getImgPath();
                         for (int i = 0; i < nikeNames.size(); i++) {
-                            EventBean eventAdd = new EventBean();
+                            GlobalEventListener.EventBean eventAdd = new GlobalEventListener.EventBean();
                             eventAdd.setSrc(nikeNm);
                             eventAdd.setTar(nikeNames.get(i));
                             eventAdd.setUrl("eventAddFriends");
@@ -284,7 +283,7 @@ public class FriendsService {
                 rt = rejectApplyFriend(nikeName, tokenNikeName);
             }
             //通知对方 申请好友事件 start
-            EventBean eventAdd = new EventBean();
+            GlobalEventListener.EventBean eventAdd = new GlobalEventListener.EventBean();
             eventAdd.setSrc(tokenNikeName);
             eventAdd.setTar(nikeName);
             eventAdd.setUrl("eventApplyFriend");
@@ -479,7 +478,7 @@ public class FriendsService {
                 rt = WebSocketConvertData.MAP_JSON.writeValueAsString(baseResponse);
                 connection.commit();
                 //通知对方删除事件 start
-                EventBean eventAdd = new EventBean();
+                GlobalEventListener.EventBean eventAdd = new GlobalEventListener.EventBean();
                 eventAdd.setSrc(src);
                 eventAdd.setTar(tar);
                 eventAdd.setUrl("eventDeleteCurFriend");

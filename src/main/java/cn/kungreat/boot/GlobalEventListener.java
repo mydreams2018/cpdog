@@ -1,14 +1,16 @@
 package cn.kungreat.boot;
 
-import cn.kungreat.boot.jb.EventBean;
 import cn.kungreat.boot.tls.CpDogSSLContext;
 import cn.kungreat.boot.utils.WebSocketResponse;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -17,8 +19,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class GlobalEventListener {
     /*
-    * 出站的源始数据
-    * */
+     * 出站的源始数据
+     * */
     private static final ByteBuffer EVENT_BUFFER = ByteBuffer.allocate(8192);
     /*
      *所有的事件集合
@@ -83,5 +85,23 @@ public class GlobalEventListener {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Setter
+    @Getter
+    public static final class EventBean {
+        private String uuid;
+        private String src;
+        private String tar;
+        private String url;
+        private Map<String, Object> extraData;
+        private String nikeName;
+        private String registerTime;
+        private String describes;
+        private String imgPath;
+        private String sortFirst;
+        private String id;
+        private String srcTarUUID;
+        private String type;
     }
 }
