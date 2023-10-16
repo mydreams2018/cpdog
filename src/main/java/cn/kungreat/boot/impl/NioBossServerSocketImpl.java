@@ -158,8 +158,8 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                         }
                         NioBossServerSocketImpl.LOGGER.info("连接成功{}", this.tlsSocketChannel.getRemoteAddress());
                         Thread.State state = choose.getWorkThreads().getState();
-                        if (state.equals(Thread.State.NEW)) {
-                            choose.getWorkThreads().start();
+                        if (state == Thread.State.NEW) {
+                            choose.runWorkThread();
                             NioBossServerSocketImpl.LOGGER.info("启动{}", choose.getWorkThreads().getName());
                         }
                         choose.getSelector().wakeup();

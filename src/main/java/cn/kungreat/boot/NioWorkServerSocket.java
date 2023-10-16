@@ -17,4 +17,5 @@ public interface NioWorkServerSocket {
     Thread getWorkThreads() ;
     Selector getSelector();
     LinkedList<SelectionKey> getTlsInitKey();
+    void runWorkThread();
 }

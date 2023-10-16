@@ -75,6 +75,16 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     }
 
     @Override
+    public void runWorkThread() {
+        synchronized (this) {
+            Thread.State state = this.workThreads.getState();
+            if (state == Thread.State.NEW) {
+                this.workThreads.start();
+            }
+        }
+    }
+
+    @Override
     public <T> NioWorkServerSocket setOption(SocketOption<T> name, T value) {
         optionMap.put(name, value);
         return this;
