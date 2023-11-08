@@ -4,6 +4,8 @@ import cn.kungreat.boot.tls.CpDogSSLContext;
 import cn.kungreat.boot.utils.WebSocketResponse;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -18,6 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * 全局的事件监听、负责事件传递
  */
 public class GlobalEventListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalEventListener.class);
     /*
      * 出站的源始数据
      * */
@@ -83,7 +86,7 @@ public class GlobalEventListener {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("事件监听错误:{}", e.getLocalizedMessage());
         }
     }
 

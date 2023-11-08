@@ -10,6 +10,8 @@ import cn.kungreat.boot.impl.NioWorkServerSocketImpl;
 import cn.kungreat.boot.utils.JdbcUtils;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.InputStream;
@@ -24,6 +26,7 @@ import java.util.jar.JarFile;
 
 public class CpdogMain {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(CpdogMain.class);
     public static final List<Class<?>> CONTROLLERS = new ArrayList<>();
     public static final List<Class<?>> EVENTS = new ArrayList<>();
     //运行线程内共享数据 GlobalEventListener NioWorkServerSocketImpl 有使用 存出站的加密数据
@@ -32,6 +35,7 @@ public class CpdogMain {
     public static final String FILE_PATH;
     //刷新token的url前后端配合使用
     public static final String REFRESH_TOKEN_URL;
+
     static {
         InputStream cpDogFile = ClassLoader.getSystemResourceAsStream("cpdog.properties");
         Properties props = new Properties();
@@ -40,7 +44,7 @@ public class CpdogMain {
             String scanPack = props.getProperty("scan.packages");
             setControllers(scanPack);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("CpdogMain-init失败:{}", e.getLocalizedMessage());
         }
         FILE_PATH = props.getProperty("user.imgPath");
         REFRESH_TOKEN_URL = props.getProperty("refresh.token.url");
