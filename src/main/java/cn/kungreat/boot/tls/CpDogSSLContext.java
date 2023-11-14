@@ -248,6 +248,7 @@ public class CpDogSSLContext {
                 inSrcDecodeGrow.put(inSrcDecode);
                 socketLink.setInSrcDecode(inSrcDecodeGrow);
                 inDecode(socketLink, spin);//扩容后尝试再次转换
+                break;
             case BUFFER_UNDERFLOW:
                 int netSize = engine.getSession().getPacketBufferSize();
                 if (netSize > inSrc.capacity()) {
@@ -284,6 +285,7 @@ public class CpDogSSLContext {
                 buf.put(outEnc);
                 CpdogMain.THREAD_LOCAL.set(buf);
                 outEncode(socketChannel, outSrc);
+                break;
             case BUFFER_UNDERFLOW:
                 LOGGER.error("outEncode-BUFFER_UNDERFLOW,输出出站数据{},{}", outSrc, outEnc);
                 break;
