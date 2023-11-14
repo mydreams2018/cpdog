@@ -318,13 +318,13 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
                 CoderResult coderResult;
                 do {
                     coderResult = CHARSET_DECODER.decode(byteBuffer, charBuffer, false);
+                    if (coderResult.isError()) {
+                        throw new WebSocketExceptional("!!!解码错误-111!!!");
+                    }
                     charBuffer.flip();
                     stringBuilder.append(charBuffer);
                     charBuffer.clear();
                 } while (coderResult.isOverflow());
-                if (coderResult.isError()) {
-                    throw new WebSocketExceptional("!!!解码错误-111!!!");
-                }
                 byteBuffer.compact();
             } else {
                 int remaining = byteBuffer.remaining();
