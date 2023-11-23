@@ -175,7 +175,7 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
 
     @Override
     public void exception(Exception e, SocketChannel socketChannel) {
-        LOGGER.error(e.getLocalizedMessage());
+        LOGGER.error("转换exception", e);
         try {
             socketChannel.close();
             WEB_SOCKET_STATE_TREEMAP.remove(socketChannel.hashCode());

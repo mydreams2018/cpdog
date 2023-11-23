@@ -32,7 +32,7 @@ public class CpDogSSLContext {
                     trustManagerFactory("www.kungreat.cn.jks", "7smuo47p"),
                     SecureRandom.getInstance("SHA1PRNG"));
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("SSLContext init error:", e);
         }
     }
 

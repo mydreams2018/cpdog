@@ -118,9 +118,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                NioBossServerSocketImpl.LOGGER.error("Boss线程挂掉");
-                NioBossServerSocketImpl.LOGGER.error(e.getLocalizedMessage());
+                NioBossServerSocketImpl.LOGGER.error("Boss线程挂掉", e);
             }
         }
 
@@ -169,12 +167,10 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                     NioBossServerSocketImpl.LOGGER.info("连接失败{}", this.tlsSocketChannel.getRemoteAddress());
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                NioBossServerSocketImpl.LOGGER.error("连接失败{}", e.getLocalizedMessage());
+                NioBossServerSocketImpl.LOGGER.error("连接失败", e);
                 try {
                     this.tlsSocketChannel.close();
                 } catch (IOException ioException) {
-                    ioException.printStackTrace();
                     NioBossServerSocketImpl.LOGGER.error("close失败{}", ioException.getLocalizedMessage());
                 }
             }
