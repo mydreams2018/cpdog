@@ -142,7 +142,7 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
         public void run() {
             TLSSocketLink sslEngine;
             try {
-                if (this.tlsSocketChannel.finishConnect()) {
+                if (this.tlsSocketChannel.isConnected() || this.tlsSocketChannel.finishConnect()) {
                     NioWorkServerSocket choose = NioBossServerSocketImpl.this.chooseWorkServer.choose(NioBossServerSocketImpl.this.workServerSockets);
                     this.tlsSocketChannel.configureBlocking(false);
                     choose.setOption(this.tlsSocketChannel);
