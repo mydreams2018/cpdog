@@ -3,6 +3,9 @@ package cn.kungreat.boot.tls;
 import java.nio.channels.SelectionKey;
 import java.util.LinkedList;
 
+/*
+ * 简单的并发安全设计
+ * */
 public class InitLinkedList extends LinkedList<SelectionKey> {
 
     @Override

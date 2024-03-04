@@ -21,7 +21,8 @@ public class WebSocketResponse {
             bts[0] = FINTXT;
             bts[1] = 126;
             return bts;
+        }else {
+            throw new RuntimeException("响应给客户端的数据长度超过65535字节...");
         }
-        return null;
     }
 }

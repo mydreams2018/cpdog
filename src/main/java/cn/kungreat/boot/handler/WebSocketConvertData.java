@@ -37,6 +37,9 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
 
     public static final ObjectMapper MAP_JSON = new ObjectMapper();
 
+    /*
+    * 前置处理
+    * */
     @Override
     public void before(SocketChannel socketChannel, ByteBuffer byteBuffer) throws Exception {
         byteBuffer.flip();
@@ -150,7 +153,9 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
             loopConvertData(socketChannel, byteBuffer);
         }
     }
-
+    /*
+    * 中置处理
+    * */
     @Override
     public List<WebSocketData> handler(SocketChannel socketChannel) throws Exception {
         LinkedList<WebSocketData> listSocket = WEB_SOCKET_STATE_TREEMAP.get(socketChannel.hashCode());
@@ -167,12 +172,16 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
         }
         return listSocket;
     }
-
+    /*
+    * 后置处理
+    * */
     @Override
     public void after(SocketChannel socketChannel, ByteBuffer byteBuffer) throws Exception {
         byteBuffer.compact();
     }
-
+    /*
+    * 异常处理
+    * */
     @Override
     public void exception(Exception e, SocketChannel socketChannel) {
         LOGGER.error("转换exception", e);
@@ -184,7 +193,9 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
             LOGGER.error(ex.getLocalizedMessage());
         }
     }
-
+    /*
+    * 此类代表一次次的事件 也就是一次完整的前端请求
+    * */
     @Setter
     @Getter
     public static final class WebSocketData {
@@ -408,7 +419,9 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
         }
 
     }
-
+    /*
+    * 业务设计前端的请求参数
+    * */
     @Setter
     @Getter
     public static final class ReceiveObj {
@@ -421,7 +434,9 @@ public class WebSocketConvertData implements ConvertDataInHandler<List<WebSocket
         private boolean fileDone;
         private ChartsContent charts;
     }
-
+    /*
+    * 业务设计前端的请求参数
+    * */
     @Setter
     @Getter
     public static final class ChartsContent {

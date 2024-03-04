@@ -38,6 +38,7 @@ public class GlobalEventListener {
      * 迭代监听 EVENT_BLOCKING_QUEUE 事件 传递给指定的回调方法
      */
     public static void loopEvent() {
+        //初始化 存出站的加密数据
         if (CpdogMain.THREAD_LOCAL.get() == null) {
             CpdogMain.THREAD_LOCAL.set(ByteBuffer.allocate(8192));
         }
@@ -90,6 +91,9 @@ public class GlobalEventListener {
         }
     }
 
+    /*
+    * 事件的源信息,根据业务设计补充数据
+    * */
     @Setter
     @Getter
     public static final class EventBean {

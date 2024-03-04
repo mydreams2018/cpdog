@@ -5,6 +5,9 @@ import cn.kungreat.boot.NioWorkServerSocket;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/*
+ * 简单的轮询选择一个NioWorkServerSocket服务
+ * */
 public class ChooseWorkServerImpl implements ChooseWorkServer {
 
     private final AtomicInteger atomicInteger = new AtomicInteger(0);

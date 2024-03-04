@@ -27,15 +27,30 @@ import java.util.jar.JarFile;
 public class CpdogMain {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CpdogMain.class);
+    /*
+    * 业务控制程序的入口,存放业务Class<?>类集合
+    * */
     public static final List<Class<?>> CONTROLLERS = new ArrayList<>();
+    /*
+     * 事件控制程序的入口,存放事件Class<?>类集合
+     * */
     public static final List<Class<?>> EVENTS = new ArrayList<>();
-    //运行线程内共享数据 GlobalEventListener NioWorkServerSocketImpl 有使用 存出站的加密数据
+    /*
+    * 运行线程内共享数据 GlobalEventListener NioWorkServerSocketImpl 有使用存出站的加密数据
+    * */
     public static final ThreadLocal<ByteBuffer> THREAD_LOCAL = new ThreadLocal<>();
-    //图片存放地址
+    /*
+    * 图片存放地址
+    * */
     public static final String FILE_PATH;
-    //刷新token的url前后端配合使用
+    /*
+    * 刷新token的url前后端配合使用
+    * */
     public static final String REFRESH_TOKEN_URL;
 
+    /*
+    * 读取配置文件信息,初始化必要设置
+    * */
     static {
         InputStream cpDogFile = ClassLoader.getSystemResourceAsStream("cpdog.properties");
         Properties props = new Properties();
@@ -48,6 +63,7 @@ public class CpdogMain {
         }
         FILE_PATH = props.getProperty("user.imgPath");
         REFRESH_TOKEN_URL = props.getProperty("refresh.token.url");
+        //数据库配置
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(props.getProperty("jdbc.url"));
         config.setUsername(props.getProperty("user.name"));
@@ -59,18 +75,25 @@ public class CpdogMain {
         JdbcUtils.dataSource = new HikariDataSource(config);
     }
 
+    /*
+    * CpdogController CpdogEvent 注解类
+    * 初始化 业务Class<?>类集合 事件Class<?>类集合
+    * 扫描指定包下的所有类,并根据指定的注解添加数据
+    * */
     private static void setControllers(String scanPack) throws Exception {
         String pks = scanPack == null ? CpdogMain.class.getPackage().getName().replace(".", "/") : scanPack.replace(".", "/");
         URL location = ClassLoader.getSystemClassLoader().getResource(pks);
         String protocol = location.getProtocol();
         if (protocol.equals("file")) {
             loopFile(new File(location.getFile()), pks.replace("/", "."));
-        }
-        if (protocol.equals("jar")) {
+        }else if (protocol.equals("jar")) {
             loopJap(location, pks);
         }
     }
 
+    /*
+    * 文件方式启动
+    * */
     public static void loopFile(File fl, String pks) throws Exception {
         if (fl.exists()) {
             File[] list = fl.listFiles();
@@ -95,6 +118,9 @@ public class CpdogMain {
         }
     }
 
+    /*
+    * jar包方式启动
+    * */
     public static void loopJap(URL location, String scanPack) throws Exception {
         JarURLConnection jarConnection = (JarURLConnection) location.openConnection();
         JarFile jarFile = jarConnection.getJarFile();
@@ -155,6 +181,9 @@ public class CpdogMain {
         }
     }
 
+    /*
+    * 程序的入口
+    * */
     public static void main(String[] args) throws Exception {
         NioBossServerSocket nioBossServerSocket = NioBossServerSocketImpl.create();
         nioBossServerSocket.buildChannel();

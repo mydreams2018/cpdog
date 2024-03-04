@@ -17,6 +17,9 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/*
+ * BOSS服务 接受套接字连接
+ * */
 public class NioBossServerSocketImpl implements NioBossServerSocket {
     private ServerSocketChannel serverSocketChannel;
     private Selector selector;
@@ -96,6 +99,9 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
         return this;
     }
 
+    /*
+     * 监听OP_ACCEPT事件 等待客户端套接字连接
+     * */
     private final class BossRunnable implements Runnable {
 
         @Override
@@ -108,9 +114,8 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
                     while (iterator.hasNext()) {
                         SelectionKey next = iterator.next();
                         iterator.remove();
-                        SelectableChannel channel = next.channel();
                         if (next.isValid() && next.isAcceptable()) {
-                            ServerSocketChannel serChannel = (ServerSocketChannel) channel;
+                            ServerSocketChannel serChannel = (ServerSocketChannel) next.channel();
                             addTask(serChannel);
                         } else {
                             NioBossServerSocketImpl.LOGGER.info("Boss事件类型错误");
@@ -130,6 +135,12 @@ public class NioBossServerSocketImpl implements NioBossServerSocket {
         }
     }
 
+    /*
+     * 1.完成客户端套接字连接
+     * 2.完成TLS握手的过程
+     * 3.选择一个WORK服务对象注册OP_READ事件
+     * 4.启动WORK服务监听套接字的OP_READ事件
+     * */
     private final class TLSRunnable implements Runnable {
 
         private final SocketChannel tlsSocketChannel;

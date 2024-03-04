@@ -20,6 +20,9 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/*
+ * WORK服务 处理套接字的数据
+ * */
 public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private static final Logger LOGGER = LoggerFactory.getLogger(NioWorkServerSocketImpl.class);
 
@@ -46,7 +49,14 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
     private final static WebSocketConvertDataOut WEB_SOCKET_CONVERT_DATA_OUT = new WebSocketConvertDataOut();
     //websocket过滤器链路
     private final static List<FilterInHandler> FILTER_IN_CHAINS = new ArrayList<>();
+    /*
+     * 一个WORK绑定一个执行线程
+     * */
     private Thread workThreads;
+    /*
+     * 一个WORK绑定一个注册器
+     * 一个WORK内会有多个SocketChannel注册在此
+     * */
     private Selector selector;
     //清理缓冲区 不存在的channel对象 172800000  48小时清理一次
     private int clearCount = 1;
@@ -149,10 +159,14 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
         return outBuf;
     }
 
+    /*
+     * 监听套接字的读取事件
+     * */
     private final class WorkRunnable implements Runnable {
 
         @Override
         public void run() {
+            //初始化 存出站的加密数据
             if (CpdogMain.THREAD_LOCAL.get() == null) {
                 CpdogMain.THREAD_LOCAL.set(ByteBuffer.allocate(32768));
             }
@@ -204,6 +218,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }
         }
 
+        /*
+         * 读取套接字数据 并走完整个业务流程
+         * */
         private void baseHandler(SelectionKey next, SocketChannel clientChannel) throws Exception {
             TLSSocketLink attachment = (TLSSocketLink) next.attachment();
             ByteBuffer inSrc = attachment.getInSrc();
@@ -263,6 +280,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }
         }
 
+        /*
+         * 走转换数据的过程 把前端传过来的数据转换成所需要的WebSocketData对象
+         * */
         private List<WebSocketConvertData.WebSocketData> websocketConvert(final SocketChannel socketChannel, final ByteBuffer byteBuffer) {
             try {
                 NioWorkServerSocketImpl.this.webSocketConvertData.before(socketChannel, byteBuffer);
@@ -275,6 +295,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             return null;
         }
 
+        /*
+         * 走用户的自定义过滤器链路
+         * */
         private void runFilterChain(WebSocketConvertData.WebSocketData webSocketData, SocketChannel socketChannel) {
             for (FilterInHandler filterInChain : FILTER_IN_CHAINS) {
                 try {
@@ -290,6 +313,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }
         }
 
+        /*
+         * 根据入参反射调用后端方法并返回数据给前端
+         * */
         private void runConvertDataOut(WebSocketConvertData.WebSocketData webSocketData, SocketChannel socketChannel) {
             if (socketChannel.isOpen()) {
                 ByteBuffer outBuf = getOutBuf();
