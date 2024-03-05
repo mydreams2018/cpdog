@@ -2,14 +2,6 @@ GlobalEventListener -> CONCURRENT_EVENT_MAP
    呢称:channel
    MAP结构、最多存放数量为用户数量、由于关闭channel时拿不到KEY:呢称、故清理非常麻烦、此处暂时不做清理
 
-CpDogSSLContext -> TLS_SOCKET_LINK
-  channel.hash:TLSSocketLink
-  MAP结构 TLS握手完成后创建、channel关闭时删除 正常关闭时没有问题[特殊情况下待设计...]
-
-WebSocketChannelInHandler -> WEBSOCKETSTATETREEMAP
-                          -> WEBSOCKETSTATEBYTES
-          MAP结构
-存储WebSocketState每次的信息对象  、channel关闭时删除 正常关闭时没有问题[特殊情况下待设计...]
 
 WebSocketChannelOutHandler -> USER_UUIDS
     呢称:uuid

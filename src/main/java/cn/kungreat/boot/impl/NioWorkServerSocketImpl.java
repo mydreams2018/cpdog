@@ -58,7 +58,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
      * 一个WORK内会有多个SocketChannel注册在此
      * */
     private Selector selector;
-    //清理缓冲区 不存在的channel对象 172800000  48小时清理一次
+    /*
+     * 清理缓冲区已关闭的channel对象 172800000  48小时清理一次
+     * */
     private int clearCount = 1;
     private final long curTimes = System.currentTimeMillis();
 
@@ -173,7 +175,6 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             try {
                 while (NioWorkServerSocketImpl.this.selector.select() >= 0) {
                     runTlsInit();
-                    clearBuffer();
                     Set<SelectionKey> selectionKeys = NioWorkServerSocketImpl.this.selector.selectedKeys();
                     Iterator<SelectionKey> iterator = selectionKeys.iterator();
                     while (iterator.hasNext()) {
@@ -181,6 +182,7 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
                         iterator.remove();
                         handler(next);
                     }
+                    clearBuffer();
                 }
             } catch (Exception e) {
                 NioWorkServerSocketImpl.LOGGER.error(e.getMessage());
@@ -275,6 +277,13 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             if (next.isValid() && next.isReadable()) {
                 InitHandler(next);
             } else {
+                try {
+                    SocketChannel channel = (SocketChannel) next.channel();
+                    baseClear(channel);
+                    channel.close();
+                } catch (IOException e) {
+                    LOGGER.error("客户端关闭异常", e);
+                }
                 next.cancel();
                 LOGGER.error("客户端监听类型异常:");
             }
@@ -331,7 +340,9 @@ public class NioWorkServerSocketImpl implements NioWorkServerSocket {
             }
         }
 
-        //清理特殊情况下 断开的channel USER_UUIDS-clear  todo
+        /*
+         * 清理特殊情况下断开的channel
+         * */
         private void clearBuffer() {
             if (System.currentTimeMillis() > curTimes + (clearCount * 172800000L)) {
                 clearCount++;
