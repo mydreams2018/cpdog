@@ -1,7 +1,7 @@
 package cn.kungreat.boot;
 
 import java.nio.channels.SocketChannel;
-
+@Deprecated
 public interface ChannelInHandler<I,O> {
     /*
      *@Description 正常链路情况下会先调此方法、出现异常时不调用此方法
