@@ -10,19 +10,24 @@
 \n     10     换行NL
 \r     13     回车CR
 
-GET /name HTTP/1.1
-Host: 192.168.9.52:9999
+GET / HTTP/1.1
+Host: www.kungreat.cn:9999
 Connection: Upgrade
 Pragma: no-cache
 Cache-Control: no-cache
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36 Edg/99.0.1150.46
 Upgrade: websocket
-Origin: http://localhost:63342
+Origin: https://www.kungreat.cn
 Sec-WebSocket-Version: 13
 Accept-Encoding: gzip, deflate
 Accept-Language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6
-Sec-WebSocket-Key: zkvuhevaXj9DhHgHWT29yQ==
+Sec-WebSocket-Key: 68/I1/YR1MYqndJnsMN9kQ==
 Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+
+HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Accept: 1u0599g+GWzsz1THsGQ7X+lpP6c=
 
 serversocketchannel IP_TOS  为从此 Socket 发送的数据包设置 IP 标头中的流量类别或服务类型八位字节。
                             由于底层网络实现可能会忽略此值，因此应用程序应将其视为提示。
