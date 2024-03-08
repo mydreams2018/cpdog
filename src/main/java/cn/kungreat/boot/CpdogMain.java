@@ -185,21 +185,28 @@ public class CpdogMain {
     * 程序的入口
     * */
     public static void main(String[] args) throws Exception {
+        //创建BOSS服务对象
         NioBossServerSocket nioBossServerSocket = NioBossServerSocketImpl.create();
         nioBossServerSocket.buildChannel();
         nioBossServerSocket.buildThread();
         nioBossServerSocket.setOption(StandardSocketOptions.SO_REUSEADDR, true);
-        ChooseWorkServerImpl chooseWorkServer = new ChooseWorkServerImpl();
+        //指定协议处理器
         NioWorkServerSocketImpl.addChannelProtocolHandler(new WebSocketProtocolHandler());
+        //指定过滤器链路
         NioWorkServerSocketImpl.addFilterChain(new BaseWebSocketFilter());
+        //创建WORK服务类数组对象
         NioWorkServerSocket[] workServerSockets = new NioWorkServerSocket[12];
         for (int x = 0; x < workServerSockets.length; x++) {
+            //创建WORK服务对象
             NioWorkServerSocket workServerSocket = NioWorkServerSocketImpl.create();
             workServerSocket.buildThread();
             workServerSocket.buildSelector();
             workServerSocket.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
             workServerSockets[x] = workServerSocket;
         }
+        //创建选择WORK服务对象
+        ChooseWorkServerImpl chooseWorkServer = new ChooseWorkServerImpl();
+        //BOSS服务启动
         nioBossServerSocket.start(new InetSocketAddress(InetAddress.getLoopbackAddress(), 9999), workServerSockets, chooseWorkServer);
         //主线程监听事件处理
         GlobalEventListener.loopEvent();
